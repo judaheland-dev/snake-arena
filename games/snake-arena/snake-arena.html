@@ -23,6 +23,7 @@ canvas{display:block;}
 .modeBtn{padding:8px 22px;font-size:.88rem;font-weight:800;border-radius:8px;cursor:pointer;
   border:2px solid #333;background:#111;color:#666;transition:all .12s;}
 .modeBtn.active{border-color:#00ff66;background:#003308;color:#00ff66;}
+#btnDaily.active{border-color:#ffcc44;background:#332700;color:#ffcc44;}
 .titleRow{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;justify-content:center;width:100%;max-width:1000px;}
 #leaderboard{background:#001a06cc;border:1px solid #00aa4466;border-radius:14px;
   padding:13px 16px;min-width:190px;flex:1;max-width:260px;}
@@ -95,6 +96,11 @@ canvas{display:block;}
 #hudP2Length{color:#66aaff;font-weight:800;}
 #hudP2Kills{color:#ff8844;font-weight:800;}
 #hudP2Boost{color:#ffdd44;font-weight:700;}
+#hudScore{color:#ffee66;font-weight:800;}
+#hudCombo{color:#ff88ff;font-weight:800;}
+#hudObjective{color:#88ddff;font-weight:700;}
+#hudEvent{color:#ffbb66;font-weight:700;}
+#hudP2Score{color:#ffee66;font-weight:800;}
 
 /* ── SPLIT DIVIDER ── */
 #splitDivider{position:fixed;top:0;bottom:0;left:50%;width:3px;background:#333;z-index:15;display:none;}
@@ -159,6 +165,7 @@ canvas{display:block;}
   <div class="modeRow">
     <button class="modeBtn active" id="btn1P">&#x1F3AE; 1 Player</button>
     <button class="modeBtn"        id="btn2P">&#x1F46B; 2 Players</button>
+    <button class="modeBtn"        id="btnDaily">&#x1F4C5; Daily Seed</button>
   </div>
   <div class="titleRow">
     <div id="leaderboard">
@@ -210,13 +217,18 @@ canvas{display:block;}
 <!-- IN-GAME HUD (left / top-left) -->
 <div id="hud">
   <div class="hBox" id="hudLength">&#x1F40D; 10</div>
+  <div class="hBox" id="hudScore">Score: 0</div>
+  <div class="hBox" id="hudCombo">Combo: x1.0</div>
   <div class="hBox" id="hudKills">&#x2694;&#xFE0F; Kills: 0</div>
   <div class="hBox" id="hudBoost">Boost (need 20)</div>
+  <div class="hBox" id="hudObjective">Objective: -</div>
+  <div class="hBox" id="hudEvent">Event: None</div>
   <div class="hBox" id="hudZone">Zone in 120s</div>
 </div>
 <!-- IN-GAME HUD P2 (top-right) -->
 <div id="hudP2">
   <div class="hBox" id="hudP2Zone">Zone in 120s</div>
+  <div class="hBox" id="hudP2Score">Score: 0</div>
   <div class="hBox" id="hudP2Boost">Boost (need 20)</div>
   <div class="hBox" id="hudP2Kills">&#x2694;&#xFE0F; Kills: 0</div>
   <div class="hBox" id="hudP2Length">&#x1F40D; 10</div>
@@ -354,6 +366,7 @@ let canvas, ctx, mmCanvas, mmCtx, mmCanvas2, mmCtx2;
 let animId      = null;
 let gameRunning = false;
 let twoPlayerMode = false;
+let dailySeedMode = false;
 let skinPickerFor = 1;  // which player is currently picking a skin
 let playerName  = 'Player 1';
 let playerName2 = 'Player 2';
@@ -371,6 +384,154 @@ let powerUpSpawnTimer = 0;
 let kills  = 0;
 let kills2 = 0;
 let leaderboard = JSON.parse(localStorage.getItem('snakeArenaLB') || '[]');
+let runScore = 0;
+let runScore2 = 0;
+let comboMult = 1;
+let comboTimer = 0;
+let maxCombo = 1;
+let bestSpeed = 0;
+let longestBoostChain = 0;
+let currentBoostChain = 0;
+let strongestNearMiss = 0;
+let floatingTexts = [];
+let screenShake = 0;
+
+let currentObjective = null;
+let nextObjectiveTime = 35;
+let currentEvent = {type:'none', end:0};
+let nextEventTime = 40;
+let dotStormTick = 0;
+
+let seedLabel = '';
+let rngState = 0;
+
+let progressData = JSON.parse(localStorage.getItem('snakeArenaProgress') || '{"unlockedTrails":["none"],"unlockedBadges":[],"unlockedTracks":["battle"],"bestScore":0}');
+let dailyChallengeData = JSON.parse(localStorage.getItem('snakeArenaDaily') || '{}');
+
+function hashStringToSeed(text){
+  let h = 2166136261 >>> 0;
+  for(let i=0; i<text.length; i++){
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) || 1;
+}
+
+function todaySeedLabel(){
+  const d = new Date();
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth()+1).padStart(2,'0');
+  const da = String(d.getUTCDate()).padStart(2,'0');
+  return y+'-'+m+'-'+da;
+}
+
+function setRunSeedFromMode(){
+  seedLabel = dailySeedMode ? todaySeedLabel() : ('free-'+Date.now());
+  rngState = hashStringToSeed(seedLabel);
+}
+
+function rng(){
+  if(!dailySeedMode) return Math.random();
+  rngState ^= rngState << 13;
+  rngState ^= rngState >>> 17;
+  rngState ^= rngState << 5;
+  return ((rngState >>> 0) / 4294967296);
+}
+
+function randRange(min, max){ return min + rng() * (max-min); }
+
+function spawnFloatingText(x, y, text, color){
+  floatingTexts.push({x,y,text,color:color||'#fff',ttl:1.1,vx:randRange(-10,10),vy:randRange(-32,-20)});
+  if(floatingTexts.length>70) floatingTexts.splice(0, floatingTexts.length-70);
+}
+
+function triggerShake(amount){ screenShake = Math.min(24, screenShake + amount); }
+
+function addScoreForSnake(snake, base, label){
+  if(!snake || !snake.isPlayer || base<=0) return;
+  const mult = (snake===player ? comboMult : 1) * (hasEffect(snake,'score2x') ? 2 : 1);
+  const gained = Math.max(1, Math.floor(base * mult));
+  if(snake===player){
+    runScore += gained;
+    comboTimer = 2.5;
+    comboMult = Math.min(8, comboMult + 0.12);
+    maxCombo = Math.max(maxCombo, comboMult);
+  } else if(snake===player2){
+    runScore2 += gained;
+  }
+  const h = snakeHead(snake);
+  spawnFloatingText(h.x, h.y-24, '+'+gained+(label?' '+label:''), '#ffee66');
+}
+
+function ensureDailyChallenge(){
+  const key = todaySeedLabel();
+  if(dailyChallengeData.key===key) return;
+  const roll = hashStringToSeed('challenge-'+key)%3;
+  const challenges = [
+    {id:'score', text:'Daily: Reach 6000 score', target:6000, reward:1800},
+    {id:'kills', text:'Daily: Get 5 kills', target:5, reward:2000},
+    {id:'combo', text:'Daily: Hit x3 combo', target:3, reward:1600},
+  ];
+  dailyChallengeData = {key, challenge: challenges[roll], done:false};
+  localStorage.setItem('snakeArenaDaily', JSON.stringify(dailyChallengeData));
+}
+
+function checkDailyChallenge(){
+  if(!dailyChallengeData || !dailyChallengeData.challenge || dailyChallengeData.done) return;
+  const ch = dailyChallengeData.challenge;
+  let ok = false;
+  if(ch.id==='score') ok = runScore >= ch.target;
+  if(ch.id==='kills') ok = kills >= ch.target;
+  if(ch.id==='combo') ok = maxCombo >= ch.target;
+  if(ok){
+    dailyChallengeData.done = true;
+    runScore += ch.reward;
+    triggerShake(8);
+    spawnFloatingText(snakeHead(player).x, snakeHead(player).y-40, 'DAILY COMPLETE +'+ch.reward, '#88ffcc');
+    localStorage.setItem('snakeArenaDaily', JSON.stringify(dailyChallengeData));
+  }
+}
+
+function pickObjective(){
+  const picks = [
+    {id:'dots', text:'Eat 35 dots', target:35, progress:0, reward:1200},
+    {id:'death', text:'Eat 10 death dots', target:10, progress:0, reward:1500},
+    {id:'survive', text:'Survive 20s', target:20, progress:0, reward:1300},
+  ];
+  currentObjective = picks[Math.floor(rng()*picks.length)];
+}
+
+function advanceObjective(id, amount){
+  if(!currentObjective || currentObjective.id!==id) return;
+  currentObjective.progress += amount;
+  if(currentObjective.progress >= currentObjective.target){
+    runScore += currentObjective.reward;
+    spawnFloatingText(snakeHead(player).x, snakeHead(player).y-44, 'OBJECTIVE COMPLETE +'+currentObjective.reward, '#66ddff');
+    triggerShake(10);
+    currentObjective = null;
+    nextObjectiveTime = gameTime + 35 + Math.floor(rng()*25);
+  }
+}
+
+function startBiomeEvent(){
+  const types = ['fog','lowgrav','dotstorm'];
+  const type = types[Math.floor(rng()*types.length)];
+  const dur = type==='dotstorm' ? 16 : 24;
+  currentEvent = {type, end: gameTime + dur};
+  dotStormTick = 0;
+  spawnFloatingText(snakeHead(player).x, snakeHead(player).y-50, 'EVENT: '+type.toUpperCase(), '#ffbb66');
+}
+
+function eventActive(type){ return currentEvent && currentEvent.type===type && gameTime < currentEvent.end; }
+
+function updateProgressUnlocks(){
+  let changed = false;
+  if(runScore > (progressData.bestScore||0)){ progressData.bestScore = runScore; changed = true; }
+  if(runScore >= 12000 && !progressData.unlockedTrails.includes('ember')){ progressData.unlockedTrails.push('ember'); changed = true; }
+  if(maxCombo >= 4 && !progressData.unlockedBadges.includes('Combo Rookie')){ progressData.unlockedBadges.push('Combo Rookie'); changed = true; }
+  if(kills >= 10 && !progressData.unlockedTracks.includes('overdrive')){ progressData.unlockedTracks.push('overdrive'); changed = true; }
+  if(changed) localStorage.setItem('snakeArenaProgress', JSON.stringify(progressData));
+}
 
 // P1 input
 let mouseX = 0, mouseY = 0;
@@ -528,6 +689,19 @@ function toggleMusic(){
   updateMusicButton();
 }
 
+function updateMusicMood(focusSnake){
+  if(!musicCtx || !musicMaster || !musicFilter || !focusSnake || focusSnake.dead) return;
+  const h = snakeHead(focusSnake);
+  const zoneDist = Math.hypot(h.x-worldSize/2, h.y-worldSize/2);
+  const zoneRisk = gameTime>ZONE_FULL_TIME && zoneDist > zoneRadius*0.9 ? 0.5 : 0.08;
+  const boostRisk = (boostKey||boostClick) ? 0.2 : 0;
+  const danger = zoneRisk + boostRisk + Math.min(0.25, comboMult*0.03);
+  const freq = 1650 + danger * 2300;
+  const gain = 0.14 + danger * 0.1;
+  musicFilter.frequency.setTargetAtTime(freq, musicCtx.currentTime, 0.12);
+  musicMaster.gain.setTargetAtTime(gain, musicCtx.currentTime, 0.14);
+}
+
 // =====================================================
 //  NPC NAMES
 // =====================================================
@@ -539,8 +713,8 @@ const NPC_FIRST=['Shadow','Blaze','Viper','Coil','Fang','Noodle','Slither','Zigz
 const NPC_LAST=['X','99','Jr','Pro','GG','2000','Boss','Alpha','Omega','Prime','Max',
   'Ultra','Elite','Star','Flash','Storm','Kill','Rage','Zero','God'];
 function randNpcName(){
-  return NPC_FIRST[Math.floor(Math.random()*NPC_FIRST.length)]
-       + NPC_LAST [Math.floor(Math.random()*NPC_LAST.length)];
+  return NPC_FIRST[Math.floor(rng()*NPC_FIRST.length)]
+       + NPC_LAST [Math.floor(rng()*NPC_LAST.length)];
 }
 
 // =====================================================
@@ -554,10 +728,16 @@ function snakeHead(s)       { return s.segs[0]; }
 function hasEffect(snake, effectKey){ return !!(snake && snake.effects && snake.effects[effectKey] > gameTime); }
 function eatRadiusMult(snake){ return hasEffect(snake, 'magnet') ? 1.65 : 1; }
 function growthRateMult(snake){ return hasEffect(snake, 'regenPlus') ? 1.9 : 1; }
-function turnRateFor(snake){ return MAX_TURN_RATE * (hasEffect(snake, 'turnPlus') ? 1.55 : 1); }
+function turnRateFor(snake){
+  let mult = hasEffect(snake, 'turnPlus') ? 1.55 : 1;
+  if(hasEffect(snake, 'score2x')) mult *= 0.78;
+  if(eventActive('lowgrav')) mult *= 0.75;
+  return MAX_TURN_RATE * mult;
+}
 function speedMultFor(snake, boosting){
   let mult = 1;
   if(hasEffect(snake, 'speed10')) mult *= 1.45;
+  if(hasEffect(snake, 'score2x')) mult *= 1.22;
   if(boosting && hasEffect(snake, 'boostPlus')) mult *= 1.28;
   return mult;
 }
@@ -614,22 +794,22 @@ function makeSnake(name, x, y, skinIdx, isPlayer){
 //  DOTS
 // =====================================================
 function spawnFoodDot(){
-  const hue  = Math.random()*360;
+  const hue  = rng()*360;
   const margin = 10;
-  const x = margin + Math.random() * (worldSize - margin * 2);
-  const y = margin + Math.random() * (worldSize - margin * 2);
+  const x = margin + rng() * (worldSize - margin * 2);
+  const y = margin + rng() * (worldSize - margin * 2);
   return { x, y,
-           r: 4+Math.random()*3, color:'hsl('+hue+',90%,62%)' };
+           r: 4+rng()*3, color:'hsl('+hue+',90%,62%)' };
 }
 
 function spawnSecretDot(){
   const margin = 16;
-  const x = margin + Math.random() * (SECRET_WORLD_SIZE - margin * 2);
-  const y = margin + Math.random() * (SECRET_WORLD_SIZE - margin * 2);
+  const x = margin + rng() * (SECRET_WORLD_SIZE - margin * 2);
+  const y = margin + rng() * (SECRET_WORLD_SIZE - margin * 2);
   return {
     x,
     y,
-    r: 5 + Math.random() * 3,
+    r: 5 + rng() * 3,
     color: '#ffe066',
     value: SECRET_DOT_VALUE,
   };
@@ -684,22 +864,23 @@ const POWERUP_TYPES = [
   {type:'turnPlus',  color:'#ffee66', label:'TURN',duration:10},
   {type:'regenPlus', color:'#88ffdd', label:'REG', duration:10},
   {type:'poopSaver', color:'#dddddd', label:'SAVE',duration:10},
+  {type:'score2x',   color:'#ff55aa', label:'X2', duration:10},
 ];
 
 function spawnPowerUp(){
-  const pick = POWERUP_TYPES[Math.floor(Math.random()*POWERUP_TYPES.length)];
+  const pick = POWERUP_TYPES[Math.floor(rng()*POWERUP_TYPES.length)];
   const margin = 60;
-  let x = margin + Math.random() * (worldSize - margin * 2);
-  let y = margin + Math.random() * (worldSize - margin * 2);
+  let x = margin + rng() * (worldSize - margin * 2);
+  let y = margin + rng() * (worldSize - margin * 2);
 
   const alivePlayers = [];
   if(player && !player.dead) alivePlayers.push(player);
   if(player2 && !player2.dead) alivePlayers.push(player2);
   if(alivePlayers.length){
-    const focus = alivePlayers[Math.floor(Math.random()*alivePlayers.length)];
+    const focus = alivePlayers[Math.floor(rng()*alivePlayers.length)];
     const h = snakeHead(focus);
-    const angle = Math.random()*Math.PI*2;
-    const dist = 140 + Math.random()*320;
+    const angle = rng()*Math.PI*2;
+    const dist = 140 + rng()*320;
     x = h.x + Math.cos(angle)*dist;
     y = h.y + Math.sin(angle)*dist;
     x = Math.max(margin, Math.min(worldSize - margin, x));
@@ -729,6 +910,7 @@ function applyPowerUpEffect(snake, power){
     case 'turnPlus':
     case 'regenPlus':
     case 'poopSaver':
+    case 'score2x':
       snake.effects[power.type] = Math.max(snake.effects[power.type] || 0, effectEnd);
       break;
     case 'growSmall':
@@ -937,6 +1119,12 @@ function initGame(){
   window.addEventListener('resize', resize);
 
   kills = 0; kills2 = 0;
+  runScore = 0; runScore2 = 0;
+  comboMult = 1; comboTimer = 0; maxCombo = 1;
+  bestSpeed = 0; longestBoostChain = 0; currentBoostChain = 0; strongestNearMiss = 0;
+  floatingTexts = []; screenShake = 0;
+  setRunSeedFromMode();
+  ensureDailyChallenge();
   gameTime     = 0;
   worldSize    = 7000;
   maxPlayerLen = BASE_LENGTH;
@@ -959,7 +1147,7 @@ function initGame(){
   npcs=[];
   for(let i=0; i<NPC_COUNT; i++){
     const pos=findSafeSpawnPos(300);
-    npcs.push(makeSnake(randNpcName(), pos.x, pos.y, Math.floor(Math.random()*SKINS.length), false));
+    npcs.push(makeSnake(randNpcName(), pos.x, pos.y, Math.floor(rng()*SKINS.length), false));
   }
 
   foodDots=[];
@@ -973,6 +1161,11 @@ function initGame(){
 
   boostKey=false; boostClick=false; boostDrainTimer=0;
   lbTimer=0; npcSpawnTimer=0;
+  currentObjective = null;
+  nextObjectiveTime = 22;
+  currentEvent = {type:'none', end:0};
+  nextEventTime = 35;
+  dotStormTick = 0;
   mouseX=canvas.width/2; mouseY=canvas.height/2;
   lastTime=performance.now();
 
@@ -1055,6 +1248,8 @@ function update(dt){
   if(!p1alive && (!twoPlayerMode || !p2alive)) return;
 
   gameTime+=dt;
+  if(comboTimer>0) comboTimer-=dt;
+  else comboMult = Math.max(1, comboMult - dt*0.9);
   zoneRadius=currentZoneRadius();
   const zoneActive = gameTime > ZONE_FULL_TIME;
 
@@ -1089,6 +1284,8 @@ function update(dt){
     // Boost
     const canBoost=player.length>=BOOST_MIN_LEN;
     const boosting=(boostKey||boostClick)&&canBoost;
+    currentBoostChain = boosting ? (currentBoostChain + dt) : 0;
+    if(currentBoostChain > longestBoostChain) longestBoostChain = currentBoostChain;
     if(boosting){
       boostDrainTimer+=dt;
       const poopInterval = boostPoopIntervalFor(player);
@@ -1106,6 +1303,7 @@ function update(dt){
     } else { boostDrainTimer=0; }
 
     const spd=(boosting ? snakeBoostSpeed(player.length) : snakeBaseSpeed(player.length)) * speedMultFor(player, boosting);
+    if(spd > bestSpeed) bestSpeed = spd;
     moveSnakeFixed(player, player.angle, spd);
     closeLoopBody(player, dt);
     clampPlayer(player);
@@ -1121,6 +1319,16 @@ function update(dt){
     hudEl.textContent='\uD83D\uDC0D '+Math.floor(player.length);
     document.getElementById('hudKills').textContent='\u2694\uFE0F Kills: '+kills;
     document.getElementById('hudBoost').textContent=canBoost?(boosting?'\uD83D\uDE80 Boosting!':'\u26A1 SPACE/Click: Boost'):'Need '+BOOST_MIN_LEN;
+    document.getElementById('hudScore').textContent='Score: '+Math.floor(runScore);
+    document.getElementById('hudCombo').textContent='Combo: x'+comboMult.toFixed(1);
+    const objText = currentObjective
+      ? (currentObjective.text+' ('+Math.floor(currentObjective.progress)+'/'+currentObjective.target+')')
+      : ('Next objective in '+Math.max(0,Math.ceil(nextObjectiveTime-gameTime))+'s');
+    document.getElementById('hudObjective').textContent='Objective: '+objText;
+    const eventLabel = gameTime < currentEvent.end && currentEvent.type!=='none'
+      ? (currentEvent.type+' '+Math.max(0,Math.ceil(currentEvent.end-gameTime))+'s')
+      : 'None';
+    document.getElementById('hudEvent').textContent='Event: '+eventLabel;
     const zt=Math.max(0,Math.ceil(ZONE_FULL_TIME-gameTime));
     document.getElementById('hudZone').textContent=gameTime<ZONE_FULL_TIME?'\u2B55 Zone in '+zt+'s':'\u26A0\uFE0F Zone closing!';
   }
@@ -1192,6 +1400,7 @@ function update(dt){
     // P2 HUD
     document.getElementById('hudP2Length').textContent='\uD83D\uDC0D '+Math.floor(player2.length);
     document.getElementById('hudP2Kills').textContent='\u2694\uFE0F Kills: '+kills2;
+    document.getElementById('hudP2Score').textContent='Score: '+Math.floor(runScore2);
     document.getElementById('hudP2Boost').textContent=canBoost2?(boost2?'\uD83D\uDE80 Boosting!':'\u26A1 SHIFT/Enter: Boost'):'Need '+BOOST_MIN_LEN;
     const zt2=Math.max(0,Math.ceil(ZONE_FULL_TIME-gameTime));
     document.getElementById('hudP2Zone').textContent=gameTime<ZONE_FULL_TIME?'\u2B55 Zone in '+zt2+'s':'\u26A0\uFE0F Zone closing!';
@@ -1253,6 +1462,21 @@ function update(dt){
   const targetFood = Math.floor(DOT_COUNT * Math.max(1, worldSize / 7000));
   let foodAdded=0;
   while(foodDots.length < targetFood && foodAdded<5){ foodDots.push(spawnFoodDot()); foodAdded++; }
+  if(eventActive('dotstorm') && p1alive){
+    dotStormTick += dt;
+    while(dotStormTick >= 0.25){
+      dotStormTick -= 0.25;
+      const h = snakeHead(player);
+      for(let i=0; i<9; i++){
+        foodDots.push({
+          x:h.x+(rng()-.5)*360,
+          y:h.y+(rng()-.5)*360,
+          r:4+rng()*3,
+          color:'hsl('+(rng()*360)+',90%,62%)'
+        });
+      }
+    }
+  }
   refillSecretDots();
   while(powerUps.length < POWERUP_COUNT) powerUps.push(spawnPowerUp());
   powerUpSpawnTimer -= dt;
@@ -1262,6 +1486,27 @@ function update(dt){
   }
 
   checkCollisions();
+  checkDailyChallenge();
+
+  if(!currentObjective && gameTime >= nextObjectiveTime) pickObjective();
+  if(currentObjective && currentObjective.id==='survive') advanceObjective('survive', dt);
+
+  if(gameTime >= nextEventTime){
+    startBiomeEvent();
+    nextEventTime = gameTime + 40 + Math.floor(rng()*35);
+  }
+  if(gameTime >= currentEvent.end) currentEvent = {type:'none', end:0};
+
+  for(let i=floatingTexts.length-1; i>=0; i--){
+    const f = floatingTexts[i];
+    f.ttl -= dt;
+    f.x += f.vx * dt;
+    f.y += f.vy * dt;
+    if(f.ttl <= 0) floatingTexts.splice(i,1);
+  }
+  if(screenShake>0) screenShake = Math.max(0, screenShake - dt*28);
+
+  updateMusicMood(p1alive ? player : null);
 
   // NPC zone damage
   if(zoneActive){
@@ -1425,6 +1670,12 @@ function eatDots(snake, dots, value, instantGrowth, radiusMult){
       const gain = d.value!=null ? d.value : value;
       if(instantGrowth) snake.length += gain;
       else snake.pendingGrowth += gain;
+      const scoreBase = Math.max(1, Math.floor(gain * (gain >= 100 ? 1 : 18)));
+      addScoreForSnake(snake, scoreBase, gain>=100?'BONUS':'');
+      if(snake===player){
+        if(d.value!=null && d.value >= DEATH_DOT_VALUE) advanceObjective('death', 1);
+        else advanceObjective('dots', 1);
+      }
       dots.splice(i,1);
     }
   }
@@ -1641,13 +1892,22 @@ function killPlayer(cause){
     // End game
     gameRunning=false;
     hideGameUI();
+    updateProgressUnlocks();
     const causeMsg = cause==='zone'?'You got caught outside the zone!'
                    : cause==='p2'  ?'Player 2 ran you over!'
                    : 'Your head hit a snake!';
-    document.getElementById('deathMsg').innerHTML=causeMsg+'<br>Length: <strong style="color:#ffcc44">'+Math.floor(player.length)+'</strong>'
-      +' &nbsp;|&nbsp; Kills: <strong style="color:#ff4466">'+kills+'</strong>';
+    document.getElementById('deathMsg').innerHTML=causeMsg
+      +'<br>Length: <strong style="color:#ffcc44">'+Math.floor(player.length)+'</strong>'
+      +' &nbsp;|&nbsp; Kills: <strong style="color:#ff4466">'+kills+'</strong>'
+      +' &nbsp;|&nbsp; Score: <strong style="color:#ffee66">'+Math.floor(runScore)+'</strong>'
+      +'<br>Max Combo: <strong style="color:#ff88ff">x'+maxCombo.toFixed(1)+'</strong>'
+      +' &nbsp;|&nbsp; Top Speed: <strong style="color:#88ddff">'+bestSpeed.toFixed(1)+'</strong>'
+      +' &nbsp;|&nbsp; Longest Boost: <strong style="color:#ffaa66">'+longestBoostChain.toFixed(1)+'s</strong>'
+      +(dailySeedMode?'<br><span style="color:#88ddff">Daily Seed: '+seedLabel+'</span>':'')
+      +'<br><span style="color:#99ffaa">Daily: '+(dailyChallengeData.challenge?dailyChallengeData.challenge.text:'-')+' ['+(dailyChallengeData.done?'DONE':'OPEN')+']</span>';
     document.getElementById('deathScreen').style.display='flex';
   }
+  triggerShake(14);
   draw();
 }
 
@@ -1684,6 +1944,8 @@ function killNpc(npc, killer){
   npc.dead=true; spawnDeathDots(npc);
   if(killer===player)  kills++;
   if(killer===player2) kills2++;
+  if(killer===player){ addScoreForSnake(player, 850, 'KILL'); triggerShake(6); }
+  if(killer===player2){ addScoreForSnake(player2, 850, 'KILL'); }
   const idx=npcs.indexOf(npc);
   setTimeout(()=>{
     const pos=findSafeSpawnPos(400);
@@ -1725,6 +1987,10 @@ function updateIngameLB(){
 // =====================================================
 function draw(){
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const shakeX = screenShake>0 ? (rng()-0.5)*screenShake : 0;
+  const shakeY = screenShake>0 ? (rng()-0.5)*screenShake : 0;
+  ctx.save();
+  ctx.translate(shakeX, shakeY);
   if(twoPlayerMode){
     const hw=canvas.width/2;
     drawWorld(0,   hw, camX2, camY2, zoom2, player2);
@@ -1748,6 +2014,7 @@ function draw(){
     drawWorld(0, canvas.width, camX, camY, zoom1, player);
     drawMinimap();
   }
+  ctx.restore();
 }
 
 function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
@@ -1793,18 +2060,20 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
     if(player2&&!player2.dead&&!player2.inSecretMap) drawSnake(player2);
     if(player &&!player.dead &&!player.inSecretMap)  drawSnake(player);
   }
-
-  if(inSecret){
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.fillStyle='rgba(0,0,0,.42)';
-    ctx.fillRect(vpX + vpW/2 - 86, 10, 172, 28);
-    ctx.font='900 16px Segoe UI';
-    ctx.textAlign='center';
-    ctx.textBaseline='middle';
-    ctx.fillStyle='#ffe066';
-    ctx.fillText('SECRET MAP', vpX + vpW/2, 24);
+  if(eventActive('fog')){
+    ctx.fillStyle='rgba(0,0,0,0.28)';
+    ctx.fillRect(0,0,mapSize,mapSize);
   }
-
+  for(const f of floatingTexts){
+    if(f.x<vx1||f.x>vx2||f.y<vy1||f.y>vy2) continue;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, f.ttl));
+    ctx.fillStyle = f.color;
+    ctx.font = 'bold 16px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(f.text, f.x, f.y);
+    ctx.restore();
+  }
   ctx.restore();
 }
 
@@ -2222,6 +2491,11 @@ function showTitle(){
   document.getElementById('minimap').style.display      ='block';
   document.getElementById('minimap2').style.display     ='none';
   renderLeaderboard();
+  ensureDailyChallenge();
+  const dc = dailyChallengeData && dailyChallengeData.challenge
+    ? (dailyChallengeData.challenge.text + (dailyChallengeData.done ? ' \u2713' : ''))
+    : 'No daily challenge';
+  document.querySelector('.subtitle').textContent = 'Grow big. Eat everything. Survive the zone.  |  '+dc;
   renderSkinPreview(1);
   renderSkinPreview(2);
 }
@@ -2297,6 +2571,10 @@ document.getElementById('btn2P').addEventListener('click',()=>{
   document.getElementById('btn2P').classList.add('active');
   document.getElementById('btn1P').classList.remove('active');
   document.getElementById('p2Setup').style.display='flex';
+});
+document.getElementById('btnDaily').addEventListener('click',()=>{
+  dailySeedMode = !dailySeedMode;
+  document.getElementById('btnDaily').classList.toggle('active', dailySeedMode);
 });
 document.getElementById('pickSkinBtn1').addEventListener('click',()=>openSkinPicker(1));
 document.getElementById('pickSkinBtn2').addEventListener('click',()=>openSkinPicker(2));
