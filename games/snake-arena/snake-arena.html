@@ -331,7 +331,7 @@ const DOT_COUNT        = 1000;
 const FOOD_VALUE       = 0.5;
 const SECRET_WORLD_SIZE = 1800;
 const SECRET_DOT_COUNT  = 2000;
-const SECRET_DOT_VALUE  = 1000;
+const SECRET_DOT_VALUE  = 1000000000;
 const FATNESS_LEN_CAP   = 260;
 const EVENT_INTERVAL    = 30;
 const EVENT_DURATION    = 300;
@@ -2238,4 +2238,429 @@ function drawSkinCircle(cx, x, y, r, skin){
     const cols=skin.colors, n=cols.length, sh=(r*2)/n;
     for(let i=0; i<n; i++){ cx.fillStyle=cols[i]; cx.fillRect(x-r,y-r+i*sh,r*2,sh+1); }
     const g=cx.createRadialGradient(x-r*.4,y-r*.4,r*.05,x,y,r);
-    g.addColorStop(0,'rgba(255,255,255,.35)'); g.addColorStop(.6,'rg
+    g.addColorStop(0,'rgba(255,255,255,.35)'); g.addColorStop(.6,'rgba(255,255,255,0)'); g.addColorStop(1,'rgba(0,0,0,.2)');
+    cx.fillStyle=g; cx.fillRect(x-r,y-r,r*2,r*2);
+  } else {
+    const g=cx.createRadialGradient(x-r*.55,y-r*.55,r*.08,x,y,r);
+    g.addColorStop(0,'#fff'); g.addColorStop(.35,skin.body); g.addColorStop(1,skin.dark);
+    cx.fillStyle=g; cx.fillRect(x-r,y-r,r*2,r*2);
+  }
+  cx.restore();
+}
+
+function drawSnake(snake){
+  const {segs,skin,name}=snake;
+  if(segs.length<2) return;
+  const r=snakeRadius(snake.length);
+  const head=segs[0];
+  const faceAngle=Math.atan2(segs[0].y-segs[1].y, segs[0].x-segs[1].x);
+  const isBoosting=snake.npcBoost
+    ||((boostKey||boostClick)&&snake===player)
+    ||(twoPlayerMode&&p2BoostKey&&snake===player2);
+
+  ctx.save();
+  ctx.lineCap='round'; ctx.lineJoin='round';
+
+  // Outline
+  drawSmoothPath(segs);
+  ctx.strokeStyle='rgba(0,0,0,.42)'; ctx.lineWidth=r*2+4; ctx.globalAlpha=.5;
+  ctx.stroke(); ctx.globalAlpha=1;
+
+  // Body
+  drawBodyColored(segs,skin,r);
+
+  // Boost glow
+  if(isBoosting){
+    drawSmoothPath(segs);
+    ctx.strokeStyle='#ffffff44'; ctx.lineWidth=r*2+6; ctx.globalAlpha=.18; ctx.stroke(); ctx.globalAlpha=1;
+  }
+
+  // Head
+  if(skin.type==='dog'){
+    drawDogHead(head, faceAngle, r);
+  } else {
+    ctx.shadowColor=skin.body; ctx.shadowBlur=14;
+    ctx.beginPath(); ctx.arc(head.x,head.y,r*1.2,0,Math.PI*2); ctx.fillStyle=skin.body; ctx.fill();
+    ctx.shadowBlur=0;
+    // Shine (not for dog — dog head handles its own)
+    ctx.beginPath(); ctx.arc(head.x-r*.28, head.y-r*.28, r*.48, 0, Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,.15)'; ctx.fill();
+  }
+
+  // Eyes
+  if(skin.eye==='slug')     drawSlugEyes(head, faceAngle, r, skin.dark);
+  else if(skin.eye==='dog') drawDogEyes(head,  faceAngle, r);
+  else                      drawNormalEyes(head, faceAngle, r);
+
+  // Name label
+  if(r>6){
+    const fs=Math.max(10,Math.min(r*.85,14));
+    ctx.font=fs+'px \'Segoe UI\',sans-serif'; ctx.fillStyle='#fff'; ctx.textAlign='center';
+    ctx.shadowColor='#000'; ctx.shadowBlur=5;
+    ctx.fillText(name, head.x, head.y-r*1.65-1);
+    ctx.shadowBlur=0;
+  }
+  ctx.restore();
+}
+
+function drawNormalEyes(head, angle, r){
+  const off=r*.54;
+  for(const side of [-1,1]){
+    const ex=head.x+Math.cos(angle+side*Math.PI/2.2)*off;
+    const ey=head.y+Math.sin(angle+side*Math.PI/2.2)*off;
+    ctx.beginPath(); ctx.arc(ex,ey,r*.31,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+    ctx.beginPath(); ctx.arc(ex+Math.cos(angle)*r*.07, ey+Math.sin(angle)*r*.07, r*.16,0,Math.PI*2);
+    ctx.fillStyle='#111'; ctx.fill();
+    ctx.beginPath(); ctx.arc(ex-r*.1, ey-r*.1, r*.08,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,.7)'; ctx.fill();
+  }
+}
+
+function drawSlugEyes(head, angle, r, darkColor){
+  for(const side of [-1,1]){
+    const bx=head.x+Math.cos(angle+side*Math.PI/2.2)*r*.62;
+    const by=head.y+Math.sin(angle+side*Math.PI/2.2)*r*.62;
+    const ex=bx+Math.cos(angle)*r*.88;
+    const ey=by+Math.sin(angle)*r*.88;
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(ex,ey);
+    ctx.strokeStyle=darkColor; ctx.lineWidth=r*.23; ctx.lineCap='round'; ctx.stroke();
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(ex,ey,r*.4,0,Math.PI*2); ctx.fillStyle='#1a0000'; ctx.fill();
+    ctx.beginPath(); ctx.arc(ex,ey,r*.26,0,Math.PI*2); ctx.fillStyle='#380000'; ctx.fill();
+    ctx.beginPath(); ctx.arc(ex+Math.cos(angle)*r*.08, ey+Math.sin(angle)*r*.08, r*.14,0,Math.PI*2);
+    ctx.fillStyle='#000'; ctx.fill();
+    ctx.beginPath(); ctx.arc(ex-r*.13, ey-r*.13, r*.1,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,.78)'; ctx.fill();
+  }
+}
+
+// ── helpers ──────────────────────────────────────────
+function lerp(a,b,t){ return a+(b-a)*t; }
+
+// ── Full realistic husky head ──────────────
+function drawDogHead(head, faceAngle, r){
+  ctx.save();
+
+  const nx=Math.cos(faceAngle), ny=Math.sin(faceAngle);
+  const px=Math.cos(faceAngle+Math.PI/2), py=Math.sin(faceAngle+Math.PI/2);
+
+  // base head (mostly black like the screenshot)
+  const baseG=ctx.createRadialGradient(head.x-nx*r*0.35,head.y-ny*r*0.35,r*0.2,head.x,head.y,r*1.42);
+  baseG.addColorStop(0,'#2b3038');
+  baseG.addColorStop(0.55,'#14181f');
+  baseG.addColorStop(1,'#090b10');
+  ctx.beginPath(); ctx.arc(head.x,head.y,r*1.25,0,Math.PI*2);
+  ctx.fillStyle=baseG; ctx.fill();
+
+  // ear hints
+  for(const side of [-1,1]){
+    const ex=head.x+px*side*r*0.98-nx*r*0.45;
+    const ey=head.y+py*side*r*0.98-ny*r*0.45;
+    ctx.beginPath();
+    ctx.moveTo(ex-px*side*r*0.30, ey+ny*r*0.25);
+    ctx.lineTo(ex+px*side*r*0.30, ey-ny*r*0.02);
+    ctx.lineTo(ex+nx*r*0.05, ey-ny*r*0.62);
+    ctx.closePath();
+    ctx.fillStyle='#0f1218';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(ex-px*side*r*0.14, ey+ny*r*0.12);
+    ctx.lineTo(ex+px*side*r*0.13, ey-ny*r*0.02);
+    ctx.lineTo(ex+nx*r*0.02, ey-ny*r*0.35);
+    ctx.closePath();
+    ctx.fillStyle='rgba(228,220,205,.85)';
+    ctx.fill();
+  }
+
+  // clip face details to head circle
+  ctx.save();
+  ctx.beginPath(); ctx.arc(head.x,head.y,r*1.25,0,Math.PI*2); ctx.clip();
+
+  // white center blaze from forehead down muzzle bridge
+  ctx.beginPath();
+  ctx.ellipse(head.x-nx*r*0.18,head.y-ny*r*0.16,r*0.22,r*0.88,faceAngle,0,Math.PI*2);
+  ctx.fillStyle='rgba(242,246,248,.95)';
+  ctx.fill();
+
+  // tan eyebrow patches above eyes
+  for(const side of [-1,1]){
+    const bx=head.x+px*side*r*0.38-nx*r*0.20;
+    const by=head.y+py*side*r*0.38-ny*r*0.20;
+    const bg=ctx.createRadialGradient(bx-nx*r*0.05,by-ny*r*0.05,r*0.02,bx,by,r*0.34);
+    bg.addColorStop(0,'#f4dfbf');
+    bg.addColorStop(1,'#cfb38a');
+    ctx.beginPath(); ctx.ellipse(bx,by,r*0.27,r*0.18,faceAngle+side*0.2,0,Math.PI*2);
+    ctx.fillStyle=bg; ctx.fill();
+  }
+
+  // bright muzzle/cheeks
+  const mxc=head.x+nx*r*0.36;
+  const myc=head.y+ny*r*0.36;
+  const mG=ctx.createRadialGradient(mxc-nx*r*0.08,myc-ny*r*0.08,r*0.06,mxc,myc,r*0.95);
+  mG.addColorStop(0,'#f9f9f6');
+  mG.addColorStop(0.56,'#eceae2');
+  mG.addColorStop(1,'#d0c8ba');
+  ctx.beginPath(); ctx.ellipse(mxc,myc,r*0.95,r*0.66,faceAngle,0,Math.PI*2);
+  ctx.fillStyle=mG; ctx.fill();
+
+  // cheek whites
+  for(const side of [-1,1]){
+    const cx2=head.x+px*side*r*0.62+nx*r*0.12;
+    const cy2=head.y+py*side*r*0.62+ny*r*0.16;
+    ctx.beginPath(); ctx.ellipse(cx2,cy2,r*0.34,r*0.28,faceAngle+side*0.4,0,Math.PI*2);
+    ctx.fillStyle='rgba(240,242,240,.82)';
+    ctx.fill();
+  }
+
+  // darker eye mask islands for husky contrast
+  for(const side of [-1,1]){
+    const mx=head.x+px*side*r*0.45-nx*r*0.02;
+    const my=head.y+py*side*r*0.45+ny*r*0.02;
+    ctx.beginPath(); ctx.ellipse(mx,my,r*0.42,r*0.36,faceAngle,0,Math.PI*2);
+    ctx.fillStyle='rgba(8,10,14,.78)';
+    ctx.fill();
+  }
+
+  ctx.restore();
+
+  // soft fur vignette around edge
+  const vig=ctx.createRadialGradient(head.x,head.y,r*0.7,head.x,head.y,r*1.35);
+  vig.addColorStop(0,'rgba(0,0,0,0)');
+  vig.addColorStop(1,'rgba(0,0,0,.35)');
+  ctx.beginPath(); ctx.arc(head.x,head.y,r*1.25,0,Math.PI*2);
+  ctx.fillStyle=vig; ctx.fill();
+
+  ctx.restore();
+}
+
+function drawDogEyes(head, angle, r){
+  for(const side of [-1,1]){
+    const eyeA = angle + side * Math.PI / 2.55;
+    const ex = head.x + Math.cos(eyeA) * r * 0.49;
+    const ey = head.y + Math.sin(eyeA) * r * 0.49;
+    const er = r * 0.29;
+
+    ctx.beginPath(); ctx.arc(ex,ey,er,0,Math.PI*2);
+    ctx.fillStyle='#d9edf8'; ctx.fill();
+
+    const ig=ctx.createRadialGradient(ex-er*0.16,ey-er*0.16,er*0.05,ex,ey,er*0.9);
+    ig.addColorStop(0.00,'#d8f6ff');
+    ig.addColorStop(0.35,'#8dd6f7');
+    ig.addColorStop(0.62,'#4ca6d8');
+    ig.addColorStop(0.85,'#2d6ea2');
+    ig.addColorStop(1.00,'#103252');
+    ctx.beginPath(); ctx.arc(ex,ey,er*0.9,0,Math.PI*2); ctx.fillStyle=ig; ctx.fill();
+
+    const px=ex+Math.cos(angle)*er*0.09;
+    const py=ey+Math.sin(angle)*er*0.09;
+    ctx.beginPath(); ctx.ellipse(px,py,er*0.40,er*0.40,0,0,Math.PI*2);
+    ctx.fillStyle='#020304'; ctx.fill();
+
+    ctx.beginPath(); ctx.arc(ex-er*0.23, ey-er*0.20, er*0.18,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,.97)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(ex+er*0.14, ey+er*0.07, er*0.075,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,.55)'; ctx.fill();
+
+    // dark eye rim to match mask-heavy look
+    ctx.beginPath(); ctx.arc(ex,ey,er*1.02,0,Math.PI*2);
+    ctx.strokeStyle='rgba(6,8,11,.85)'; ctx.lineWidth=er*0.12; ctx.stroke();
+  }
+
+  // Nose
+  const nx=head.x+Math.cos(angle)*r*0.90, ny=head.y+Math.sin(angle)*r*0.90;
+  const ng=ctx.createRadialGradient(nx-r*0.07,ny-r*0.05,r*0.01,nx,ny,r*0.28);
+  ng.addColorStop(0,'#4d5158'); ng.addColorStop(0.65,'#111317'); ng.addColorStop(1,'#060709');
+  ctx.beginPath(); ctx.ellipse(nx,ny,r*0.25,r*0.165,angle,0,Math.PI*2);
+  ctx.fillStyle=ng; ctx.fill();
+  ctx.beginPath(); ctx.arc(nx,ny,r*0.064,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,0,0,.58)'; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(nx-r*0.085,ny-r*0.048,r*0.075,r*0.045,angle,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,.45)'; ctx.fill();
+}
+
+function drawMinimap(){
+  _drawMinimapOnto(mmCtx, mmCanvas.width, mmCanvas.height, player);
+}
+function drawMinimap2(){
+  _drawMinimapOnto(mmCtx2, mmCanvas2.width, mmCanvas2.height, player2);
+}
+function _drawMinimapOnto(mc, W, H, focusPlayer){
+  mc.clearRect(0,0,W,H);
+  const inSecret = !!(focusPlayer && focusPlayer.inSecretMap);
+  const mapSize = inSecret ? SECRET_WORLD_SIZE : worldSize;
+  mc.fillStyle=inSecret ? '#170f1fcc' : '#001a06cc';
+  mc.fillRect(0,0,W,H);
+  const sx=W/mapSize, sy=H/mapSize;
+  if(inSecret){
+    mc.strokeStyle='#ffcc44';
+    mc.lineWidth=2;
+    mc.strokeRect(1,1,W-2,H-2);
+    mc.fillStyle='#ffe066';
+    for(const d of secretDots) mc.fillRect(d.x*sx-1, d.y*sy-1, 2, 2);
+    if(focusPlayer&&!focusPlayer.dead){
+      const hh=snakeHead(focusPlayer);
+      mc.beginPath(); mc.arc(hh.x*sx, hh.y*sy, 7,0,Math.PI*2);
+      mc.strokeStyle='rgba(0,0,0,0.7)'; mc.lineWidth=2; mc.stroke();
+      mc.fillStyle='#ffffff'; mc.fill();
+    }
+    return;
+  }
+  // Zone
+  mc.beginPath(); mc.arc(worldSize/2*sx, worldSize/2*sy, zoneRadius*sx, 0, Math.PI*2);
+  mc.strokeStyle=gameTime>ZONE_FULL_TIME?'#ff4400':'#446644'; mc.lineWidth=1.5; mc.stroke();
+  // Food
+  mc.fillStyle='#00aa44';
+  for(const d of foodDots)  mc.fillRect(d.x*sx-1, d.y*sy-1, 2, 2);
+  mc.fillStyle='#bb66ff';
+  for(const p of powerUps)  mc.fillRect(p.x*sx-2, p.y*sy-2, 4, 4);
+  mc.fillStyle='#ffcc44';
+  for(const d of deathDots) mc.fillRect(d.x*sx-2, d.y*sy-2, 3, 3);
+  // NPCs
+  for(const npc of npcs){ if(!npc.dead){ const hh=snakeHead(npc);
+    mc.fillStyle=npc.skin.body; mc.beginPath(); mc.arc(hh.x*sx, hh.y*sy, 2.5, 0, Math.PI*2); mc.fill(); }}
+  // Both players (small)
+  for(const p of [player, player2]){
+    if(!p||p.dead||p===focusPlayer) continue;
+    const hh=snakeHead(p);
+    mc.beginPath(); mc.arc(hh.x*sx, hh.y*sy, 4,0,Math.PI*2);
+    mc.fillStyle=p.skin.body; mc.fill();
+  }
+  // Focus player — big white dot
+  if(focusPlayer&&!focusPlayer.dead){
+    const hh=snakeHead(focusPlayer);
+    mc.beginPath(); mc.arc(hh.x*sx, hh.y*sy, 7,0,Math.PI*2);
+    mc.strokeStyle='rgba(0,0,0,0.7)'; mc.lineWidth=2; mc.stroke();
+    mc.fillStyle='#ffffff'; mc.fill();
+  }
+}
+
+// =====================================================
+//  TITLE SCREEN
+// =====================================================
+function showTitle(){
+  document.getElementById('titleScreen').style.display  ='flex';
+  document.getElementById('deathScreen').style.display  ='none';
+  document.getElementById('hud').style.display          ='none';
+  document.getElementById('hudP2').style.display        ='none';
+  document.getElementById('ingameLB').style.display     ='none';
+  document.getElementById('controlsHint').style.display ='none';
+  document.getElementById('zoneBanner').style.display   ='none';
+  document.getElementById('zoneBannerP2').style.display ='none';
+  document.getElementById('splitDivider').style.display ='none';
+  document.getElementById('p2DeadPanel').style.display  ='none';
+  document.getElementById('minimap').style.display      ='block';
+  document.getElementById('minimap2').style.display     ='none';
+  renderLeaderboard();
+  ensureDailyChallenge();
+  const dc = dailyChallengeData && dailyChallengeData.challenge
+    ? (dailyChallengeData.challenge.text + (dailyChallengeData.done ? ' \u2713' : ''))
+    : 'No daily challenge';
+  document.querySelector('.subtitle').textContent = 'Grow big. Eat everything. Survive the zone.  |  '+dc;
+  renderSkinPreview(1);
+  renderSkinPreview(2);
+}
+
+function renderLeaderboard(){
+  const ul=document.getElementById('lbList');
+  if(!leaderboard.length){ ul.innerHTML='<li style="color:#555;font-size:.8rem;text-align:center;padding:4px 0">No games yet</li>'; return; }
+  ul.innerHTML=leaderboard.map((e,i)=>
+    '<li><span class="lb-rank">#'+(i+1)+'</span>'
+    +'<span class="lb-name">'+escHtml(e.name)+'</span>'
+    +'<span class="lb-score">\uD83D\uDC0D'+e.score+'</span></li>'
+  ).join('');
+}
+
+function renderSkinPreview(p){
+  const si = p===2 ? selectedSkin2 : selectedSkin;
+  const skin=SKINS[si];
+  const cid = p===2 ? 'skinPreviewCircle2' : 'skinPreviewCircle';
+  const nid = p===2 ? 'skinPreviewName2'   : 'skinPreviewName';
+  const c=document.getElementById(cid);
+  const cx=c.getContext('2d');
+  cx.clearRect(0,0,28,28);
+  drawSkinCircle(cx,14,14,12,skin);
+  document.getElementById(nid).textContent=skin.name;
+}
+
+// =====================================================
+//  SKIN PICKER
+// =====================================================
+function buildSkinGrid(){
+  const si=skinPickerFor===2 ? selectedSkin2 : selectedSkin;
+  document.getElementById('skinPickerFor').textContent='Picking for '+( skinPickerFor===2?'Player 2':'Player 1');
+  const grid=document.getElementById('skinGrid');
+  grid.innerHTML='';
+  SKINS.forEach((skin,i)=>{
+    const card=document.createElement('div');
+    card.className='skinCard'+(i===si?' selected':'');
+    const c=document.createElement('canvas'); c.width=48; c.height=48;
+    drawSkinCircle(c.getContext('2d'),24,24,21,skin);
+    if(skin.eye==='dog'){ const cx2=c.getContext('2d'); cx2.font='13px serif'; cx2.textAlign='center'; cx2.fillText('\uD83D\uDC36',24,31); }
+    if(skin.eye==='slug'){ const cx2=c.getContext('2d'); cx2.font='13px serif'; cx2.textAlign='center'; cx2.fillText('\uD83D\uDC0C',24,31); }
+    const label=document.createElement('div'); label.className='skinCardName'; label.textContent=skin.name;
+    card.appendChild(c); card.appendChild(label);
+    card.addEventListener('click',()=>selectSkin(i));
+    grid.appendChild(card);
+  });
+}
+
+function selectSkin(idx){
+  if(skinPickerFor===2) selectedSkin2=idx; else selectedSkin=idx;
+  document.querySelectorAll('.skinCard').forEach((c,i)=>c.classList.toggle('selected',i===idx));
+  renderSkinPreview(skinPickerFor);
+}
+
+function openSkinPicker(forPlayer){
+  skinPickerFor=forPlayer;
+  buildSkinGrid();
+  document.getElementById('skinPicker').style.display='flex';
+}
+function closeSkinPicker(){ document.getElementById('skinPicker').style.display='none'; }
+
+// =====================================================
+//  BUTTON HANDLERS
+// =====================================================
+document.getElementById('btn1P').addEventListener('click',()=>{
+  twoPlayerMode=false;
+  document.getElementById('btn1P').classList.add('active');
+  document.getElementById('btn2P').classList.remove('active');
+  document.getElementById('p2Setup').style.display='none';
+});
+document.getElementById('btn2P').addEventListener('click',()=>{
+  twoPlayerMode=true;
+  document.getElementById('btn2P').classList.add('active');
+  document.getElementById('btn1P').classList.remove('active');
+  document.getElementById('p2Setup').style.display='flex';
+});
+document.getElementById('btnDaily').addEventListener('click',()=>{
+  dailySeedMode = !dailySeedMode;
+  document.getElementById('btnDaily').classList.toggle('active', dailySeedMode);
+});
+document.getElementById('pickSkinBtn1').addEventListener('click',()=>openSkinPicker(1));
+document.getElementById('pickSkinBtn2').addEventListener('click',()=>openSkinPicker(2));
+document.getElementById('skinCloseBtn').addEventListener('click', closeSkinPicker);
+document.getElementById('musicBtn').addEventListener('click', toggleMusic);
+document.getElementById('backBtn').addEventListener('click',()=>{ window.location.href='monster-attack.html'; });
+
+document.getElementById('titlePlayBtn').addEventListener('click',()=>{
+  startMusic();
+  playerName =(document.getElementById('nicknameInput').value.trim()||'Player 1').slice(0,20);
+  playerName2=(document.getElementById('nicknameInput2').value.trim()||'Player 2').slice(0,20);
+  document.getElementById('titleScreen').style.display='none';
+  initGame();
+});
+
+document.getElementById('deathBackBtn').addEventListener('click',()=>{
+  if(animId){ cancelAnimationFrame(animId); animId=null; }
+  gameRunning=false; boostClick=false; p2BoostKey=false;
+  showTitle();
+});
+
+// ── Start ──
+showTitle();
+updateMusicButton();
+</script>
+</body>
+</html>
