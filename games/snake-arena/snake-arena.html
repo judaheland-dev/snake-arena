@@ -759,8 +759,8 @@ function snakeBoostSpeed(len){ return Math.min(28, BASE_SPEED*BOOST_SPEED_MULT +
 function snakeHead(s)       { return s.segs[0]; }
 function hasEffect(snake, effectKey){ return !!(snake && snake.effects && snake.effects[effectKey] > gameTime); }
 function eatRadiusMult(snake){
-  let mult = hasEffect(snake, 'magnet') ? 1.65 : 1;
-  if(eventActive('magnetstorm')) mult *= 1.35;
+  let mult = hasEffect(snake, 'magnet') ? 5.2 : 3.4;
+  if(eventActive('magnetstorm')) mult *= 1.8;
   return mult;
 }
 function growthRateMult(snake){
