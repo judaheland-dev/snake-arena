@@ -333,7 +333,7 @@ const SECRET_WORLD_SIZE = 1800;
 const SECRET_DOT_COUNT  = 2000;
 const SECRET_DOT_VALUE  = 1000;
 const FATNESS_LEN_CAP   = 260;
-const EVENT_INTERVAL    = 120;
+const EVENT_INTERVAL    = 30;
 const EVENT_DURATION    = 300;
 const DEATH_DOT_VALUE  = 50;
 const DEATH_DOT_PER_LEN = 50;
@@ -780,6 +780,7 @@ function speedMultFor(snake, boosting){
   if(hasEffect(snake, 'score2x')) mult *= 1.22;
   if(boosting && hasEffect(snake, 'boostPlus')) mult *= 1.28;
   if(eventActive('haste')) mult *= 1.2;
+  if(eventActive('lowgrav')) mult *= 1.22;
   if(eventActive('heavy')) mult *= 0.8;
   return mult;
 }
@@ -1507,13 +1508,14 @@ function update(dt){
   while(foodDots.length < targetFood && foodAdded<foodSpawnCap){ foodDots.push(spawnFoodDot()); foodAdded++; }
   if(eventActive('dotstorm') && p1alive){
     dotStormTick += dt;
-    while(dotStormTick >= 0.25){
-      dotStormTick -= 0.25;
+    while(dotStormTick >= 0.08){
+      dotStormTick -= 0.08;
       const h = snakeHead(player);
-      for(let i=0; i<9; i++){
+      for(let i=0; i<32; i++){
+        const burstRadius = 900;
         foodDots.push({
-          x:h.x+(rng()-.5)*360,
-          y:h.y+(rng()-.5)*360,
+          x:h.x+(rng()-.5)*burstRadius,
+          y:h.y+(rng()-.5)*burstRadius,
           r:4+rng()*3,
           color:'hsl('+(rng()*360)+',90%,62%)'
         });
@@ -2108,8 +2110,20 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
     if(player &&!player.dead &&!player.inSecretMap)  drawSnake(player);
   }
   if(eventActive('fog')){
-    ctx.fillStyle='rgba(0,0,0,0.28)';
+    ctx.fillStyle='rgba(0,0,0,0.52)';
     ctx.fillRect(0,0,mapSize,mapSize);
+    for(let i=0; i<45; i++){
+      const fx = vx1 + rng() * (vx2 - vx1);
+      const fy = vy1 + rng() * (vy2 - vy1);
+      const fr = 70 + rng() * 220;
+      const g = ctx.createRadialGradient(fx,fy,fr*0.15,fx,fy,fr);
+      g.addColorStop(0,'rgba(180,200,190,0.06)');
+      g.addColorStop(1,'rgba(20,24,22,0.38)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(fx,fy,fr,0,Math.PI*2);
+      ctx.fill();
+    }
   }
   for(const f of floatingTexts){
     if(f.x<vx1||f.x>vx2||f.y<vy1||f.y>vy2) continue;
