@@ -317,6 +317,9 @@ const SKINS = [
 let   worldSize        = 7000;
 const DOT_COUNT        = 1000;
 const FOOD_VALUE       = 0.5;
+const SECRET_WORLD_SIZE = 1800;
+const SECRET_DOT_COUNT  = 1400;
+const SECRET_DOT_VALUE  = 2000;
 const DEATH_DOT_VALUE  = 50;
 const DEATH_DOT_PER_LEN = 50;
 const MIN_SINGLE_DEATH_DROP_LEN = 10;
@@ -361,6 +364,7 @@ let player   = null;
 let player2  = null;
 let npcs     = [];
 let foodDots  = [];
+let secretDots = [];
 let deathDots = [];
 let powerUps  = [];
 let powerUpSpawnTimer = 0;
@@ -580,6 +584,7 @@ function makeSnake(name, x, y, skinIdx, isPlayer){
     name, skin, isPlayer,
     segs,
     length: BASE_LENGTH,
+    inSecretMap: false,
     pendingGrowth: 0,
     angle: 0,
     dead: false,
@@ -615,6 +620,55 @@ function spawnFoodDot(){
   const y = margin + Math.random() * (worldSize - margin * 2);
   return { x, y,
            r: 4+Math.random()*3, color:'hsl('+hue+',90%,62%)' };
+}
+
+function spawnSecretDot(){
+  const margin = 16;
+  const x = margin + Math.random() * (SECRET_WORLD_SIZE - margin * 2);
+  const y = margin + Math.random() * (SECRET_WORLD_SIZE - margin * 2);
+  return {
+    x,
+    y,
+    r: 5 + Math.random() * 3,
+    color: '#ffe066',
+    value: SECRET_DOT_VALUE,
+  };
+}
+
+function refillSecretDots(){
+  while(secretDots.length < SECRET_DOT_COUNT) secretDots.push(spawnSecretDot());
+}
+
+function rebuildSnakeInMap(snake, centerX, centerY, angle, mapSize){
+  const segCount = Math.max(2, Math.min(Math.ceil(snake.length), 600));
+  const margin = 10;
+  const rebuilt = [];
+  for(let i=0; i<segCount; i++){
+    const x = centerX - Math.cos(angle) * i * SEG_SPACING;
+    const y = centerY - Math.sin(angle) * i * SEG_SPACING;
+    rebuilt.push({
+      x: Math.max(margin, Math.min(mapSize - margin, x)),
+      y: Math.max(margin, Math.min(mapSize - margin, y)),
+    });
+  }
+  snake.segs = rebuilt;
+  snake.moveAccum = 0;
+}
+
+function enterSecretMap(snake){
+  if(!snake || snake.dead || snake.inSecretMap) return;
+  snake.inSecretMap = true;
+  refillSecretDots();
+  const angle = snake.isPlayer ? snake.angle : snake.npcAngle;
+  rebuildSnakeInMap(snake, SECRET_WORLD_SIZE/2, SECRET_WORLD_SIZE/2, angle, SECRET_WORLD_SIZE);
+}
+
+function exitSecretMap(snake){
+  if(!snake || snake.dead || !snake.inSecretMap) return;
+  snake.inSecretMap = false;
+  const pos = findSafeSpawnPosExcluding(snake, 520);
+  const angle = snake.isPlayer ? snake.angle : snake.npcAngle;
+  rebuildSnakeInMap(snake, pos.x, pos.y, angle, worldSize);
 }
 
 const POWERUP_TYPES = [
@@ -910,6 +964,8 @@ function initGame(){
 
   foodDots=[];
   for(let i=0; i<DOT_COUNT; i++) foodDots.push(spawnFoodDot());
+  secretDots=[];
+  refillSecretDots();
   powerUps=[];
   for(let i=0; i<POWERUP_COUNT; i++) powerUps.push(spawnPowerUp());
   powerUpSpawnTimer = POWERUP_SPAWN_INTERVAL;
@@ -1005,7 +1061,7 @@ function update(dt){
   // ── Player 1 ──
   if(p1alive){
     // Zone damage
-    if(zoneActive){
+    if(zoneActive && !player.inSecretMap){
       const ph=snakeHead(player);
       const outside=Math.hypot(ph.x-worldSize/2, ph.y-worldSize/2)>zoneRadius;
       if(outside){
@@ -1071,7 +1127,7 @@ function update(dt){
 
   // ── Player 2 ──
   if(p2alive){
-    if(zoneActive){
+    if(zoneActive && !player2.inSecretMap){
       const ph2=snakeHead(player2);
       const out2=Math.hypot(ph2.x-worldSize/2, ph2.y-worldSize/2)>zoneRadius;
       if(out2){
@@ -1145,8 +1201,20 @@ function update(dt){
   for(const npc of npcs) if(!npc.dead){ updateNpc(npc, dt); clampNpc(npc); }
 
   // ── Eating ──
-  if(p1alive){ eatDots(player, foodDots,FOOD_VALUE,false,eatRadiusMult(player)); eatDots(player, deathDots, DEATH_DOT_VALUE,false,eatRadiusMult(player)); }
-  if(p2alive){ eatDots(player2,foodDots,FOOD_VALUE,false,eatRadiusMult(player2)); eatDots(player2,deathDots, DEATH_DOT_VALUE,false,eatRadiusMult(player2)); }
+  if(p1alive){
+    if(player.inSecretMap) eatDots(player, secretDots, SECRET_DOT_VALUE, false, eatRadiusMult(player));
+    else {
+      eatDots(player, foodDots, FOOD_VALUE, false, eatRadiusMult(player));
+      eatDots(player, deathDots, DEATH_DOT_VALUE, false, eatRadiusMult(player));
+    }
+  }
+  if(p2alive){
+    if(player2.inSecretMap) eatDots(player2, secretDots, SECRET_DOT_VALUE, false, eatRadiusMult(player2));
+    else {
+      eatDots(player2, foodDots, FOOD_VALUE, false, eatRadiusMult(player2));
+      eatDots(player2, deathDots, DEATH_DOT_VALUE, false, eatRadiusMult(player2));
+    }
+  }
   for(const npc of npcs) if(!npc.dead){ eatDots(npc,foodDots,FOOD_VALUE,false,eatRadiusMult(npc)); eatDots(npc,deathDots,DEATH_DOT_VALUE,false,eatRadiusMult(npc)); }
 
   if(p1alive) collectPowerUps(player);
@@ -1185,6 +1253,7 @@ function update(dt){
   const targetFood = Math.floor(DOT_COUNT * Math.max(1, worldSize / 7000));
   let foodAdded=0;
   while(foodDots.length < targetFood && foodAdded<5){ foodDots.push(spawnFoodDot()); foodAdded++; }
+  refillSecretDots();
   while(powerUps.length < POWERUP_COUNT) powerUps.push(spawnPowerUp());
   powerUpSpawnTimer -= dt;
   if(powerUpSpawnTimer <= 0){
@@ -1327,9 +1396,16 @@ function closeLoopBody(snake, dt){
 }
 
 function clampPlayer(snake){
-  const h=snakeHead(snake);
-  h.x=Math.max(10, Math.min(worldSize-10, h.x));
-  h.y=Math.max(10, Math.min(worldSize-10, h.y));
+  const h = snakeHead(snake);
+  const mapSize = snake.inSecretMap ? SECRET_WORLD_SIZE : worldSize;
+  const hitEdge = h.x <= 10 || h.x >= mapSize - 10 || h.y <= 10 || h.y >= mapSize - 10;
+  if(hitEdge){
+    if(snake.inSecretMap) exitSecretMap(snake);
+    else enterSecretMap(snake);
+    return;
+  }
+  h.x = Math.max(10, Math.min(mapSize - 10, h.x));
+  h.y = Math.max(10, Math.min(mapSize - 10, h.y));
 }
 function clampNpc(snake){
   const h=snakeHead(snake);
@@ -1363,8 +1439,8 @@ function updateNpc(npc, dt){
 
   // Collect human players as potential targets/threats
   const humans=[];
-  if(player&&!player.dead)   humans.push(player);
-  if(player2&&!player2.dead) humans.push(player2);
+  if(player&&!player.dead&&!player.inSecretMap)   humans.push(player);
+  if(player2&&!player2.dead&&!player2.inSecretMap) humans.push(player2);
 
   if(npc.npcModeTimer<=0||npc.npcMode==='wander'){
     let huntTarget=null, bestDist=600;
@@ -1473,11 +1549,13 @@ function updateNpc(npc, dt){
 function checkCollisions(){
   const p1a=player&&!player.dead;
   const p2a=twoPlayerMode&&player2&&!player2.dead;
+  const p1Secret = p1a && player.inSecretMap;
+  const p2Secret = p2a && player2.inSecretMap;
   const p1r=p1a?snakeRadius(player.length):0;
   const p2r=p2a?snakeRadius(player2.length):0;
 
   // P1 vs NPC bodies / NPC heads vs P1 body
-  if(p1a){
+  if(p1a && !p1Secret){
     const ph=snakeHead(player);
     for(const npc of npcs){
       if(npc.dead) continue;
@@ -1495,7 +1573,7 @@ function checkCollisions(){
   }
 
   // P2 vs NPC bodies / NPC heads vs P2 body
-  if(p2a){
+  if(p2a && !p2Secret){
     const ph2=snakeHead(player2);
     for(const npc of npcs){
       if(npc.dead) continue;
@@ -1513,7 +1591,7 @@ function checkCollisions(){
   }
 
   // P1 vs P2 (mutual)
-  if(p1a&&p2a){
+  if(p1a&&p2a && !p1Secret && !p2Secret){
     const ph =snakeHead(player);
     const ph2=snakeHead(player2);
     // P1 head into P2 body
@@ -1649,8 +1727,8 @@ function draw(){
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   if(twoPlayerMode){
     const hw=canvas.width/2;
-    drawWorld(0,   hw, camX2, camY2, zoom2);
-    drawWorld(hw,  hw, camX,  camY,  zoom1);
+    drawWorld(0,   hw, camX2, camY2, zoom2, player2);
+    drawWorld(hw,  hw, camX,  camY,  zoom1, player);
     ctx.fillStyle='#1a1a1a'; ctx.fillRect(hw-2, 0, 4, canvas.height);
     // Length at bottom of each half
     ctx.font='bold 22px Segoe UI';
@@ -1667,43 +1745,54 @@ function draw(){
     drawMinimap();
     drawMinimap2();
   } else {
-    drawWorld(0, canvas.width, camX, camY, zoom1);
+    drawWorld(0, canvas.width, camX, camY, zoom1, player);
     drawMinimap();
   }
 }
 
-function drawWorld(vpX, vpW, cx, cy, zoom){
+function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
   ctx.save();
   ctx.beginPath(); ctx.rect(vpX, 0, vpW, canvas.height); ctx.clip();
+  const inSecret = !!(focusSnake && focusSnake.inSecretMap);
+  const mapSize = inSecret ? SECRET_WORLD_SIZE : worldSize;
   // Center-based zoom transform: cx,cy is the world point shown at screen center
   ctx.translate(vpX + vpW/2, canvas.height/2);
   ctx.scale(zoom, zoom);
   ctx.translate(-cx, -cy);
 
   // Background
-  ctx.fillStyle='#0a1a0a'; ctx.fillRect(0,0,worldSize,worldSize);
+  ctx.fillStyle=inSecret ? '#171017' : '#0a1a0a';
+  ctx.fillRect(0,0,mapSize,mapSize);
   // Grid — batch all lines into one path per direction
-  const gs = Math.max(100, Math.ceil(worldSize / 7000) * 100);
-  ctx.strokeStyle='#1a2a1a'; ctx.lineWidth=1/zoom;
+  const gs = inSecret ? 80 : Math.max(100, Math.ceil(worldSize / 7000) * 100);
+  ctx.strokeStyle=inSecret ? '#2d1f3a' : '#1a2a1a';
+  ctx.lineWidth=1/zoom;
   ctx.beginPath();
-  for(let x=0; x<=worldSize; x+=gs){ ctx.moveTo(x,0); ctx.lineTo(x,worldSize); }
-  for(let y=0; y<=worldSize; y+=gs){ ctx.moveTo(0,y); ctx.lineTo(worldSize,y); }
+  for(let x=0; x<=mapSize; x+=gs){ ctx.moveTo(x,0); ctx.lineTo(x,mapSize); }
+  for(let y=0; y<=mapSize; y+=gs){ ctx.moveTo(0,y); ctx.lineTo(mapSize,y); }
   ctx.stroke();
   // Border
-  ctx.strokeStyle='#004422'; ctx.lineWidth=6/zoom; ctx.strokeRect(0,0,worldSize,worldSize);
+  ctx.strokeStyle=inSecret ? '#ffcc44' : '#004422';
+  ctx.lineWidth=6/zoom;
+  ctx.strokeRect(0,0,mapSize,mapSize);
   // Zone
-  drawZone();
+  if(!inSecret) drawZone();
   // Dots (viewport culled accounting for zoom)
   const pad=100/zoom;
   const vx1=cx-vpW/(2*zoom)-pad, vx2=cx+vpW/(2*zoom)+pad;
   const vy1=cy-canvas.height/(2*zoom)-pad, vy2=cy+canvas.height/(2*zoom)+pad;
-  for(const p of powerUps)  if(p.x>=vx1&&p.x<=vx2&&p.y>=vy1&&p.y<=vy2) drawPowerUp(p);
-  for(const d of deathDots) if(d.x>=vx1&&d.x<=vx2&&d.y>=vy1&&d.y<=vy2) drawDot(d);
-  for(const d of foodDots)  if(d.x>=vx1&&d.x<=vx2&&d.y>=vy1&&d.y<=vy2) drawDot(d);
-  // Snakes
-  for(const npc of npcs) if(!npc.dead) drawSnake(npc);
-  if(player2&&!player2.dead) drawSnake(player2);
-  if(player &&!player.dead)  drawSnake(player);
+  if(inSecret){
+    for(const d of secretDots) if(d.x>=vx1&&d.x<=vx2&&d.y>=vy1&&d.y<=vy2) drawDot(d);
+    if(player2 && !player2.dead && player2.inSecretMap) drawSnake(player2);
+    if(player  && !player.dead  && player.inSecretMap)  drawSnake(player);
+  } else {
+    for(const p of powerUps)  if(p.x>=vx1&&p.x<=vx2&&p.y>=vy1&&p.y<=vy2) drawPowerUp(p);
+    for(const d of deathDots) if(d.x>=vx1&&d.x<=vx2&&d.y>=vy1&&d.y<=vy2) drawDot(d);
+    for(const d of foodDots)  if(d.x>=vx1&&d.x<=vx2&&d.y>=vy1&&d.y<=vy2) drawDot(d);
+    for(const npc of npcs) if(!npc.dead) drawSnake(npc);
+    if(player2&&!player2.dead&&!player2.inSecretMap) drawSnake(player2);
+    if(player &&!player.dead &&!player.inSecretMap)  drawSnake(player);
+  }
   ctx.restore();
 }
 
@@ -2056,8 +2145,25 @@ function drawMinimap2(){
 }
 function _drawMinimapOnto(mc, W, H, focusPlayer){
   mc.clearRect(0,0,W,H);
-  mc.fillStyle='#001a06cc'; mc.fillRect(0,0,W,H);
-  const sx=W/worldSize, sy=H/worldSize;
+  const inSecret = !!(focusPlayer && focusPlayer.inSecretMap);
+  const mapSize = inSecret ? SECRET_WORLD_SIZE : worldSize;
+  mc.fillStyle=inSecret ? '#170f1fcc' : '#001a06cc';
+  mc.fillRect(0,0,W,H);
+  const sx=W/mapSize, sy=H/mapSize;
+  if(inSecret){
+    mc.strokeStyle='#ffcc44';
+    mc.lineWidth=2;
+    mc.strokeRect(1,1,W-2,H-2);
+    mc.fillStyle='#ffe066';
+    for(const d of secretDots) mc.fillRect(d.x*sx-1, d.y*sy-1, 2, 2);
+    if(focusPlayer&&!focusPlayer.dead){
+      const hh=snakeHead(focusPlayer);
+      mc.beginPath(); mc.arc(hh.x*sx, hh.y*sy, 7,0,Math.PI*2);
+      mc.strokeStyle='rgba(0,0,0,0.7)'; mc.lineWidth=2; mc.stroke();
+      mc.fillStyle='#ffffff'; mc.fill();
+    }
+    return;
+  }
   // Zone
   mc.beginPath(); mc.arc(worldSize/2*sx, worldSize/2*sy, zoneRadius*sx, 0, Math.PI*2);
   mc.strokeStyle=gameTime>ZONE_FULL_TIME?'#ff4400':'#446644'; mc.lineWidth=1.5; mc.stroke();
