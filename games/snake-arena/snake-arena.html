@@ -796,6 +796,10 @@ function angDiff(from, to){
   return d;
 }
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function formatLengthExact(len){
+  if(!Number.isFinite(len)) return '0';
+  return len.toLocaleString(undefined, { maximumFractionDigits: 6, useGrouping: false });
+}
 
 // =====================================================
 //  SNAKE FACTORY
@@ -1106,7 +1110,7 @@ function getTargetZoom(len){
   const baseRadius = snakeRadius(BASE_LENGTH);
   const currentRadius = snakeRadius(Math.max(len, BASE_LENGTH));
   const extraFat = Math.max(0, currentRadius - baseRadius);
-  return 1 / (1 + extraFat * 0.006);
+  return 1 / (1 + extraFat * 0.01);
 }
 
 function worldSizeForLength(len){
@@ -1357,11 +1361,11 @@ function update(dt){
     const h=snakeHead(player);
     camX=h.x; camY=h.y;
     // Smooth zoom based on snake size
-    zoom1 += (getTargetZoom(player.length) - zoom1) * Math.min(dt * 1.15, 1);
+    zoom1 += (getTargetZoom(player.length) - zoom1) * Math.min(dt * 2.8, 1);
 
     // HUD
     const hudEl=document.getElementById('hudLength');
-    hudEl.textContent='\uD83D\uDC0D '+Math.floor(player.length);
+    hudEl.textContent='\uD83D\uDC0D '+formatLengthExact(player.length);
     document.getElementById('hudKills').textContent='\u2694\uFE0F Kills: '+kills;
     document.getElementById('hudBoost').textContent=canBoost?(boosting?'\uD83D\uDE80 Boosting!':'\u26A1 SPACE/Click: Boost'):'Need '+BOOST_MIN_LEN;
     document.getElementById('hudScore').textContent='Score: '+Math.floor(runScore);
@@ -1437,10 +1441,10 @@ function update(dt){
     const h2=snakeHead(player2);
     camX2=h2.x; camY2=h2.y;
     // Smooth zoom for P2
-    zoom2 += (getTargetZoom(player2.length) - zoom2) * Math.min(dt * 1.15, 1);
+    zoom2 += (getTargetZoom(player2.length) - zoom2) * Math.min(dt * 2.8, 1);
 
     // P2 HUD
-    document.getElementById('hudP2Length').textContent='\uD83D\uDC0D '+Math.floor(player2.length);
+    document.getElementById('hudP2Length').textContent='\uD83D\uDC0D '+formatLengthExact(player2.length);
     document.getElementById('hudP2Kills').textContent='\u2694\uFE0F Kills: '+kills2;
     document.getElementById('hudP2Score').textContent='Score: '+Math.floor(runScore2);
     document.getElementById('hudP2Boost').textContent=canBoost2?(boost2?'\uD83D\uDE80 Boosting!':'\u26A1 SHIFT/Enter: Boost'):'Need '+BOOST_MIN_LEN;
@@ -2025,10 +2029,11 @@ function updateIngameLB(){
   ul.innerHTML=top.map((s,i)=>{
     const isP1=s===player, isP2=s===player2;
     const nm=s.name.length>11?s.name.slice(0,10)+'\u2026':s.name;
+    const exactLen = formatLengthExact(s.length);
     return '<li class="'+(isP1||isP2?'me':'')+'">'
       +'<span class="lb-in-rank">#'+(i+1)+'</span>'
       +'<span class="lb-in-name" style="color:'+s.skin.body+'">'+escHtml(nm)+'</span>'
-      +'<span class="lb-in-len">'+Math.floor(s.length)+'</span></li>';
+      +'<span class="lb-in-len">'+exactLen+'</span></li>';
   }).join('');
 }
 
@@ -2051,11 +2056,11 @@ function draw(){
     ctx.textBaseline='bottom';
     if(player2&&!player2.dead){
       ctx.fillStyle='rgba(102,170,255,.95)'; ctx.textAlign='center';
-      ctx.fillText('\uD83D\uDC0D '+Math.floor(player2.length), hw/2, canvas.height-6);
+      ctx.fillText('\uD83D\uDC0D '+formatLengthExact(player2.length), hw/2, canvas.height-6);
     }
     if(player&&!player.dead){
       ctx.fillStyle='rgba(0,255,136,.95)'; ctx.textAlign='center';
-      ctx.fillText('\uD83D\uDC0D '+Math.floor(player.length), hw+hw/2, canvas.height-6);
+      ctx.fillText('\uD83D\uDC0D '+formatLengthExact(player.length), hw+hw/2, canvas.height-6);
     }
     ctx.textBaseline='alphabetic'; ctx.textAlign='left';
     drawMinimap();
