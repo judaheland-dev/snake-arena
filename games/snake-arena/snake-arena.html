@@ -330,8 +330,11 @@ let   worldSize        = 7000;
 const DOT_COUNT        = 1000;
 const FOOD_VALUE       = 0.5;
 const SECRET_WORLD_SIZE = 1800;
-const SECRET_DOT_COUNT  = 1000;
+const SECRET_DOT_COUNT  = 2000;
 const SECRET_DOT_VALUE  = 1000;
+const FATNESS_LEN_CAP   = 260;
+const EVENT_INTERVAL    = 120;
+const EVENT_DURATION    = 300;
 const DEATH_DOT_VALUE  = 50;
 const DEATH_DOT_PER_LEN = 50;
 const MIN_SINGLE_DEATH_DROP_LEN = 10;
@@ -398,9 +401,10 @@ let screenShake = 0;
 
 let currentObjective = null;
 let nextObjectiveTime = 35;
-let currentEvent = {type:'none', end:0};
+let activeEvents = [];
 let nextEventTime = 40;
 let dotStormTick = 0;
+let lastEventType = 'none';
 
 let seedLabel = '';
 let rngState = 0;
@@ -514,15 +518,39 @@ function advanceObjective(id, amount){
 }
 
 function startBiomeEvent(){
-  const types = ['fog','lowgrav','dotstorm'];
+  const types = [
+    'fog',
+    'lowgrav',
+    'dotstorm',
+    'haste',
+    'heavy',
+    'magnetstorm',
+    'regenrain',
+    'powersurge',
+    'coinburst',
+    'drift',
+  ];
   const type = types[Math.floor(rng()*types.length)];
-  const dur = type==='dotstorm' ? 16 : 24;
-  currentEvent = {type, end: gameTime + dur};
+  activeEvents.push({type, end: gameTime + EVENT_DURATION});
+  lastEventType = type;
   dotStormTick = 0;
   spawnFloatingText(snakeHead(player).x, snakeHead(player).y-50, 'EVENT: '+type.toUpperCase(), '#ffbb66');
 }
 
-function eventActive(type){ return currentEvent && currentEvent.type===type && gameTime < currentEvent.end; }
+function eventActive(type){
+  for(const ev of activeEvents){
+    if(ev.type===type && gameTime < ev.end) return true;
+  }
+  return false;
+}
+
+function activeEventSummary(){
+  const live = activeEvents.filter(ev => gameTime < ev.end);
+  if(!live.length) return 'None';
+  const first = live[0];
+  const rem = Math.max(0, Math.ceil(first.end - gameTime));
+  return first.type+' '+rem+'s'+(live.length>1 ? ' (+'+(live.length-1)+')' : '');
+}
 
 function updateProgressUnlocks(){
   let changed = false;
@@ -720,18 +748,30 @@ function randNpcName(){
 // =====================================================
 //  HELPERS
 // =====================================================
-function snakeRadius(len) { return 5 + len * ((0.38 * 15) / 50); }
+function snakeRadius(len) {
+  const visualLen = Math.min(len, FATNESS_LEN_CAP);
+  return 6 + visualLen * 0.2;
+}
 function snakeViewRange(len){ return Math.min(700 + len*5, 1600); }
 function snakeBaseSpeed(len){ return Math.max(BASE_SPEED - len*0.003, 1.6); }
 function snakeBoostSpeed(len){ return Math.min(28, BASE_SPEED*BOOST_SPEED_MULT + len*0.012); }
 function snakeHead(s)       { return s.segs[0]; }
 function hasEffect(snake, effectKey){ return !!(snake && snake.effects && snake.effects[effectKey] > gameTime); }
-function eatRadiusMult(snake){ return hasEffect(snake, 'magnet') ? 1.65 : 1; }
-function growthRateMult(snake){ return hasEffect(snake, 'regenPlus') ? 1.9 : 1; }
+function eatRadiusMult(snake){
+  let mult = hasEffect(snake, 'magnet') ? 1.65 : 1;
+  if(eventActive('magnetstorm')) mult *= 1.35;
+  return mult;
+}
+function growthRateMult(snake){
+  let mult = hasEffect(snake, 'regenPlus') ? 1.9 : 1;
+  if(eventActive('regenrain')) mult *= 1.5;
+  return mult;
+}
 function turnRateFor(snake){
   let mult = hasEffect(snake, 'turnPlus') ? 1.55 : 1;
   if(hasEffect(snake, 'score2x')) mult *= 0.78;
   if(eventActive('lowgrav')) mult *= 0.75;
+  if(eventActive('drift')) mult *= 0.82;
   return MAX_TURN_RATE * mult;
 }
 function speedMultFor(snake, boosting){
@@ -739,6 +779,8 @@ function speedMultFor(snake, boosting){
   if(hasEffect(snake, 'speed10')) mult *= 1.45;
   if(hasEffect(snake, 'score2x')) mult *= 1.22;
   if(boosting && hasEffect(snake, 'boostPlus')) mult *= 1.28;
+  if(eventActive('haste')) mult *= 1.2;
+  if(eventActive('heavy')) mult *= 0.8;
   return mult;
 }
 function boostPoopIntervalFor(snake){ return BOOST_POOP_INTERVAL * (hasEffect(snake, 'poopSaver') ? 2 : 1); }
@@ -1163,8 +1205,9 @@ function initGame(){
   lbTimer=0; npcSpawnTimer=0;
   currentObjective = null;
   nextObjectiveTime = 22;
-  currentEvent = {type:'none', end:0};
-  nextEventTime = 35;
+  activeEvents = [];
+  lastEventType = 'none';
+  nextEventTime = EVENT_INTERVAL;
   dotStormTick = 0;
   mouseX=canvas.width/2; mouseY=canvas.height/2;
   lastTime=performance.now();
@@ -1325,10 +1368,7 @@ function update(dt){
       ? (currentObjective.text+' ('+Math.floor(currentObjective.progress)+'/'+currentObjective.target+')')
       : ('Next objective in '+Math.max(0,Math.ceil(nextObjectiveTime-gameTime))+'s');
     document.getElementById('hudObjective').textContent='Objective: '+objText;
-    const eventLabel = gameTime < currentEvent.end && currentEvent.type!=='none'
-      ? (currentEvent.type+' '+Math.max(0,Math.ceil(currentEvent.end-gameTime))+'s')
-      : 'None';
-    document.getElementById('hudEvent').textContent='Event: '+eventLabel;
+    document.getElementById('hudEvent').textContent='Event: '+activeEventSummary();
     const zt=Math.max(0,Math.ceil(ZONE_FULL_TIME-gameTime));
     document.getElementById('hudZone').textContent=gameTime<ZONE_FULL_TIME?'\u2B55 Zone in '+zt+'s':'\u26A0\uFE0F Zone closing!';
   }
@@ -1461,7 +1501,10 @@ function update(dt){
   // Food count scales with world size — spawn at most 5 per frame
   const targetFood = Math.floor(DOT_COUNT * Math.max(1, worldSize / 7000));
   let foodAdded=0;
-  while(foodDots.length < targetFood && foodAdded<5){ foodDots.push(spawnFoodDot()); foodAdded++; }
+  let foodSpawnCap = 5;
+  if(eventActive('coinburst')) foodSpawnCap = 10;
+  if(eventActive('powersurge')) foodSpawnCap = 8;
+  while(foodDots.length < targetFood && foodAdded<foodSpawnCap){ foodDots.push(spawnFoodDot()); foodAdded++; }
   if(eventActive('dotstorm') && p1alive){
     dotStormTick += dt;
     while(dotStormTick >= 0.25){
@@ -1493,9 +1536,13 @@ function update(dt){
 
   if(gameTime >= nextEventTime){
     startBiomeEvent();
-    nextEventTime = gameTime + 40 + Math.floor(rng()*35);
+    nextEventTime += EVENT_INTERVAL;
   }
-  if(gameTime >= currentEvent.end) currentEvent = {type:'none', end:0};
+  activeEvents = activeEvents.filter(ev => gameTime < ev.end);
+
+  if(eventActive('powersurge') && powerUps.length < POWERUP_MAX_COUNT){
+    if(rng() < dt * 1.2) powerUps.push(spawnPowerUp());
+  }
 
   for(let i=floatingTexts.length-1; i>=0; i--){
     const f = floatingTexts[i];
