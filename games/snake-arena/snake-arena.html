@@ -1793,6 +1793,18 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
     if(player2&&!player2.dead&&!player2.inSecretMap) drawSnake(player2);
     if(player &&!player.dead &&!player.inSecretMap)  drawSnake(player);
   }
+
+  if(inSecret){
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.fillStyle='rgba(0,0,0,.42)';
+    ctx.fillRect(vpX + vpW/2 - 86, 10, 172, 28);
+    ctx.font='900 16px Segoe UI';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillStyle='#ffe066';
+    ctx.fillText('SECRET MAP', vpX + vpW/2, 24);
+  }
+
   ctx.restore();
 }
 
