@@ -235,6 +235,33 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
 #controlsHint{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);
   background:rgba(0,0,0,.6);border-radius:9px;padding:5px 14px;
   font-size:.73rem;color:#779;display:none;pointer-events:none;z-index:10;white-space:nowrap;}
+/* ── SHOP ── */
+#shopBtn{padding:12px 20px;font-size:.92rem;font-weight:900;
+  background:linear-gradient(135deg,#664400,#ddaa00);color:#fff;border:none;border-radius:10px;
+  cursor:pointer;box-shadow:0 4px 18px #aa880044;transition:transform .12s;min-width:120px;}
+#shopBtn:hover{transform:scale(1.07);}
+#shopOverlay{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;
+  background:rgba(0,0,0,.96);z-index:400;overflow-y:auto;padding:28px 16px 36px;}
+#shopOverlay h2{font-size:1.9rem;font-weight:900;color:#ffcc44;margin-bottom:4px;
+  text-shadow:0 0 20px #ffcc4466;}
+.shopCoinsDisplay{font-size:1.05rem;color:#ffd700;font-weight:800;margin-bottom:6px;}
+.shopHint{font-size:.78rem;color:#888;margin-bottom:18px;text-align:center;}
+.shopGrid{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;max-width:580px;margin-bottom:26px;}
+.shopCard{background:#0f1a0f;border:2px solid #224422;border-radius:16px;padding:22px 20px;
+  width:220px;display:flex;flex-direction:column;align-items:center;gap:10px;transition:border-color .2s;}
+.shopCard.owned{border-color:#00ff66;box-shadow:0 0 18px #00ff6633;}
+.shopCardIcon{font-size:3rem;line-height:1;}
+.shopCardName{font-size:1rem;font-weight:900;color:#fff;}
+.shopCardDesc{font-size:.75rem;color:#aaa;text-align:center;line-height:1.5;}
+.shopCardPrice{font-size:.92rem;font-weight:800;color:#ffd700;}
+.shopCardBtn{padding:9px 28px;font-size:.9rem;font-weight:800;border:none;border-radius:9px;
+  cursor:pointer;transition:transform .12s;min-width:100px;}
+.shopCardBtn.can{background:linear-gradient(135deg,#cc7700,#ffaa00);color:#000;}
+.shopCardBtn.can:hover{transform:scale(1.07);}
+.shopCardBtn.poor{background:#333;color:#555;cursor:not-allowed;}
+.shopCardBtn.have{background:#003300;color:#00ff66;cursor:default;}
+#shopCloseBtn{padding:11px 48px;font-size:1rem;font-weight:800;
+  background:linear-gradient(135deg,#5500cc,#aa44ff);color:#fff;border:none;border-radius:36px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -297,6 +324,7 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
       <div class="titleTopButtons">
         <button id="titlePlayBtn">&#x25B6; Play</button>
         <button id="musicBtn">&#x1F3B5; Music: ON</button>
+        <button id="shopBtn">&#x1F6D2; Shop</button>
       </div>
       <button id="backBtn">&#x2190; Monster Attack</button>
     </div>
@@ -309,6 +337,30 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
   <h2>&#x1F3A8; Pick Your Skin</h2>
   <div id="skinGrid"></div>
   <button id="skinCloseBtn">&#x2713; Done</button>
+</div>
+
+<!-- SHOP OVERLAY -->
+<div id="shopOverlay">
+  <h2>&#x1F6D2; Shop</h2>
+  <div class="shopCoinsDisplay" id="shopCoinsDisplay">&#x1FA99; 0 Coins</div>
+  <p class="shopHint">Win team battles to earn &#x1FA99; 20 coins each win!</p>
+  <div class="shopGrid">
+    <div class="shopCard" id="shopCardTurbo">
+      <div class="shopCardIcon">&#x1F680;</div>
+      <div class="shopCardName">Turbo Jets</div>
+      <div class="shopCardDesc">Rockets on your tail blast fire when you boost! 2&times; boost speed. Fire kills enemy worms.</div>
+      <div class="shopCardPrice">&#x1FA99; 100 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyTurbo">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardSaw">
+      <div class="shopCardIcon">&#x2699;&#xFE0F;</div>
+      <div class="shopCardName">Saws</div>
+      <div class="shopCardDesc">Two spinning saws orbit your head and slice enemy worms on contact!</div>
+      <div class="shopCardPrice">&#x1FA99; 200 coins</div>
+      <button class="shopCardBtn poor" id="shopBuySaw">Buy</button>
+    </div>
+  </div>
+  <button id="shopCloseBtn">&#x2713; Done</button>
 </div>
 
 <!-- SPLIT DIVIDER -->
@@ -602,7 +654,7 @@ const POWERUP_COUNT    = 12;
 const POWERUP_MAX_COUNT = 28;
 const POWERUP_SPAWN_INTERVAL = 3.5;
 const POWERUP_RADIUS   = 18;
-const BODYGUARD_COUNT  = 10;   // permanent bodyguards per player
+const BODYGUARD_COUNT  = 3;    // permanent bodyguards per player
 const BODYGUARD_DEFENDERS = 3; // how many are purely defensive (stay near player)
 const CIRCLER_COUNT    = 25;   // invincible ring-worms that circle around the player
 
@@ -676,6 +728,13 @@ let rngState = 0;
 
 let progressData = JSON.parse(localStorage.getItem('snakeArenaProgress') || '{"unlockedTrails":["none"],"unlockedBadges":[],"unlockedTracks":["battle"],"bestScore":0}');
 let dailyChallengeData = JSON.parse(localStorage.getItem('snakeArenaDaily') || '{}');
+// ── Shop persistence ──
+let playerCoins = Math.max(0, parseInt(localStorage.getItem('snakeArenaCoins') || '0'));
+let ownsTurboJets = localStorage.getItem('snakeArenaItemTurboJets') === '1';
+let ownsSaw = localStorage.getItem('snakeArenaItemSaw') === '1';
+const SAW_ORBIT_R = 52;
+const SAW_KILL_R  = 18;
+const FIRE_KILL_R = 24;
 
 function hashStringToSeed(text){
   let h = 2166136261 >>> 0;
@@ -1340,11 +1399,12 @@ function snakeRadius(len) {
 function snakeViewRange(len){ return Math.min(700 + len*5, 1600); }
 function snakeBaseSpeed(len){ return Math.max(BASE_SPEED - len*0.003, 1.6); }
 function snakeBoostSpeed(len, snake){
+  const turboMult = (snake && snake.isPlayer && ownsTurboJets) ? 2 : 1;
   if(teamMode && snake){
     // In team mode: normal boost speed doubled, scales gently with length
-    return Math.min(56, BASE_SPEED*BOOST_SPEED_MULT*2 + len*0.024);
+    return Math.min(56 * turboMult, (BASE_SPEED*BOOST_SPEED_MULT*2 + len*0.024) * turboMult);
   }
-  return Math.min(28, BASE_SPEED*BOOST_SPEED_MULT + len*0.012);
+  return Math.min(28 * turboMult, (BASE_SPEED*BOOST_SPEED_MULT + len*0.012) * turboMult);
 }
 function snakeHead(s)       { return s.segs[0]; }
 function hasEffect(snake, effectKey){ return !!(snake && snake.effects && snake.effects[effectKey] > gameTime); }
@@ -1478,7 +1538,7 @@ function spawnCirclerFor(protectedPlayer, rank){
 // Spawn bodyguards for the enemy commander (enemy-team colored)
 function spawnEnemyCommanderGuards(cmdSnake){
   if(!cmdSnake) return;
-  for(let i = 0; i < BODYGUARD_COUNT; i++){
+  for(let i = 0; i < 5; i++){
     const g = spawnBodyguardFor(cmdSnake, i);
     g.name = '⭐ Guard';
     // Kill existing enemy commander guards and replace
@@ -2189,10 +2249,23 @@ function update(dt){
     const redPct=((teamScoreRed/total)*100).toFixed(1);
     const bluePct=((teamScoreBlue/total)*100).toFixed(1);
     const winner = teamScoreRed===teamScoreBlue ? 'DRAW' : (teamScoreRed>teamScoreBlue ? 'RED TEAM WINS' : 'BLUE TEAM WINS');
+    // Award coins to winning team
+    let coinMsg = '';
+    if(teamScoreRed !== teamScoreBlue){
+      const winTeam = teamScoreRed > teamScoreBlue ? 'red' : 'blue';
+      const p1won = player && player.team === winTeam;
+      const p2won = player2 && player2.team === winTeam;
+      if(p1won || p2won){
+        playerCoins += 20;
+        localStorage.setItem('snakeArenaCoins', String(playerCoins));
+        coinMsg = '<br><span style="color:#ffd700;font-size:.95em">&#x1F3C6; +20 coins earned! Total: '+playerCoins+'</span>';
+      }
+    }
     document.getElementById('deathMsg').innerHTML = winner
       +'<br>Red: <strong style="color:#ff6677">'+redPct+'%</strong>'
       +' &nbsp;|&nbsp; Blue: <strong style="color:#66aaff">'+bluePct+'%</strong>'
-      +'<br>Uncolored land does not count.';
+      +'<br>Uncolored land does not count.'
+      +coinMsg;
     document.getElementById('deathScreen').style.display='flex';
     return;
   }
@@ -4369,7 +4442,7 @@ function updateNpc(npc, dt){
     if(target){
       const ph    = snakeHead(target);
       const bodyR = snakeRadius(npc.length);
-      const orbitR = Math.max(bodyR * 2.2 * CIRCLER_COUNT / (2 * Math.PI), bodyR * 3);
+      const orbitR = 300; // fixed large ring radius around the player's head
       const rank   = npc.circlerRank || 0;
       const angle  = (rank / CIRCLER_COUNT) * Math.PI * 2 + gameTime * 0.4;
       const tx = ph.x + Math.cos(angle) * orbitR;
@@ -4383,10 +4456,10 @@ function updateNpc(npc, dt){
                       : false;
       const playerSpd = (pBoosting ? snakeBoostSpeed(target.length, target) : snakeBaseSpeed(target.length))
                         * speedMultFor(target, pBoosting);
-      // Always match (or exceed) player speed; push even faster when out of position
-      const catchUpMult = dist > orbitR * 0.5 ? 1.6 : 1.05;
+      // Always match (or exceed) player speed; push harder the further out of position they are
+      const catchUpMult = dist > orbitR * 0.5 ? 2.5 : 1.1;
       npc._circlerMatchSpd = playerSpd * catchUpMult;
-      npc.npcBoost = pBoosting && npc.length >= BOOST_MIN_LEN;
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN;
     } else {
       npc._circlerMatchSpd = null;
       npc.npcBoost = false;
@@ -4650,6 +4723,52 @@ function checkCollisions(){
       }
     }
   }
+
+  // ── Turbo Jets fire kills (P1) ──
+  if(p1a && ownsTurboJets && (boostKey||boostClick) && player.length >= BOOST_MIN_LEN && !player.inSecretMap){
+    const fireSegs = player.segs.slice(-Math.min(12, player.segs.length));
+    const fireR = snakeRadius(player.length) + FIRE_KILL_R;
+    for(let i = npcs.length-1; i >= 0; i--){
+      const npc = npcs[i];
+      if(npc.dead || (teamMode && sameTeam(player, npc))) continue;
+      const nh = snakeHead(npc);
+      for(const seg of fireSegs){
+        const dx=nh.x-seg.x, dy=nh.y-seg.y;
+        if(dx*dx+dy*dy < fireR*fireR){ killNpc(npc, player); break; }
+      }
+    }
+    if(player2&&!player2.dead&&!(teamMode&&sameTeam(player,player2))){
+      const ph2=snakeHead(player2);
+      for(const seg of fireSegs){
+        const dx=ph2.x-seg.x, dy=ph2.y-seg.y;
+        if(dx*dx+dy*dy < fireR*fireR){ killPlayer2('turbo fire'); break; }
+      }
+    }
+  }
+
+  // ── Saw kills (P1) ──
+  if(p1a && ownsSaw && !player.inSecretMap){
+    const ph = snakeHead(player);
+    for(let s = 0; s < 2; s++){
+      const sawAng = gameTime * 3.5 + s * Math.PI;
+      const sx = ph.x + Math.cos(sawAng) * SAW_ORBIT_R;
+      const sy = ph.y + Math.sin(sawAng) * SAW_ORBIT_R;
+      for(let i = npcs.length-1; i >= 0; i--){
+        const npc = npcs[i];
+        if(npc.dead || (teamMode && sameTeam(player, npc))) continue;
+        const nh = snakeHead(npc);
+        const dx=nh.x-sx, dy=nh.y-sy;
+        const killR = SAW_KILL_R + snakeRadius(npc.length);
+        if(dx*dx+dy*dy < killR*killR){ killNpc(npc, player); }
+      }
+      if(player2&&!player2.dead&&!(teamMode&&sameTeam(player,player2))){
+        const ph2=snakeHead(player2);
+        const dx=ph2.x-sx, dy=ph2.y-sy;
+        const killR = SAW_KILL_R + snakeRadius(player2.length);
+        if(dx*dx+dy*dy < killR*killR){ killPlayer2('saw'); }
+      }
+    }
+  }
 }
 
 function isOnOwnLand(snake){
@@ -4748,6 +4867,8 @@ function killNpc(npc, killer){
   if(npc.isAllyCommander) return;
   // Circlers are invincible — nothing can kill them
   if(npc.isCircler) return;
+  // Player bodyguards are invincible — only guards protecting a human player
+  if(npc.isBodyguard && npc.bodyguardFor && npc.bodyguardFor.isPlayer) return;
   // Worms in circle_me shield mode are invincible — attacker dies instead
   if(npc.npcMode === 'circle_me'){
     if(killer && killer !== player && killer !== player2 && !killer.dead && !killer.isAllyCommander){
@@ -5114,6 +5235,88 @@ function drawSkinCircle(cx, x, y, r, skin){
   cx.restore();
 }
 
+function drawTurboJetsFire(snake){
+  if(!ownsTurboJets || !snake.isPlayer) return;
+  const segs = snake.segs;
+  if(segs.length < 3) return;
+  const r = snakeRadius(snake.length);
+  const isBoosting = ((boostKey||boostClick) && snake===player && snake.length>=BOOST_MIN_LEN)
+                   || (p2BoostKey && snake===player2 && snake.length>=BOOST_MIN_LEN);
+  const tail  = segs[segs.length - 1];
+  const tail2 = segs[Math.max(0, segs.length - 5)];
+  const rocketAngle = Math.atan2(tail.y - tail2.y, tail.x - tail2.x);
+  for(const side of [-1, 1]){
+    const offAng = rocketAngle + side * Math.PI / 2.6;
+    const rx = tail.x + Math.cos(offAng) * r * 0.65;
+    const ry = tail.y + Math.sin(offAng) * r * 0.65;
+    ctx.save();
+    ctx.translate(rx, ry);
+    ctx.rotate(rocketAngle);
+    // Rocket nozzle body
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 0.3, r * 0.52, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#999999';
+    ctx.fill();
+    ctx.strokeStyle = '#555'; ctx.lineWidth = r * 0.08; ctx.stroke();
+    // Nose tip
+    ctx.beginPath();
+    ctx.moveTo(-r*0.3, 0); ctx.lineTo(0, -r*0.65); ctx.lineTo(r*0.3, 0);
+    ctx.fillStyle = '#cc3300'; ctx.fill();
+    // Fire flame when boosting
+    if(isBoosting){
+      const flameT = gameTime * 18;
+      const fl = r * (1.6 + Math.sin(flameT + side) * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(-r*0.26, 0);
+      ctx.quadraticCurveTo(-r*0.35, fl*0.5, 0, fl);
+      ctx.quadraticCurveTo(r*0.35, fl*0.5, r*0.26, 0);
+      ctx.fillStyle = '#ff6600'; ctx.fill();
+      const fl2 = fl * 0.6;
+      ctx.beginPath();
+      ctx.moveTo(-r*0.14, 0);
+      ctx.quadraticCurveTo(-r*0.18, fl2*0.5, 0, fl2);
+      ctx.quadraticCurveTo(r*0.18, fl2*0.5, r*0.14, 0);
+      ctx.fillStyle = '#ffee00'; ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function drawSaws(snake){
+  if(!ownsSaw || !snake.isPlayer) return;
+  const ph = snakeHead(snake);
+  for(let s = 0; s < 2; s++){
+    const sawAng = gameTime * 3.5 + s * Math.PI;
+    const sx = ph.x + Math.cos(sawAng) * SAW_ORBIT_R;
+    const sy = ph.y + Math.sin(sawAng) * SAW_ORBIT_R;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(gameTime * 7 + s * Math.PI);
+    const sr = SAW_KILL_R;
+    // Saw disc
+    ctx.beginPath(); ctx.arc(0, 0, sr, 0, Math.PI * 2);
+    ctx.fillStyle = '#aabbcc'; ctx.fill();
+    // Teeth
+    const teeth = 10;
+    ctx.fillStyle = '#ddeeff';
+    for(let t = 0; t < teeth; t++){
+      const ta = (t / teeth) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(ta-0.22)*sr, Math.sin(ta-0.22)*sr);
+      ctx.lineTo(Math.cos(ta)*(sr+9), Math.sin(ta)*(sr+9));
+      ctx.lineTo(Math.cos(ta+0.22)*sr, Math.sin(ta+0.22)*sr);
+      ctx.fill();
+    }
+    // Center bolt
+    ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffaa22'; ctx.fill();
+    // Spin glow
+    ctx.beginPath(); ctx.arc(0, 0, sr, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(200,220,255,0.5)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+  }
+}
+
 function drawSnake(snake){
   const segs=snake.segs, name=snake.name;
   const skin = (teamMode && snake.team) ? (snake.team==='red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE) : snake.skin;
@@ -5170,6 +5373,12 @@ function drawSnake(snake){
 
   // Commander hat (team mode players OR the AI commander NPC OR ally bot commander)
   if(teamMode && (snake.isPlayer || snake.isCommander || snake.isAllyCommander)) drawCommanderHat(ctx, head, faceAngle, r, snake.team);
+
+  // Shop item visuals (player only)
+  if(snake.isPlayer){
+    drawTurboJetsFire(snake);
+    drawSaws(snake);
+  }
 
   ctx.restore();
 }
@@ -5504,6 +5713,42 @@ function _drawMinimapOnto(mc, W, H, focusPlayer){
 }
 
 // =====================================================
+//  SHOP
+// =====================================================
+function updateShopUI(){
+  document.getElementById('shopCoinsDisplay').textContent = '\u1FA99 ' + playerCoins + ' Coins';
+  // Turbo Jets
+  const turboCard = document.getElementById('shopCardTurbo');
+  const turboBtn  = document.getElementById('shopBuyTurbo');
+  turboCard.classList.toggle('owned', ownsTurboJets);
+  if(ownsTurboJets){
+    turboBtn.textContent = '\u2713 Owned'; turboBtn.className = 'shopCardBtn have';
+  } else if(playerCoins >= 100){
+    turboBtn.textContent = 'Buy'; turboBtn.className = 'shopCardBtn can';
+  } else {
+    turboBtn.textContent = 'Need \u1FA99 100'; turboBtn.className = 'shopCardBtn poor';
+  }
+  // Saws
+  const sawCard = document.getElementById('shopCardSaw');
+  const sawBtn  = document.getElementById('shopBuySaw');
+  sawCard.classList.toggle('owned', ownsSaw);
+  if(ownsSaw){
+    sawBtn.textContent = '\u2713 Owned'; sawBtn.className = 'shopCardBtn have';
+  } else if(playerCoins >= 200){
+    sawBtn.textContent = 'Buy'; sawBtn.className = 'shopCardBtn can';
+  } else {
+    sawBtn.textContent = 'Need \u1FA99 200'; sawBtn.className = 'shopCardBtn poor';
+  }
+}
+function openShop(){
+  updateShopUI();
+  document.getElementById('shopOverlay').style.display = 'flex';
+}
+function closeShop(){
+  document.getElementById('shopOverlay').style.display = 'none';
+}
+
+// =====================================================
 //  TITLE SCREEN
 // =====================================================
 function showTitle(){
@@ -5654,6 +5899,26 @@ document.getElementById('deathBackBtn').addEventListener('click',()=>{
   if(animId){ cancelAnimationFrame(animId); animId=null; }
   gameRunning=false; boostClick=false; p2BoostKey=false;
   showTitle();
+});
+document.getElementById('shopBtn').addEventListener('click', openShop);
+document.getElementById('shopCloseBtn').addEventListener('click', closeShop);
+document.getElementById('shopBuyTurbo').addEventListener('click',()=>{
+  if(ownsTurboJets) return;
+  if(playerCoins < 100) return;
+  playerCoins -= 100;
+  ownsTurboJets = true;
+  localStorage.setItem('snakeArenaCoins', String(playerCoins));
+  localStorage.setItem('snakeArenaItemTurboJets', '1');
+  updateShopUI();
+});
+document.getElementById('shopBuySaw').addEventListener('click',()=>{
+  if(ownsSaw) return;
+  if(playerCoins < 200) return;
+  playerCoins -= 200;
+  ownsSaw = true;
+  localStorage.setItem('snakeArenaCoins', String(playerCoins));
+  localStorage.setItem('snakeArenaItemSaw', '1');
+  updateShopUI();
 });
 
 window.addEventListener('beforeunload', disconnectMultiplayer);
