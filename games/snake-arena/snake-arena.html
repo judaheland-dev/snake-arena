@@ -1453,6 +1453,17 @@ function spawnBodyguardFor(protectedPlayer, rank){
   return guard;
 }
 
+// Spawn bodyguards for the enemy commander (enemy-team colored)
+function spawnEnemyCommanderGuards(cmdSnake){
+  if(!cmdSnake) return;
+  for(let i = 0; i < BODYGUARD_COUNT; i++){
+    const g = spawnBodyguardFor(cmdSnake, i);
+    g.name = '⭐ Guard';
+    // Kill existing enemy commander guards and replace
+    npcs.push(g);
+  }
+}
+
 // =====================================================
 //  DOTS
 // =====================================================
@@ -1919,6 +1930,8 @@ function initGame(){
   if(twoPlayerMode && player2){
     for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player2, i));
   }
+  // Spawn bodyguards for the enemy commander
+  if(teamMode && enemyCommander) spawnEnemyCommanderGuards(enemyCommander);
 
   boostKey=false; boostClick=false; boostDrainTimer=0;
   lbTimer=0; npcSpawnTimer=0;
@@ -2417,6 +2430,8 @@ function update(dt){
         enemyCommander.isCommander = true;
         enemyCommander.name = '⭐ General';
         enemyCmdTimer = 5;
+        // Spawn fresh bodyguards for the new commander
+        spawnEnemyCommanderGuards(enemyCommander);
       } else {
         enemyCommander = null;
       }
@@ -4188,7 +4203,6 @@ function updateNpc(npc, dt){
   } else if(npc.npcMode==='bodyguard'){
     const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
     const guardRank = npc.bodyguardRank || 0;
-    const isHunter = guardRank >= BODYGUARD_DEFENDERS; // ranks 3-9 are hunters
 
     // All bodyguards must stay within sight range of the commander
     const BODYGUARD_SIGHT = 700;
@@ -4196,105 +4210,75 @@ function updateNpc(npc, dt){
     const tooFar = distToCommander > BODYGUARD_SIGHT;
 
     if(tooFar && commander){
-      // Rush back to commander immediately — ignore everything else
+      // Rush back to commander — ignore everything else
       const ch = snakeHead(commander);
       desiredAngle = Math.atan2(ch.y - h.y, ch.x - h.x);
       npc.npcBoost = npc.length >= BOOST_MIN_LEN;
       npc._guardMatchSpd = null;
       npc._guardTarget = null;
-    } else if(isHunter){
-      // Hunter guards: chase any enemy visible near the commander
-      const SIGHT_RADIUS = BODYGUARD_SIGHT;
-      // Drop target if it died or drifted out of commander's sight
-      if(npc._guardTarget){
-        const tDist = commander ? Math.hypot(snakeHead(npc._guardTarget).x - snakeHead(commander).x, snakeHead(npc._guardTarget).y - snakeHead(commander).y) : Infinity;
-        if(npc._guardTarget.dead || tDist > SIGHT_RADIUS * 1.2) npc._guardTarget = null;
-      }
-      if(!npc._guardTarget && commander){
-        // Find nearest enemy within commander's sight
-        const ch = snakeHead(commander);
-        let best = null, bestD = SIGHT_RADIUS;
-        for(const e of npcs){
-          if(e.dead || sameTeam(e, npc)) continue;
-          const d = Math.hypot(snakeHead(e).x - ch.x, snakeHead(e).y - ch.y);
-          if(d < bestD){ bestD = d; best = e; }
-        }
-        for(const ep of [player, player2]){
-          if(!ep || ep.dead || sameTeam(ep, npc)) continue;
-          const d = Math.hypot(snakeHead(ep).x - ch.x, snakeHead(ep).y - ch.y);
-          if(d < bestD){ bestD = d; best = ep; }
-        }
-        npc._guardTarget = best;
-      }
-      if(npc._guardTarget){
-        const th = snakeHead(npc._guardTarget);
-        desiredAngle = Math.atan2(th.y - h.y, th.x - h.x);
-        npc.npcBoost = npc.length >= BOOST_MIN_LEN;
-        npc._guardMatchSpd = null;
-      } else if(commander){
-        // No enemies nearby — orbit close to commander
-        const ch = snakeHead(commander);
-        const hunterIdx = guardRank - BODYGUARD_DEFENDERS;
-        const orbitAngle = (hunterIdx / (BODYGUARD_COUNT - BODYGUARD_DEFENDERS)) * Math.PI * 2 + performance.now() * 0.0003;
-        const orbitR = 180;
-        const tx = ch.x + Math.cos(orbitAngle) * orbitR;
-        const ty = ch.y + Math.sin(orbitAngle) * orbitR;
-        desiredAngle = Math.atan2(ty - h.y, tx - h.x);
-        const cBoosting = commander === player ? (boostKey||boostClick) && player.length >= BOOST_MIN_LEN
-                         : commander === player2 ? p2BoostKey && player2.length >= BOOST_MIN_LEN
-                         : (commander.npcBoost || false);
-        npc.npcBoost = cBoosting && npc.length >= BOOST_MIN_LEN;
-        npc._guardMatchSpd = cBoosting
-          ? snakeBoostSpeed(commander.length, commander) * speedMultFor(commander, true)
-          : snakeBaseSpeed(commander.length) * speedMultFor(commander, false);
-      } else {
-        npc.npcBoost = false;
-        npc._guardMatchSpd = null;
-      }
     } else {
-      // Defender guards (ranks 0-2): intercept threats near commander, otherwise flank
-      const GUARD_PROTECT_DIST = 500;
+      // Defensive only: only attack an enemy that is actively heading toward the guard or commander.
+      // Bodyguards do NOT chase enemies just because they're nearby — they wait to be attacked.
+      const THREAT_DIST  = 420; // only watch enemies within this range of guard or commander
+      const AIM_DOT      = 0.50; // cos ~60° — enemy's heading must point this close toward us
       let threat = null;
+      let bestScore = Infinity;
+
       if(commander){
         const ch = snakeHead(commander);
-        let threats = [];
-        for(const e of npcs){
-          if(e.dead || sameTeam(e, npc)) continue;
-          const d = Math.hypot(snakeHead(e).x - ch.x, snakeHead(e).y - ch.y);
-          if(d < GUARD_PROTECT_DIST) threats.push({e, d});
-        }
-        for(const ep of [player, player2]){
-          if(!ep || ep.dead || sameTeam(ep, npc)) continue;
-          const d = Math.hypot(snakeHead(ep).x - ch.x, snakeHead(ep).y - ch.y);
-          if(d < GUARD_PROTECT_DIST) threats.push({e: ep, d});
-        }
-        threats.sort((a, b) => a.d - b.d);
-        if(guardRank < threats.length) threat = threats[guardRank].e;
+        const checkEnemy = (e) => {
+          if(e.dead || sameTeam(e, npc)) return;
+          const eh = snakeHead(e);
+          const eAngle = e.angle || e.npcAngle || 0;
+          const dGuard = Math.hypot(eh.x - h.x,  eh.y - h.y);
+          const dCmd   = Math.hypot(eh.x - ch.x, eh.y - ch.y);
+          const closest = Math.min(dGuard, dCmd);
+          if(closest > THREAT_DIST) return;
+          // Check if enemy is aimed at the guard
+          const cosGuard = Math.cos(eAngle - Math.atan2(h.y  - eh.y, h.x  - eh.x));
+          // Check if enemy is aimed at the commander
+          const cosCmd   = Math.cos(eAngle - Math.atan2(ch.y - eh.y, ch.x - eh.x));
+          if(cosGuard > AIM_DOT || cosCmd > AIM_DOT){
+            if(closest < bestScore){ bestScore = closest; threat = e; }
+          }
+        };
+        for(const e of npcs) checkEnemy(e);
+        for(const ep of [player, player2]) if(ep) checkEnemy(ep);
       }
+
+      // Drop stale target
+      if(npc._guardTarget && (npc._guardTarget.dead || bestScore === Infinity)) npc._guardTarget = null;
+
       if(threat && !threat.dead){
+        // Intercept the incoming threat
+        npc._guardTarget = threat;
         const eh = snakeHead(threat);
         desiredAngle = Math.atan2(eh.y - h.y, eh.x - h.x);
         npc.npcBoost = npc.length >= BOOST_MIN_LEN;
         npc._guardMatchSpd = null;
-      } else if(commander){
-        const ch = snakeHead(commander);
-        const cAngle = commander.angle || commander.npcAngle || 0;
-        const side = guardRank % 2 === 0 ? 1 : -1;
-        const row = Math.floor(guardRank / 2);
-        const sideOffset = (row + 1) * (snakeRadius(npc.length) * 3.5 + 28);
-        const tx = ch.x + Math.cos(cAngle + side * Math.PI / 2) * sideOffset;
-        const ty = ch.y + Math.sin(cAngle + side * Math.PI / 2) * sideOffset;
-        desiredAngle = Math.atan2(ty - h.y, tx - h.x);
-        const cBoosting = commander === player ? (boostKey||boostClick) && player.length >= BOOST_MIN_LEN
-                         : commander === player2 ? p2BoostKey && player2.length >= BOOST_MIN_LEN
-                         : (commander.npcBoost || false);
-        npc.npcBoost = cBoosting && npc.length >= BOOST_MIN_LEN;
-        npc._guardMatchSpd = cBoosting
-          ? snakeBoostSpeed(commander.length, commander) * speedMultFor(commander, true)
-          : snakeBaseSpeed(commander.length) * speedMultFor(commander, false);
       } else {
-        npc.npcBoost = false;
-        npc._guardMatchSpd = null;
+        npc._guardTarget = null;
+        // No active threat — flank beside the commander
+        if(commander){
+          const ch = snakeHead(commander);
+          const cAngle = commander.angle || commander.npcAngle || 0;
+          const side = guardRank % 2 === 0 ? 1 : -1;
+          const row = Math.floor(guardRank / 2);
+          const sideOffset = (row + 1) * (snakeRadius(npc.length) * 3.5 + 28);
+          const tx = ch.x + Math.cos(cAngle + side * Math.PI / 2) * sideOffset;
+          const ty = ch.y + Math.sin(cAngle + side * Math.PI / 2) * sideOffset;
+          desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+          const cBoosting = commander === player ? (boostKey||boostClick) && player.length >= BOOST_MIN_LEN
+                           : commander === player2 ? p2BoostKey && player2.length >= BOOST_MIN_LEN
+                           : (commander.npcBoost || false);
+          npc.npcBoost = cBoosting && npc.length >= BOOST_MIN_LEN;
+          npc._guardMatchSpd = cBoosting
+            ? snakeBoostSpeed(commander.length, commander) * speedMultFor(commander, true)
+            : snakeBaseSpeed(commander.length) * speedMultFor(commander, false);
+        } else {
+          npc.npcBoost = false;
+          npc._guardMatchSpd = null;
+        }
       }
     }
 
