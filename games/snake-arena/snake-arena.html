@@ -24,6 +24,10 @@ canvas{display:block;}
   border:2px solid #333;background:#111;color:#666;transition:all .12s;}
 .modeBtn.active{border-color:#00ff66;background:#003308;color:#00ff66;}
 #btnDaily.active{border-color:#ffcc44;background:#332700;color:#ffcc44;}
+#btnTeam.active{border-color:#ff5566;background:#330910;color:#ff8899;}
+.tcBtn{padding:6px 14px;font-size:.80rem;font-weight:800;border-radius:8px;cursor:pointer;
+  border:2px solid #333;background:#111;color:#666;transition:all .12s;}
+.tcBtn.active{border-color:#ff5566;background:#330910;color:#ff8899;}
 .titleRow{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;justify-content:center;width:100%;max-width:1000px;}
 #leaderboard{background:#001a06cc;border:1px solid #00aa4466;border-radius:14px;
   padding:13px 16px;min-width:190px;flex:1;max-width:260px;}
@@ -100,7 +104,78 @@ canvas{display:block;}
 #hudCombo{color:#ff88ff;font-weight:800;}
 #hudObjective{color:#88ddff;font-weight:700;}
 #hudEvent{color:#ffbb66;font-weight:700;}
+#hudNet{color:#66ddff;font-weight:800;}
 #hudP2Score{color:#ffee66;font-weight:800;}
+
+/* ── VOICE MIC BUTTONS ── */
+.voiceMicBtn{position:fixed;bottom:18px;width:56px;height:56px;border-radius:50%;
+  border:3px solid #555;background:#111c;color:#fff;font-size:1.5rem;cursor:pointer;
+  z-index:30;display:none;pointer-events:auto;transition:all .15s;
+  box-shadow:0 2px 10px #0008;line-height:56px;text-align:center;padding:0;}
+.voiceMicBtn:hover{border-color:#aaa;background:#333c;}
+.voiceMicBtn.listening{border-color:#ff3333;background:#330000c0;
+  box-shadow:0 0 18px #ff333399,0 2px 10px #0008;animation:micPulse .7s ease-in-out infinite alternate;}
+@keyframes micPulse{from{transform:scale(1);}to{transform:scale(1.12);}}
+#voiceMic1{left:12px;}
+#voiceMic2{right:12px;}
+/* ── BOT COMMANDER BUTTON ── */
+#addBotCmdBtn{
+  position:fixed;bottom:82px;left:50%;transform:translateX(-50%);
+  padding:7px 18px;font-size:.82rem;font-weight:800;
+  background:linear-gradient(135deg,#1a3a5a,#2266aa);color:#88ccff;
+  border:2px solid #4488cc55;border-radius:10px;cursor:pointer;
+  z-index:30;display:none;pointer-events:auto;
+  box-shadow:0 2px 12px #0008;transition:all .15s;white-space:nowrap;
+}
+#addBotCmdBtn:hover{background:linear-gradient(135deg,#225577,#3388dd);border-color:#66aaff;}
+#addBotCmdBtn.active{background:linear-gradient(135deg,#0a2a0a,#1a6622);color:#88ff99;border-color:#44cc55;}
+.voiceCmdList{position:fixed;bottom:84px;background:#0009;border:1px solid #ffffff22;
+  border-radius:10px;padding:7px 11px;color:#eee;font-size:.72rem;z-index:30;
+  display:none;pointer-events:none;line-height:1.6;min-width:180px;}
+#voiceCmdList1{left:12px;}
+#voiceCmdList2{right:12px;text-align:right;}
+.voiceCmdList b{color:#ffcc44;font-size:.75rem;display:block;margin-bottom:3px;}
+.voiceCmdList span{opacity:.75;}
+/* ── TYPE-A-COMMAND INPUT ── */
+.voiceTypeRow{position:fixed;bottom:82px;display:none;align-items:center;gap:5px;
+  z-index:30;pointer-events:auto;}
+#voiceTypeRow1{left:12px;}
+#voiceTypeRow2{right:12px;}
+/* ── 1-PLAYER TEAM MODE: move P1 voice controls to the right ── */
+body.one-player-team #voiceMic1{left:auto;right:12px;}
+body.one-player-team #voiceCmdList1{left:auto;right:12px;text-align:right;}
+body.one-player-team #voiceTypeRow1{left:auto;right:12px;}
+body.one-player-team #voicePending1{left:auto;right:12px;}
+.voiceTypeInput{background:#111c;border:2px solid #444;border-radius:8px;
+  color:#fff;font-size:.82rem;padding:5px 8px;width:160px;outline:none;
+  pointer-events:auto;}
+.voiceTypeInput:focus{border-color:#88aaff;}
+.voiceTypeSendBtn{background:#1a5a1a;border:none;border-radius:8px;color:#fff;
+  font-size:.8rem;font-weight:800;padding:5px 9px;cursor:pointer;pointer-events:auto;
+  white-space:nowrap;}
+.voiceTypeSendBtn:hover{background:#228822;}
+/* ── VOICE PENDING REVIEW PANEL ── */
+.voicePendingPanel{position:fixed;bottom:84px;background:#111d;border:2px solid #555;
+  border-radius:14px;padding:10px 13px;color:#fff;font-size:.82rem;z-index:35;
+  display:none;pointer-events:auto;min-width:210px;max-width:270px;
+  box-shadow:0 4px 22px #000a;}
+#voicePending1{left:12px;}
+#voicePending2{right:12px;}
+.voicePendingPanel .vp-label{font-size:.7rem;color:#aaa;margin-bottom:4px;}
+.voicePendingPanel .vp-transcript{font-style:italic;color:#ffe080;margin:4px 0 7px;word-break:break-word;
+  min-height:1.2em;font-size:.83rem;}
+.voicePendingPanel audio{width:100%;height:30px;margin-bottom:7px;filter:invert(1) hue-rotate(180deg);}
+.voicePendingPanel .vp-btns{display:flex;gap:6px;}
+.voicePendingPanel .vp-send{flex:1;background:#1a7a1a;border:none;border-radius:8px;color:#fff;
+  font-size:.85rem;font-weight:800;padding:6px 0;cursor:pointer;pointer-events:auto;}
+.voicePendingPanel .vp-send:hover{background:#22aa22;}
+.voicePendingPanel .vp-cancel{flex:0 0 36px;background:#550000;border:none;border-radius:8px;
+  color:#fff;font-size:.85rem;cursor:pointer;pointer-events:auto;}
+.voicePendingPanel .vp-cancel:hover{background:#880000;}
+#voiceToast{position:fixed;bottom:82px;left:50%;transform:translateX(-50%);
+  background:#000d;border:1px solid #ffffff33;border-radius:12px;padding:9px 18px;
+  color:#fff;font-size:.92rem;font-weight:800;z-index:31;display:none;pointer-events:none;
+  text-align:center;max-width:340px;letter-spacing:.03em;}
 
 /* ── SPLIT DIVIDER ── */
 #splitDivider{position:fixed;top:0;bottom:0;left:50%;width:3px;background:#333;z-index:15;display:none;}
@@ -114,6 +189,7 @@ canvas{display:block;}
 /* ── IN-GAME LEADERBOARD ── */
 #ingameLB{position:fixed;top:190px;right:12px;background:#001a06dd;border:1px solid #00aa4455;
   border-radius:10px;padding:7px 9px;width:158px;display:none;pointer-events:none;z-index:25;}
+#ingameLB.team-lb{width:192px;}
 #ingameLBTitle{font-size:.75rem;font-weight:900;color:#ffcc44;margin-bottom:4px;text-align:center;}
 #ingameLBList{list-style:none;}
 #ingameLBList li{font-size:.70rem;padding:2px 0;border-bottom:1px solid #00441022;
@@ -122,6 +198,14 @@ canvas{display:block;}
 .lb-in-rank{color:#666;min-width:16px;font-size:.65rem;}
 .lb-in-name{flex:1;overflow:hidden;text-overflow:ellipsis;max-width:86px;}
 .lb-in-len{color:#ffcc44;font-weight:700;min-width:26px;text-align:right;font-size:.68rem;}
+/* team territory board */
+.lb-team-row{display:flex;flex-direction:column;gap:3px;padding:3px 0;border-bottom:none!important;}
+.lb-team-label{font-size:.72rem;font-weight:900;display:flex;justify-content:space-between;}
+.lb-team-bar-bg{width:100%;height:8px;background:#1a1a1a;border-radius:4px;overflow:hidden;}
+.lb-team-bar-fill{height:100%;border-radius:4px;transition:width .3s;}
+.lb-split-bar{width:100%;height:12px;border-radius:6px;overflow:hidden;display:flex;margin:4px 0 2px;}
+.lb-split-red{background:#ff2222;height:100%;transition:width .3s;}
+.lb-split-blue{background:#2266ff;height:100%;transition:width .3s;}
 
 /* ── ZONE WARNING ── */
 #zoneBanner,#zoneBannerP2{position:fixed;font-size:1.8rem;font-weight:900;color:#ff6622;
@@ -165,7 +249,23 @@ canvas{display:block;}
   <div class="modeRow">
     <button class="modeBtn active" id="btn1P">&#x1F3AE; 1 Player</button>
     <button class="modeBtn"        id="btn2P">&#x1F46B; 2 Players</button>
+    <button class="modeBtn"        id="btnTeam">&#x1F534; Team Mode</button>
     <button class="modeBtn"        id="btnDaily">&#x1F4C5; Daily Seed</button>
+  </div>
+  <div id="teamConfigRow" style="display:none;flex-direction:column;align-items:center;gap:6px;margin-bottom:8px;">
+    <div style="font-size:.74rem;color:#ff8899;font-weight:800;letter-spacing:.5px;">2P TEAM ASSIGNMENT</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+      <button class="tcBtn active" id="tcVs">&#x1F534; vs &#x1F535; Red vs Blue</button>
+      <button class="tcBtn" id="tcBothRed">&#x1F534;&#x1F534; Both Red</button>
+      <button class="tcBtn" id="tcBothBlue">&#x1F535;&#x1F535; Both Blue</button>
+    </div>
+  </div>
+  <div id="teamP1ConfigRow" style="display:none;flex-direction:column;align-items:center;gap:6px;margin-bottom:8px;">
+    <div style="font-size:.74rem;color:#ff8899;font-weight:800;letter-spacing:.5px;">YOUR TEAM (1P)</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+      <button class="tcBtn active" id="tc1PRed">&#x1F534; Red Team</button>
+      <button class="tcBtn" id="tc1PBlue">&#x1F535; Blue Team</button>
+    </div>
   </div>
   <div class="titleRow">
     <div id="leaderboard">
@@ -175,7 +275,7 @@ canvas{display:block;}
     <!-- P1 setup -->
     <div class="playerSetup p1Setup" id="p1Setup">
       <div class="setupLabel p1Label">&#x1F3AE; PLAYER 1</div>
-      <input class="nicknameInput" id="nicknameInput" type="text" maxlength="20" placeholder="Name..." value="Player 1" autocomplete="off">
+      <input class="nicknameInput" id="nicknameInput" type="text" maxlength="25" placeholder="Name..." value="Player 1" autocomplete="off">
       <div class="skinRow">
         <canvas class="skinPreviewCircle" id="skinPreviewCircle" width="28" height="28"></canvas>
         <span class="skinPreviewName" id="skinPreviewName">Neon Green</span>
@@ -186,7 +286,7 @@ canvas{display:block;}
     <div class="playerSetup p2Setup" id="p2Setup">
       <div class="setupLabel p2Label">&#x1F3AE; PLAYER 2</div>
       <div style="font-size:.72rem;color:#888;text-align:center;">WASD / Arrows: steer<br>SHIFT / ENTER: boost</div>
-      <input class="nicknameInput" id="nicknameInput2" type="text" maxlength="20" placeholder="Name..." value="Player 2" autocomplete="off">
+      <input class="nicknameInput" id="nicknameInput2" type="text" maxlength="25" placeholder="Name..." value="Player 2" autocomplete="off">
       <div class="skinRow">
         <canvas class="skinPreviewCircle" id="skinPreviewCircle2" width="28" height="28"></canvas>
         <span class="skinPreviewName" id="skinPreviewName2">Ocean Blue</span>
@@ -223,6 +323,7 @@ canvas{display:block;}
   <div class="hBox" id="hudBoost">Boost (need 20)</div>
   <div class="hBox" id="hudObjective">Objective: -</div>
   <div class="hBox" id="hudEvent">Event: None</div>
+  <div class="hBox" id="hudNet">LAN: Offline</div>
   <div class="hBox" id="hudZone">Zone in 120s</div>
 </div>
 <!-- IN-GAME HUD P2 (top-right) -->
@@ -250,6 +351,139 @@ canvas{display:block;}
   <p id="p2DeadMsg"></p>
 </div>
 
+<!-- VOICE MIC BUTTONS (team mode only) -->
+<button class="voiceMicBtn" id="voiceMic1" title="Hold to record · Release · Press Send">🎙</button>
+<button class="voiceMicBtn" id="voiceMic2" title="Hold to record · Release · Press Send">🎙</button>
+<!-- VOICE REVIEW PANELS -->
+<div class="voicePendingPanel" id="voicePending1">
+  <div class="vp-label">🎙 RECORDING — release to review</div>
+  <div class="vp-transcript" id="vpTranscript1"></div>
+  <audio id="vpAudio1" controls></audio>
+  <div class="vp-btns">
+    <button class="vp-send" id="vpSend1">✅ SEND</button>
+    <button class="vp-cancel" id="vpCancel1">✖</button>
+  </div>
+</div>
+<div class="voicePendingPanel" id="voicePending2">
+  <div class="vp-label">🎙 RECORDING — release to review</div>
+  <div class="vp-transcript" id="vpTranscript2"></div>
+  <audio id="vpAudio2" controls></audio>
+  <div class="vp-btns">
+    <button class="vp-send" id="vpSend2">✅ SEND</button>
+    <button class="vp-cancel" id="vpCancel2">✖</button>
+  </div>
+</div>
+<div class="voiceCmdList" id="voiceCmdList1">
+  <b>🎙 COMMANDS (voice or type)</b>
+  <span>🚀 boost / sprint / turbo</span><br>
+  <span>💨 run</span><br>
+  <span>⬆️ up / go up</span><br>
+  <span>⬇️ down / go down</span><br>
+  <span>⬅️ left / go left</span><br>
+  <span>➡️ right / go right</span><br>
+  <span>🚶 follow me</span><br>
+  <span>⚔️ attack / charge / kill them</span><br>
+  <span>⚡ charge attack / line up side by side and charge</span><br>
+  <span>➡️ line charge forward</span><br>
+  <span>⬅️ line charge backward</span><br>
+  <span>⬆️ line charge up</span><br>
+  <span>⬇️ line charge down</span><br>
+  <span>🏴 eat their land / raid</span><br>
+  <span>💥 destroy them / annihilate</span><br>
+  <span>🌊 make a wave / wave of worms</span><br>
+  <span>📏 make a huge line of worms</span><br>
+  <span>⭕ make a huge circle around me</span><br>
+  <span>⭕ circle up</span><br>
+  <span>🔄 make a circle around all of the other team</span><br>
+  <span>☄️ meteor shower of worms / worm rain</span><br>
+  <span>🔗 worm chain / chain</span><br>
+  <span>🛡️ help me / protect me</span><br>
+  <span>🏃 fall back / retreat</span><br>
+  <span>💨 run away / scatter</span><br>
+  <span>☠️ sacrifice worms to escape</span><br>
+  <span>🍕 stop attacking / just eat</span><br>
+  <span>💎 diamond formation</span><br>
+  <span>🔺 wedge formation / arrow formation / v formation</span><br>
+  <span>🧱 wall / form a wall / shield wall</span><br>
+  <span>✂️ split up / divide into two groups</span><br>
+  <span>🦀 pincer attack / flank them</span><br>
+  <span>🎣 bait and switch / lure them</span><br>
+  <span>🎭 decoy / send a decoy / distract them</span><br>
+  <span>🛑 hold the line / stand your ground</span><br>
+  <span>🍽️ eat everything / eat all the food / vacuum</span><br>
+  <span>📈 grow grow grow / get huge / bulk up</span><br>
+  <span>🗺️ push left / flood left / swarm left</span><br>
+  <span>🗺️ push right / flood right / swarm right</span><br>
+  <span>🏠 defend home / defend base / return home</span><br>
+  <span>🌊 flood the map / spread everywhere / cover the map</span><br>
+  <span>🌀 tornado / spiral out / vortex</span><br>
+  <span>🚂 snake train / single file / conga line</span><br>
+  <span>💣 kamikaze one / send one / sacrifice one</span><br>
+  <span>🫡 bodyguard / stick beside me / escort me</span><br>
+  <span style="opacity:.65;font-size:.78em">💡 Worms boost on every command! Commands last until a new one is given.</span>
+</div>
+<div class="voiceCmdList" id="voiceCmdList2">
+  <b>🎙 COMMANDS (voice or type)</b>
+  <span>boost / sprint / turbo 🚀</span><br>
+  <span>run 💨</span><br>
+  <span>up / go up ⬆️</span><br>
+  <span>down / go down ⬇️</span><br>
+  <span>left / go left ⬅️</span><br>
+  <span>right / go right ➡️</span><br>
+  <span>follow me 🚶</span><br>
+  <span>attack / charge / kill them ⚔️</span><br>
+  <span>charge attack / line up side by side and charge ⚡</span><br>
+  <span>line charge forward ➡️</span><br>
+  <span>line charge backward ⬅️</span><br>
+  <span>line charge up ⬆️</span><br>
+  <span>line charge down ⬇️</span><br>
+  <span>eat their land / raid 🏴</span><br>
+  <span>destroy them / annihilate 💥</span><br>
+  <span>make a wave / wave of worms 🌊</span><br>
+  <span>make a huge line of worms 📏</span><br>
+  <span>make a huge circle around me ⭕</span><br>
+  <span>circle up ⭕</span><br>
+  <span>make a circle around all of the other team 🔄</span><br>
+  <span>meteor shower of worms / worm rain ☄️</span><br>
+  <span>worm chain / chain 🔗</span><br>
+  <span>help me / protect me 🛡️</span><br>
+  <span>fall back / retreat 🏃</span><br>
+  <span>run away / scatter 💨</span><br>
+  <span>sacrifice worms to escape ☠️</span><br>
+  <span>stop attacking / just eat 🍕</span><br>
+  <span>diamond formation 💎</span><br>
+  <span>wedge formation / arrow formation / v formation 🔺</span><br>
+  <span>wall / form a wall / shield wall 🧱</span><br>
+  <span>split up / divide into two groups ✂️</span><br>
+  <span>pincer attack / flank them 🦀</span><br>
+  <span>bait and switch / lure them 🎣</span><br>
+  <span>decoy / send a decoy / distract them 🎭</span><br>
+  <span>hold the line / stand your ground 🛑</span><br>
+  <span>eat everything / eat all the food / vacuum 🍽️</span><br>
+  <span>grow grow grow / get huge / bulk up 📈</span><br>
+  <span>push left / flood left / swarm left 🗺️</span><br>
+  <span>push right / flood right / swarm right 🗺️</span><br>
+  <span>defend home / defend base / return home 🏠</span><br>
+  <span>flood the map / spread everywhere / cover the map 🌊</span><br>
+  <span>tornado / spiral out / vortex 🌀</span><br>
+  <span>snake train / single file / conga line 🚂</span><br>
+  <span>kamikaze one / send one / sacrifice one 💣</span><br>
+  <span>bodyguard / stick beside me / escort me 🫡</span><br>
+  <span style="opacity:.65;font-size:.78em">💡 Worms boost on every command! Commands last until a new one is given.</span>
+</div>
+<button id="addBotCmdBtn">🤖 Add Bot Commander</button>
+<div id="voiceToast"></div>
+
+<!-- TYPE-A-COMMAND ROWS (team mode) -->
+<div class="voiceTypeRow" id="voiceTypeRow1">
+  <input class="voiceTypeInput" id="voiceTypeInput1" type="text" placeholder="[C] Type command & Enter..." maxlength="60" autocomplete="off">
+  <button class="voiceTypeSendBtn" id="voiceTypeSend1">➕ Send</button>
+</div>
+<div class="voiceTypeRow" id="voiceTypeRow2">
+  <button class="voiceTypeSendBtn" id="voiceTypeSend2">➕ Send</button>
+  <input class="voiceTypeInput" id="voiceTypeInput2" type="text" placeholder="[M] Type command & Enter..." maxlength="60" autocomplete="off">
+</div>
+
 <!-- DEATH SCREEN -->
 <div id="deathScreen">
   <h2>&#x1F480; YOU DIED</h2>
@@ -257,7 +491,7 @@ canvas{display:block;}
   <button id="deathBackBtn">&#x1F3E0; Back to Title</button>
 </div>
 
-<div id="controlsHint" id="controlsHint">P1: Mouse steer | SPACE/Click: Boost &nbsp;||&nbsp; Zone closes over time!</div>
+<div id="controlsHint" id="controlsHint">P1: Arrow Keys steer | SPACE: Boost &nbsp;||&nbsp; P2: WASD steer | SHIFT: Boost &nbsp;||&nbsp; Zone closes over time!</div>
 
 <script>
 // =====================================================
@@ -332,12 +566,10 @@ const FOOD_VALUE       = 0.5;
 const SECRET_WORLD_SIZE = 1800;
 const SECRET_DOT_COUNT  = 2000;
 const SECRET_DOT_VALUE  = 1000000000;
-const FATNESS_LEN_CAP   = 260;
+const FATNESS_LEN_CAP   = 900;
 const EVENT_INTERVAL    = 30;
 const EVENT_DURATION    = 300;
 const DEATH_DOT_VALUE  = 50;
-const DEATH_DOT_PER_LEN = 50;
-const MIN_SINGLE_DEATH_DROP_LEN = 10;
 const MAX_DEATH_DOTS   = 12000;
 const DEATH_DOT_RADIUS_MIN = 16;
 const DEATH_DOT_RADIUS_MAX = 26;
@@ -350,6 +582,13 @@ const BOOST_SPEED_MULT = 3;
 const BASE_SPEED       = 2.9;
 const BASE_LENGTH      = 10;
 const BOOST_MIN_LEN    = 20;
+const TEAM_START_LENGTH = 20;
+const TEAM_SKIN_RED  = {name:'Team Red',  body:'#ff2222', dark:'#880000', eye:'normal'};
+const TEAM_SKIN_BLUE = {name:'Team Blue', body:'#2266ff', dark:'#002299', eye:'normal'};
+const TEAM_TOTAL_PER_SIDE = 100;
+const TEAM_MODE_DURATION = 300;
+const TEAM_MAP_SIZE = SECRET_WORLD_SIZE * 5;
+const TEAM_CELL_SIZE = 45;
 const MAX_TURN_RATE    = 9.0;
 const ZONE_FULL_TIME   = 120;
 const ZONE_CLOSE_TIME  = 600;
@@ -369,6 +608,9 @@ let canvas, ctx, mmCanvas, mmCtx, mmCanvas2, mmCtx2;
 let animId      = null;
 let gameRunning = false;
 let twoPlayerMode = false;
+let teamP2Config = 'vs'; // 'vs' | 'both-red' | 'both-blue'
+let teamP1Config = 'red'; // 1P team mode choice: 'red' | 'blue'
+let teamMode = false;
 let dailySeedMode = false;
 let skinPickerFor = 1;  // which player is currently picking a skin
 let playerName  = 'Player 1';
@@ -398,6 +640,24 @@ let currentBoostChain = 0;
 let strongestNearMiss = 0;
 let floatingTexts = [];
 let screenShake = 0;
+
+let teamGrid = null;
+let teamCols = 0;
+let teamRows = 0;
+let teamScoreRed = 0;
+let teamScoreBlue = 0;
+let bluePackTarget = null; // shared hunt target used for blue bot pack coordination
+let teamScoreTick = 0;
+let enemyCommander = null;        // the AI commander NPC on the enemy team
+let enemyCmdTimer = 0;            // countdown until next AI commander order
+let allyCommander = null;         // bot commander on the PLAYER's team (optional)
+let allyCmdTimer = 0;             // countdown until bot ally commander gives next order
+let allyCommanderEnabled = false; // whether the player has activated the bot commander
+
+// ── Voice command state ──
+let p1VoiceCmd = null, p1VoiceCmdTimer = 0;
+let p2VoiceCmd = null, p2VoiceCmdTimer = 0;
+const VOICE_CMD_DURATION = 18; // seconds bots obey before returning to normal AI
 
 let currentObjective = null;
 let nextObjectiveTime = 35;
@@ -443,6 +703,236 @@ function rng(){
 }
 
 function randRange(min, max){ return min + rng() * (max-min); }
+
+function localNetworkSnake(){
+  if(player && !player.dead) return player;
+  if(player2 && !player2.dead) return player2;
+  return player || player2 || null;
+}
+
+function applyNetworkMessage(data){
+  if(!data || !data.type) return;
+
+  if(data.type === 'welcome'){
+    netClientId = Number(data.id) || null;
+    return;
+  }
+
+  if(data.type === 'peer'){
+    const peerId = Number(data.id);
+    if(!peerId || peerId === netClientId || !data.state) return;
+    const st = data.state;
+    const segs = Array.isArray(st.segs)
+      ? st.segs.slice(0, 600).map(s => ({x:+s.x||0, y:+s.y||0}))
+      : [];
+    netPeers.set(peerId, {
+      id: peerId,
+      name: String(st.name || 'Player').slice(0, 20),
+      skinIdx: Math.max(0, Math.min(SKINS.length - 1, Number(st.skinIdx) || 0)),
+      length: Math.max(1, Number(st.length) || segs.length || BASE_LENGTH),
+      segs,
+      dead: !!st.dead,
+      inSecretMap: !!st.inSecretMap,
+      lastSeen: performance.now(),
+    });
+    return;
+  }
+
+  if(data.type === 'leave'){
+    const peerId = Number(data.id);
+    if(peerId) netPeers.delete(peerId);
+  }
+}
+
+function buildLocalState(){
+  const s = localNetworkSnake();
+  if(!s || !s.segs || !s.segs.length) return null;
+  const maxSegs = 220;
+  const step = Math.max(1, Math.floor(s.segs.length / maxSegs));
+  const segs = [];
+  for(let i=0; i<s.segs.length; i+=step){
+    const seg = s.segs[i];
+    segs.push({x:Math.round(seg.x*100)/100, y:Math.round(seg.y*100)/100});
+    if(segs.length >= maxSegs) break;
+  }
+  const tail = s.segs[s.segs.length-1];
+  if(tail){
+    const last = segs[segs.length-1];
+    if(!last || last.x!==tail.x || last.y!==tail.y){
+      segs.push({x:Math.round(tail.x*100)/100, y:Math.round(tail.y*100)/100});
+    }
+  }
+
+  const skinIdx = Number.isInteger(s.skinIdx) ? s.skinIdx : Math.max(0, SKINS.indexOf(s.skin));
+  return {
+    name: String(s.name || 'Player').slice(0, 20),
+    skinIdx,
+    segs,
+    length: s.length,
+    dead: !!s.dead,
+    inSecretMap: !!s.inSecretMap,
+  };
+}
+
+function connectMultiplayer(){
+  if((netMode==='ws' && netWs && (netWs.readyState === WebSocket.OPEN || netWs.readyState === WebSocket.CONNECTING)) || netMode==='http') return;
+  if(!location.host) return;
+  if(typeof WebSocket === 'undefined'){
+    connectMultiplayerHttp();
+    return;
+  }
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const wsUrl = proto + '://' + location.host;
+  netMode = 'ws';
+  try {
+    netWs = new WebSocket(wsUrl);
+  } catch {
+    netWs = null;
+    connectMultiplayerHttp();
+    return;
+  }
+
+  netWs.addEventListener('open', ()=>{
+    netSendTimer = 0;
+    netReconnectDelay = 0;
+  });
+
+  netWs.addEventListener('message', (event)=>{
+    let data;
+    try { data = JSON.parse(event.data); } catch { return; }
+    applyNetworkMessage(data);
+  });
+
+  netWs.addEventListener('close', ()=>{
+    netWs = null;
+    netClientId = null;
+    if(netMode==='ws') connectMultiplayerHttp();
+    netReconnectDelay = 0.8;
+  });
+
+  netWs.addEventListener('error', ()=>{
+    if(netMode==='ws') connectMultiplayerHttp();
+  });
+}
+
+async function connectMultiplayerHttp(){
+  if(netMode==='http') return;
+  netMode = 'http';
+  try {
+    const res = await fetch('/api/join', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name:playerName||'Player'})
+    });
+    if(!res.ok) throw new Error('join failed');
+    const data = await res.json();
+    netClientId = Number(data.id) || null;
+    netToken = String(data.token || '');
+    netSeq = Number(data.seq || 0);
+    netPollTimer = 0;
+    if(Array.isArray(data.peers)){
+      for(const p of data.peers){
+        applyNetworkMessage({type:'peer', id:p.id, state:p.state});
+      }
+    }
+  } catch {
+    netMode = 'none';
+    netReconnectDelay = 1.2;
+  }
+}
+
+async function pollMultiplayerHttp(){
+  if(netMode!=='http' || !netToken) return;
+  try {
+    const res = await fetch('/api/events?after='+netSeq+'&token='+encodeURIComponent(netToken), {cache:'no-store'});
+    if(!res.ok) throw new Error('poll failed');
+    const data = await res.json();
+    if(Array.isArray(data.events)){
+      for(const ev of data.events) applyNetworkMessage(ev);
+    }
+    netSeq = Number(data.seq || netSeq);
+  } catch {
+    netMode = 'none';
+    netReconnectDelay = 1.2;
+  }
+}
+
+function maintainMultiplayerConnection(dt){
+  if(netMode==='http'){
+    netPollTimer += dt;
+    if(netPollTimer >= 0.25){
+      netPollTimer = 0;
+      pollMultiplayerHttp();
+    }
+    return;
+  }
+  if(netMode==='ws' && netWs && (netWs.readyState === WebSocket.OPEN || netWs.readyState === WebSocket.CONNECTING)) return;
+  netReconnectDelay -= dt;
+  if(netReconnectDelay > 0) return;
+  netReconnectDelay = 1.2;
+  connectMultiplayer();
+}
+
+function disconnectMultiplayer(){
+  if(netWs){
+    try { netWs.close(); } catch {}
+  }
+  if(netMode==='http' && netToken){
+    try {
+      navigator.sendBeacon('/api/leave', JSON.stringify({token: netToken}));
+    } catch {}
+  }
+  netWs = null;
+  netMode = 'none';
+  netToken = '';
+  netSeq = 0;
+  netPollTimer = 0;
+  netClientId = null;
+  netPeers.clear();
+  netReconnectDelay = 0;
+}
+
+function sendMultiplayerState(dt){
+  if(!gameRunning) return;
+  netSendTimer += dt;
+  if(netSendTimer < NET_SEND_INTERVAL) return;
+  netSendTimer = 0;
+  const state = buildLocalState();
+  if(!state) return;
+
+  if(netMode==='ws' && netWs && netWs.readyState === WebSocket.OPEN){
+    netWs.send(JSON.stringify({ type:'state', ...state }));
+    return;
+  }
+
+  if(netMode==='http' && netToken){
+    fetch('/api/state', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({token: netToken, state}),
+      keepalive: true,
+    }).catch(()=>{});
+  }
+}
+
+function updateNetworkHud(){
+  const el = document.getElementById('hudNet');
+  if(!el) return;
+  const totalPlayers = 1 + netPeers.size;
+  if(!netWs){
+    el.textContent = 'LAN Players: ' + totalPlayers;
+    return;
+  }
+  if(netWs.readyState === WebSocket.CONNECTING){
+    el.textContent = 'LAN Players: ' + totalPlayers;
+    return;
+  }
+  if(netWs.readyState !== WebSocket.OPEN){
+    el.textContent = 'LAN Players: ' + totalPlayers;
+    return;
+  }
+  el.textContent = 'LAN Players: ' + totalPlayers;
+}
 
 function spawnFloatingText(x, y, text, color){
   floatingTexts.push({x,y,text,color:color||'#fff',ttl:1.1,vx:randRange(-10,10),vy:randRange(-32,-20)});
@@ -523,7 +1013,7 @@ function startBiomeEvent(){
     'lowgrav',
     'dotstorm',
     'haste',
-    'heavy',
+    ...(teamMode ? [] : ['heavy']),
     'magnetstorm',
     'regenrain',
     'powersurge',
@@ -566,7 +1056,9 @@ let mouseX = 0, mouseY = 0;
 let boostKey   = false;
 let boostClick = false;
 let boostDrainTimer  = 0;
-// P2 input
+// P1 arrow-key input
+const p1Keys = {up:false,down:false,left:false,right:false};
+// P2 WASD input
 const p2Keys = {up:false,down:false,left:false,right:false};
 let p2BoostKey  = false;
 let p2BoostDt   = 0;
@@ -583,6 +1075,18 @@ let gameTime     = 0;
 let zoneRadius   = 7000 * 0.75;
 let maxPlayerLen = BASE_LENGTH;
 let zoom1 = 1.0, zoom2 = 1.0;
+
+let netWs = null;
+let netClientId = null;
+let netPeers = new Map();
+let netSendTimer = 0;
+let netReconnectDelay = 0;
+let netMode = 'none';
+let netToken = '';
+let netSeq = 0;
+let netPollTimer = 0;
+const NET_SEND_INTERVAL = 0.08;
+const NET_PEER_TIMEOUT = 6000;
 
 let musicCtx = null;
 let musicMaster = null;
@@ -746,20 +1250,97 @@ function randNpcName(){
 }
 
 function randomNpcSpawnLength(){
-  return 1000 + Math.floor(rng() * 9000);
+  return 1000 + Math.floor(rng() * 8001);
 }
 
 // =====================================================
 //  HELPERS
 // =====================================================
+function teamOf(snake){ return snake && snake.team ? snake.team : null; }
+function enemyTeam(team){ return team === 'red' ? 'blue' : 'red'; }
+function sameTeam(a, b){ return !!(a && b && a.team && b.team && a.team === b.team); }
+
+function setupTeamGrid(){
+  teamCols = Math.max(10, Math.floor(worldSize / TEAM_CELL_SIZE));
+  teamRows = Math.max(10, Math.floor(worldSize / TEAM_CELL_SIZE));
+  teamGrid = new Uint8Array(teamCols * teamRows);
+  teamScoreRed = 0;
+  teamScoreBlue = 0;
+  teamScoreTick = 0;
+}
+
+function paintTeamLand(x, y, team){
+  if(!teamMode || !teamGrid) return;
+  const cx = Math.max(0, Math.min(teamCols - 1, Math.floor(x / TEAM_CELL_SIZE)));
+  const cy = Math.max(0, Math.min(teamRows - 1, Math.floor(y / TEAM_CELL_SIZE)));
+  const idx = cy * teamCols + cx;
+  teamGrid[idx] = team === 'red' ? 1 : 2;
+}
+
+function paintFromSnake(snake){
+  if(!teamMode || !snake || snake.dead || !snake.segs || !snake.segs.length) return;
+  const h = snakeHead(snake);
+  const team = snake.team || 'blue';
+  // Player's team paints 3 cells wide (radius 1); enemy team paints only 1 cell (radius 0)
+  const playerTeam = player ? player.team : 'red';
+  const paintR = team === playerTeam ? 1 : 0;
+  for(let dy = -paintR; dy <= paintR; dy++){
+    for(let dx = -paintR; dx <= paintR; dx++){
+      if(dx*dx + dy*dy <= paintR*paintR){
+        paintTeamLand(h.x + dx*TEAM_CELL_SIZE, h.y + dy*TEAM_CELL_SIZE, team);
+      }
+    }
+  }
+}
+
+function refreshTeamScores(){
+  if(!teamMode || !teamGrid) return;
+  let red = 0, blue = 0;
+  for(let i=0; i<teamGrid.length; i++){
+    if(teamGrid[i] === 1) red++;
+    else if(teamGrid[i] === 2) blue++;
+  }
+  teamScoreRed = red;
+  teamScoreBlue = blue;
+}
+
+function nearestEnemyLandTarget(x, y, team, samples){
+  if(!teamMode || !teamGrid) return null;
+  const enemy = team === 'red' ? 2 : 1;
+  let best = null;
+  let bestD2 = Infinity;
+  samples = samples || 140;
+  for(let i=0; i<samples; i++){
+    const cx = Math.floor(rng() * teamCols);
+    const cy = Math.floor(rng() * teamRows);
+    const idx = cy * teamCols + cx;
+    if(teamGrid[idx] !== enemy) continue;
+    const tx = (cx + 0.5) * TEAM_CELL_SIZE;
+    const ty = (cy + 0.5) * TEAM_CELL_SIZE;
+    const dx = tx - x, dy = ty - y;
+    const d2 = dx*dx + dy*dy;
+    if(d2 < bestD2){ bestD2 = d2; best = {x:tx, y:ty}; }
+  }
+  return best;
+}
+
 function snakeRadius(len) {
-  const visualLen = Math.min(len, FATNESS_LEN_CAP);
+  const snake = arguments[1] || null;
+  const bulk = snake && snake.bulk ? snake.bulk : 0;
+  const cap = teamMode ? Infinity : FATNESS_LEN_CAP;
+  const visualLen = Math.min(len + bulk, cap);
   const skinnyScale = Math.pow(visualLen, 0.58);
   return 5 + skinnyScale * 0.78;
 }
 function snakeViewRange(len){ return Math.min(700 + len*5, 1600); }
 function snakeBaseSpeed(len){ return Math.max(BASE_SPEED - len*0.003, 1.6); }
-function snakeBoostSpeed(len){ return Math.min(28, BASE_SPEED*BOOST_SPEED_MULT + len*0.012); }
+function snakeBoostSpeed(len, snake){
+  if(teamMode && snake){
+    // In team mode: normal boost speed doubled, scales gently with length
+    return Math.min(56, BASE_SPEED*BOOST_SPEED_MULT*2 + len*0.024);
+  }
+  return Math.min(28, BASE_SPEED*BOOST_SPEED_MULT + len*0.012);
+}
 function snakeHead(s)       { return s.segs[0]; }
 function hasEffect(snake, effectKey){ return !!(snake && snake.effects && snake.effects[effectKey] > gameTime); }
 function eatRadiusMult(snake){
@@ -814,9 +1395,12 @@ function makeSnake(name, x, y, skinIdx, isPlayer){
   for(let i=0; i<BASE_LENGTH; i++) segs.push({x: x - i*SEG_SPACING, y});
   return {
     name, skin, isPlayer,
+    skinIdx,
     segs,
     length: BASE_LENGTH,
     inSecretMap: false,
+    team: 'blue',
+    bulk: 0,
     pendingGrowth: 0,
     angle: 0,
     dead: false,
@@ -888,6 +1472,7 @@ function rebuildSnakeInMap(snake, centerX, centerY, angle, mapSize){
 }
 
 function enterSecretMap(snake){
+  if(teamMode) return;
   if(!snake || snake.dead || snake.inSecretMap) return;
   snake.inSecretMap = true;
   refillSecretDots();
@@ -919,17 +1504,21 @@ const POWERUP_TYPES = [
   {type:'score2x',   color:'#ff55aa', label:'X2', duration:10},
 ];
 
-function spawnPowerUp(){
+function spawnPowerUp(nearSnake){
   const pick = POWERUP_TYPES[Math.floor(rng()*POWERUP_TYPES.length)];
   const margin = 60;
   let x = margin + rng() * (worldSize - margin * 2);
   let y = margin + rng() * (worldSize - margin * 2);
 
-  const alivePlayers = [];
-  if(player && !player.dead) alivePlayers.push(player);
-  if(player2 && !player2.dead) alivePlayers.push(player2);
-  if(alivePlayers.length){
-    const focus = alivePlayers[Math.floor(rng()*alivePlayers.length)];
+  // Determine focus: use provided snake, or pick a random alive player
+  let focus = (nearSnake && !nearSnake.dead) ? nearSnake : null;
+  if(!focus){
+    const alivePlayers = [];
+    if(player && !player.dead) alivePlayers.push(player);
+    if(player2 && !player2.dead) alivePlayers.push(player2);
+    if(alivePlayers.length) focus = alivePlayers[Math.floor(rng()*alivePlayers.length)];
+  }
+  if(focus){
     const h = snakeHead(focus);
     const angle = rng()*Math.PI*2;
     const dist = 140 + rng()*320;
@@ -1038,7 +1627,8 @@ function spawnDeathDots(snake){
   const drops = formerLen >= 60
     ? Math.max(5, Math.floor(formerLen / 10))
     : 5;
-  const perDotValue = formerLen / drops;
+  const perDotValue = Math.floor(formerLen / drops);
+  let remainder = formerLen - (perDotValue * drops);
   if(drops <= 0){
     if(deathDots.length > MAX_DEATH_DOTS) deathDots.splice(0, deathDots.length - MAX_DEATH_DOTS);
     return;
@@ -1052,7 +1642,7 @@ function spawnDeathDots(snake){
         y:snake.segs[0].y,
         r:DEATH_DOT_RADIUS_MIN+Math.random()*(DEATH_DOT_RADIUS_MAX-DEATH_DOT_RADIUS_MIN),
         color:c,
-        value:perDotValue,
+        value:perDotValue + (remainder-- > 0 ? 1 : 0),
       });
     }
     if(deathDots.length > MAX_DEATH_DOTS) deathDots.splice(0, deathDots.length - MAX_DEATH_DOTS);
@@ -1074,7 +1664,7 @@ function spawnDeathDots(snake){
         y:snake.segs[0].y,
         r:DEATH_DOT_RADIUS_MIN+Math.random()*(DEATH_DOT_RADIUS_MAX-DEATH_DOT_RADIUS_MIN),
         color:c,
-        value:perDotValue,
+        value:perDotValue + (remainder-- > 0 ? 1 : 0),
       });
     }
     if(deathDots.length > MAX_DEATH_DOTS) deathDots.splice(0, deathDots.length - MAX_DEATH_DOTS);
@@ -1100,7 +1690,7 @@ function spawnDeathDots(snake){
       y: a.y + (b.y - a.y) * localT,
       r: DEATH_DOT_RADIUS_MIN+Math.random()*(DEATH_DOT_RADIUS_MAX-DEATH_DOT_RADIUS_MIN),
       color:c,
-      value:perDotValue,
+      value:perDotValue + (remainder-- > 0 ? 1 : 0),
     });
   }
 
@@ -1137,6 +1727,27 @@ function findSafeSpawnPos(minDist){
     if(safe) return {x, y};
   }
   return {x: margin + Math.random() * (worldSize - margin * 2),
+          y: margin + Math.random() * (worldSize - margin * 2)};
+}
+
+// Spawn in the correct map half: red = left (x < worldSize/2), blue = right (x > worldSize/2)
+function findTeamSpawnPos(team, minDist){
+  minDist = minDist || 200;
+  const margin = 60;
+  const half = worldSize / 2;
+  const xMin = team === 'red' ? margin         : half + margin;
+  const xMax = team === 'red' ? half - margin  : worldSize - margin;
+  const all = [player, player2, ...npcs].filter(s => s && !s.dead);
+  for(let attempt = 0; attempt < 40; attempt++){
+    const x = xMin + Math.random() * (xMax - xMin);
+    const y = margin + Math.random() * (worldSize - margin * 2);
+    let safe = true;
+    for(const s of all){
+      if(Math.hypot(snakeHead(s).x - x, snakeHead(s).y - y) < minDist){ safe = false; break; }
+    }
+    if(safe) return {x, y};
+  }
+  return {x: xMin + Math.random() * (xMax - xMin),
           y: margin + Math.random() * (worldSize - margin * 2)};
 }
 
@@ -1178,18 +1789,37 @@ function initGame(){
   setRunSeedFromMode();
   ensureDailyChallenge();
   gameTime     = 0;
-  worldSize    = 7000;
+  enemyCommander = null; enemyCmdTimer = 12;
+  allyCommander = null; allyCmdTimer = 14; allyCommanderEnabled = false;
+  worldSize    = teamMode ? TEAM_MAP_SIZE : 7000;
   maxPlayerLen = BASE_LENGTH;
-  zoom1 = 1.0; zoom2 = 1.0;
+  zoom1 = teamMode ? 1.8 : 1.0; zoom2 = teamMode ? 1.8 : 1.0;
   zoneRadius   = worldSize * 0.75;
   zoneDamageT1 = 0; zoneDamageT2 = 0;
   zoneWarnT1   = 0; zoneWarnT2   = 0;
 
-  player = makeSnake(playerName, worldSize/2 - 120, worldSize/2, selectedSkin, true);
+  if(teamMode) setupTeamGrid();
+
+  // P1 spawns on their team's half
+  const _p1TeamMode = twoPlayerMode ? (teamP2Config === 'both-blue' ? 'blue' : 'red') : teamP1Config;
+  const p1SpawnX = teamMode ? (_p1TeamMode === 'blue' ? worldSize*0.75 : worldSize*0.25) : worldSize/2 - 300;
+  player = makeSnake(playerName, p1SpawnX, worldSize/2, selectedSkin, true);
+  // In team mode: 2P uses teamP2Config for P1's side; 1P uses teamP1Config
+  player.team = teamMode ? _p1TeamMode : 'blue';
+  if(teamMode){ player.length = TEAM_START_LENGTH; player.bulk = 900;
+    player.skin = player.team === 'red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE; }
+  camX = snakeHead(player).x; camY = snakeHead(player).y;
 
   if(twoPlayerMode){
-    player2 = makeSnake(playerName2, worldSize/2 + 120, worldSize/2, selectedSkin2, true);
+    // P2 spawns on their team's half
+    const p2SpawnX = teamMode ? (teamP2Config === 'both-red' ? worldSize*0.25 : worldSize*0.75) : worldSize/2 + 300;
+    player2 = makeSnake(playerName2, p2SpawnX, worldSize/2 + 200, selectedSkin2, true);
     player2.angle = Math.PI;
+    player2.team = teamMode ? (teamP2Config === 'both-red' ? 'red' : 'blue') : 'blue';
+    if(teamMode){ player2.length = TEAM_START_LENGTH; player2.bulk = 900;
+      player2.skin = player2.team === 'red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE; }
+    camX2 = snakeHead(player2).x; camY2 = snakeHead(player2).y;
+    p1Keys.up=p1Keys.down=p1Keys.left=p1Keys.right=false;
     p2Keys.up=p2Keys.down=p2Keys.left=p2Keys.right=false;
     p2BoostKey = false; p2BoostDt = 0;
   } else {
@@ -1197,15 +1827,59 @@ function initGame(){
   }
 
   npcs=[];
-  for(let i=0; i<NPC_COUNT; i++){
-    const pos=findSafeSpawnPos(300);
-    const npc = makeSnake(randNpcName(), pos.x, pos.y, Math.floor(rng()*SKINS.length), false);
-    npc.length = randomNpcSpawnLength();
-    npcs.push(npc);
+  if(teamMode){
+    // Player's team gets 50 more worms than the enemy team
+    const playerTeamForSpawn = player ? player.team : 'red';
+    const redBots  = playerTeamForSpawn === 'red' ? 150 : 100;
+    const blueBots = playerTeamForSpawn === 'blue' ? 150 : 100;
+    // Red skins: indices 1(Red Slug),15(Scarlet),34(Deep Red),29(Crimson),30(Cherry)
+    const redSkins  = [1, 15, 34, 29, 30];
+    // Blue skins: indices 2(Sky Blue),16(Royal Blue),28(Cobalt),22(Ocean Blue),23(Ice Blue)
+    const blueSkins = [2, 16, 28, 22, 35];
+    for(let i=0; i<blueBots; i++){
+      const pos=findTeamSpawnPos('blue', 120);
+      const skinIdx = blueSkins[i % blueSkins.length];
+      const npc = makeSnake(randNpcName(), pos.x, pos.y, skinIdx, false);
+      npc.team = 'blue';
+      npc.skin = TEAM_SKIN_BLUE;
+      npc.length = TEAM_START_LENGTH;
+      npc.bulk = TEAM_START_LENGTH * 0.7;
+      npcs.push(npc);
+    }
+    for(let i=0; i<redBots; i++){
+      const pos=findTeamSpawnPos('red', 120);
+      const skinIdx = redSkins[i % redSkins.length];
+      const npc = makeSnake(randNpcName(), pos.x, pos.y, skinIdx, false);
+      npc.team = 'red';
+      npc.skin = TEAM_SKIN_RED;
+      npc.length = TEAM_START_LENGTH;
+      npc.bulk = TEAM_START_LENGTH * 0.7;
+      npcs.push(npc);
+    }
+    // Designate the AI commander: the first NPC on the ENEMY team
+    enemyCommander = null;
+    enemyCmdTimer = 12; // first command fires 12s in
+    const enemyTeam = playerTeamForSpawn === 'red' ? 'blue' : 'red';
+    const enemyCandidates = npcs.filter(n => n.team === enemyTeam);
+    if(enemyCandidates.length > 0){
+      enemyCommander = enemyCandidates[0];
+      enemyCommander.isCommander = true;
+      enemyCommander.name = '⭐ General';
+      enemyCommander.length = TEAM_START_LENGTH * 2.5; // commander starts bigger
+      enemyCommander.bulk = enemyCommander.length * 0.7;
+    }
+  } else {
+    for(let i=0; i<NPC_COUNT; i++){
+      const pos=findSafeSpawnPos(300);
+      const npc = makeSnake(randNpcName(), pos.x, pos.y, Math.floor(rng()*SKINS.length), false);
+      npc.length = Math.min(9000, randomNpcSpawnLength());
+      npcs.push(npc);
+    }
   }
 
   foodDots=[];
-  for(let i=0; i<DOT_COUNT; i++) foodDots.push(spawnFoodDot());
+  const _dotCount = teamMode ? DOT_COUNT * 4 : DOT_COUNT;
+  for(let i=0; i<_dotCount; i++) foodDots.push(spawnFoodDot());
   secretDots=[];
   refillSecretDots();
   powerUps=[];
@@ -1223,6 +1897,8 @@ function initGame(){
   dotStormTick = 0;
   mouseX=canvas.width/2; mouseY=canvas.height/2;
   lastTime=performance.now();
+  netSendTimer = 0;
+  connectMultiplayer();
 
   // Show UI
   document.getElementById('hud').style.display         ='flex';
@@ -1235,6 +1911,73 @@ function initGame(){
   document.getElementById('p2DeadPanel').style.display  ='none';
   document.getElementById('minimap').style.display       = 'block';
   document.getElementById('minimap2').style.display      = twoPlayerMode ? 'block' : 'none';
+
+  // Voice mic buttons (team mode only)
+  p1VoiceCmd = null; p1VoiceCmdTimer = 0;
+  p2VoiceCmd = null; p2VoiceCmdTimer = 0;
+  bluePackTarget = null;
+  const mic1 = document.getElementById('voiceMic1');
+  const mic2 = document.getElementById('voiceMic2');
+  const voiceToast = document.getElementById('voiceToast');
+  if(mic1){ mic1.style.display = teamMode ? 'block' : 'none'; }
+  if(mic2){ mic2.style.display = (teamMode && twoPlayerMode) ? 'block' : 'none'; }
+  document.body.classList.toggle('one-player-team', !!(teamMode && !twoPlayerMode));
+  if(voiceToast) voiceToast.style.display = 'none';
+  const vp1=document.getElementById('voicePending1');
+  const vp2=document.getElementById('voicePending2');
+  if(vp1) vp1.style.display='none';
+  if(vp2) vp2.style.display='none';
+  const vtr1=document.getElementById('voiceTypeRow1');
+  const vtr2=document.getElementById('voiceTypeRow2');
+  // Always hidden by default — C key (P1) or M key (P2) will show them on demand
+  if(vtr1) vtr1.style.display = 'none';
+  if(vtr2) vtr2.style.display = 'none';
+  if(teamMode){
+    // P1 mic controls red team (or their own team)
+    const p1Team = player && player.team ? player.team : 'red';
+    const p2Team = player2 && player2.team ? player2.team : 'blue';
+    _micRecognizers = {}; // reset so teams are re-bound each game
+    initVoiceMic('voiceMic1', p1Team);
+    if(twoPlayerMode) initVoiceMic('voiceMic2', p2Team);
+    initVoiceTypeInput('voiceTypeInput1','voiceTypeSend1', p1Team);
+    if(twoPlayerMode) initVoiceTypeInput('voiceTypeInput2','voiceTypeSend2', p2Team);
+  }
+
+  // Bot commander button: only show in team mode (single player side)
+  const addBotBtn = document.getElementById('addBotCmdBtn');
+  if(addBotBtn){
+    addBotBtn.style.display = teamMode ? 'block' : 'none';
+    addBotBtn.textContent = '🤖 Add Bot Commander';
+    addBotBtn.classList.remove('active');
+    addBotBtn.onclick = function(){
+      if(!teamMode) return;
+      // Toggle the bot commander on/off
+      if(allyCommanderEnabled && allyCommander && !allyCommander.dead){
+        // Dismiss the bot commander
+        allyCommanderEnabled = false;
+        allyCommander.isAllyCommander = false;
+        allyCommander.name = allyCommander._origName || allyCommander.name.replace('🤖 ','');
+        allyCommander = null;
+        addBotBtn.textContent = '🤖 Add Bot Commander';
+        addBotBtn.classList.remove('active');
+      } else {
+        // Pick a living NPC on the player's team to be bot commander
+        const playerTeam = player && player.team ? player.team : (player2 && player2.team ? player2.team : 'red');
+        const candidates = npcs.filter(n => !n.dead && n.team === playerTeam && !n.isAllyCommander);
+        if(candidates.length === 0){ return; }
+        // Pick the biggest (smartest) bot
+        candidates.sort((a,b) => b.length - a.length);
+        allyCommander = candidates[0];
+        allyCommander._origName = allyCommander.name;
+        allyCommander.isAllyCommander = true;
+        allyCommander.name = '🤖 Commander';
+        allyCommanderEnabled = true;
+        allyCmdTimer = 3; // first order fires quickly
+        addBotBtn.textContent = '🤖 Bot Commander: ON';
+        addBotBtn.classList.add('active');
+      }
+    };
+  }
 
   gameRunning=true;
   if(animId) cancelAnimationFrame(animId);
@@ -1250,23 +1993,76 @@ function resize(){
 // =====================================================
 document.addEventListener('mousemove', e=>{ mouseX=e.clientX; mouseY=e.clientY; });
 document.addEventListener('keydown', e=>{
-  if(e.target.tagName==='INPUT') return;
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
   if(!gameRunning) return;
+  // C key: open P1 command input in team mode
+  if(e.code==='KeyC' && teamMode){
+    e.preventDefault();
+    const row = document.getElementById('voiceTypeRow1');
+    const inp = document.getElementById('voiceTypeInput1');
+    if(row && inp){
+      if(row.style.display === 'flex'){ // already open — close it
+        row.style.display = 'none'; inp.value = ''; inp.blur();
+      } else {
+        row.style.display = 'flex'; inp.focus(); inp.select();
+      }
+    }
+    return;
+  }
+  // M key: open P2 command input in two-player team mode
+  if(e.code==='KeyM' && teamMode && twoPlayerMode){
+    e.preventDefault();
+    const row = document.getElementById('voiceTypeRow2');
+    const inp = document.getElementById('voiceTypeInput2');
+    if(row && inp){
+      if(row.style.display === 'flex'){
+        row.style.display = 'none'; inp.value = ''; inp.blur();
+      } else {
+        row.style.display = 'flex'; inp.focus(); inp.select();
+      }
+    }
+    return;
+  }
   if(e.code==='Space'){ e.preventDefault(); boostKey=true; }
-  if(e.code==='KeyW'||e.code==='ArrowUp')   { p2Keys.up=true;    e.preventDefault(); }
-  if(e.code==='KeyS'||e.code==='ArrowDown') { p2Keys.down=true;  e.preventDefault(); }
-  if(e.code==='KeyA'||e.code==='ArrowLeft') { p2Keys.left=true;  e.preventDefault(); }
-  if(e.code==='KeyD'||e.code==='ArrowRight'){ p2Keys.right=true; e.preventDefault(); }
+  // P1: Arrow keys only
+  if(e.code==='ArrowUp')   { p1Keys.up=true;    e.preventDefault(); }
+  if(e.code==='ArrowDown') { p1Keys.down=true;  e.preventDefault(); }
+  if(e.code==='ArrowLeft') { p1Keys.left=true;  e.preventDefault(); }
+  if(e.code==='ArrowRight'){ p1Keys.right=true; e.preventDefault(); }
+  // P2: WASD only
+  if(e.code==='KeyW'){ p2Keys.up=true;    e.preventDefault(); }
+  if(e.code==='KeyS'){ p2Keys.down=true;  e.preventDefault(); }
+  if(e.code==='KeyA'){ p2Keys.left=true;  e.preventDefault(); }
+  if(e.code==='KeyD'){ p2Keys.right=true; e.preventDefault(); }
   if(e.code==='ShiftLeft'||e.code==='ShiftRight'){ e.preventDefault(); p2BoostKey=true; }
+  // Enter key: open P1 command input in team mode, otherwise P2 boost
+  if(e.code==='Enter'){
+    e.preventDefault();
+    if(teamMode){
+      const row = document.getElementById('voiceTypeRow1');
+      const inp = document.getElementById('voiceTypeInput1');
+      if(row && inp){
+        if(row.style.display === 'flex'){ row.style.display = 'none'; inp.value = ''; inp.blur(); }
+        else { row.style.display = 'flex'; inp.focus(); inp.select(); }
+      }
+    } else {
+      p2BoostKey = true;
+    }
+  }
 });
 document.addEventListener('keyup', e=>{
-  if(e.target.tagName==='INPUT') return;
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
   if(e.code==='Space') boostKey=false;
-  if(e.code==='KeyW'||e.code==='ArrowUp')   p2Keys.up=false;
-  if(e.code==='KeyS'||e.code==='ArrowDown') p2Keys.down=false;
-  if(e.code==='KeyA'||e.code==='ArrowLeft') p2Keys.left=false;
-  if(e.code==='KeyD'||e.code==='ArrowRight')p2Keys.right=false;
+  if(e.code==='ArrowUp')   p1Keys.up=false;
+  if(e.code==='ArrowDown') p1Keys.down=false;
+  if(e.code==='ArrowLeft') p1Keys.left=false;
+  if(e.code==='ArrowRight')p1Keys.right=false;
+  if(e.code==='KeyW') p2Keys.up=false;
+  if(e.code==='KeyS') p2Keys.down=false;
+  if(e.code==='KeyA') p2Keys.left=false;
+  if(e.code==='KeyD') p2Keys.right=false;
   if(e.code==='ShiftLeft'||e.code==='ShiftRight') p2BoostKey=false;
+  if(e.code==='Enter') p2BoostKey=false;
 });
 document.addEventListener('mousedown', e=>{ if(gameRunning&&e.button===0) boostClick=true; });
 document.addEventListener('mouseup',   e=>{ if(e.button===0) boostClick=false; });
@@ -1296,6 +2092,15 @@ function currentZoneRadius(){
 //  UPDATE
 // =====================================================
 function update(dt){
+  maintainMultiplayerConnection(dt);
+  if(netPeers.size){
+    const now = performance.now();
+    for(const [id, peer] of netPeers){
+      if(now - (peer.lastSeen || 0) > NET_PEER_TIMEOUT) netPeers.delete(id);
+    }
+  }
+  updateNetworkHud();
+
   const p1alive = player  && !player.dead;
   const p2alive = twoPlayerMode && player2 && !player2.dead;
 
@@ -1303,6 +2108,21 @@ function update(dt){
   if(!p1alive && (!twoPlayerMode || !p2alive)) return;
 
   gameTime+=dt;
+  if(teamMode && gameTime >= TEAM_MODE_DURATION){
+    gameRunning=false;
+    hideGameUI();
+    refreshTeamScores();
+    const total=Math.max(1, teamScoreRed + teamScoreBlue);
+    const redPct=((teamScoreRed/total)*100).toFixed(1);
+    const bluePct=((teamScoreBlue/total)*100).toFixed(1);
+    const winner = teamScoreRed===teamScoreBlue ? 'DRAW' : (teamScoreRed>teamScoreBlue ? 'RED TEAM WINS' : 'BLUE TEAM WINS');
+    document.getElementById('deathMsg').innerHTML = winner
+      +'<br>Red: <strong style="color:#ff6677">'+redPct+'%</strong>'
+      +' &nbsp;|&nbsp; Blue: <strong style="color:#66aaff">'+bluePct+'%</strong>'
+      +'<br>Uncolored land does not count.';
+    document.getElementById('deathScreen').style.display='flex';
+    return;
+  }
   if(comboTimer>0) comboTimer-=dt;
   else comboMult = Math.max(1, comboMult - dt*0.9);
   zoneRadius=currentZoneRadius();
@@ -1329,12 +2149,18 @@ function update(dt){
       }
     }
 
-    // Steer — in split screen mouse is relative to left half (center at W/4)
-    const vpCenterX = twoPlayerMode ? canvas.width*3/4 : canvas.width/2;
-    const targetAngle=Math.atan2(mouseY-canvas.height/2, mouseX-vpCenterX);
-    const diff=angDiff(player.angle, targetAngle);
-    const clamp=Math.sign(diff)*Math.min(Math.abs(diff), Math.PI*0.83);
-    player.angle+=Math.sign(clamp)*Math.min(Math.abs(clamp), turnRateFor(player)*dt);
+    // Steer — Arrow keys
+    let p1tx=0, p1ty=0;
+    if(p1Keys.up)    p1ty-=1;
+    if(p1Keys.down)  p1ty+=1;
+    if(p1Keys.left)  p1tx-=1;
+    if(p1Keys.right) p1tx+=1;
+    if(p1tx!==0||p1ty!==0){
+      const targetAngle=Math.atan2(p1ty, p1tx);
+      const diff=angDiff(player.angle, targetAngle);
+      const clamp=Math.sign(diff)*Math.min(Math.abs(diff), Math.PI*0.83);
+      player.angle+=Math.sign(clamp)*Math.min(Math.abs(clamp), turnRateFor(player)*dt);
+    }
 
     // Boost
     const canBoost=player.length>=BOOST_MIN_LEN;
@@ -1357,11 +2183,34 @@ function update(dt){
       }
     } else { boostDrainTimer=0; }
 
-    const spd=(boosting ? snakeBoostSpeed(player.length) : snakeBaseSpeed(player.length)) * speedMultFor(player, boosting);
+    const spd=(boosting ? snakeBoostSpeed(player.length, player) : snakeBaseSpeed(player.length)) * speedMultFor(player, boosting);
     if(spd > bestSpeed) bestSpeed = spd;
     moveSnakeFixed(player, player.angle, spd);
     closeLoopBody(player, dt);
     clampPlayer(player);
+
+    // ── Circle barrier: steer P1 away from enemy circle formations ──
+    if(!player.dead){
+      const ph = snakeHead(player);
+      for(const circler of npcs){
+        if(circler.dead || circler.npcMode !== 'circle_me' || circler.team === player.team) continue;
+        const cmdr = (circler.commanderAssignment && !circler.commanderAssignment.dead) ? circler.commanderAssignment : [player2].find(p => p && !p.dead && sameTeam(p, circler));
+        if(!cmdr) continue;
+        const cx = snakeHead(cmdr).x, cy = snakeHead(cmdr).y;
+        const totalCircle = npcs.filter(n => !n.dead && n.team === circler.team && n.npcMode === 'circle_me').length || 1;
+        const bodyDiam = snakeRadius(circler.length) * 3.6;
+        const barrierR = Math.max(160, (totalCircle * bodyDiam) / (2 * Math.PI)) + snakeRadius(player.length) * 2;
+        const ddx = ph.x - cx, ddy = ph.y - cy;
+        const dist = Math.hypot(ddx, ddy);
+        if(dist < barrierR && dist > 10){
+          const blend = Math.max(0, 1 - dist / barrierR) * 1.2;
+          const pushAngle = Math.atan2(ddy, ddx);
+          const dif = angDiff(player.angle, pushAngle);
+          player.angle += dif * blend * Math.min(dt * 6, 0.5);
+        }
+        break;
+      }
+    }
 
     // Camera center in world space
     const h=snakeHead(player);
@@ -1381,8 +2230,19 @@ function update(dt){
       : ('Next objective in '+Math.max(0,Math.ceil(nextObjectiveTime-gameTime))+'s');
     document.getElementById('hudObjective').textContent='Objective: '+objText;
     document.getElementById('hudEvent').textContent='Event: '+activeEventSummary();
-    const zt=Math.max(0,Math.ceil(ZONE_FULL_TIME-gameTime));
-    document.getElementById('hudZone').textContent=gameTime<ZONE_FULL_TIME?'\u2B55 Zone in '+zt+'s':'\u26A0\uFE0F Zone closing!';
+    if(teamMode){
+      teamScoreTick += dt;
+      if(teamScoreTick >= 0.5){ teamScoreTick = 0; refreshTeamScores(); }
+      const total=Math.max(1, teamScoreRed + teamScoreBlue);
+      const redPct=((teamScoreRed/total)*100).toFixed(1);
+      const bluePct=((teamScoreBlue/total)*100).toFixed(1);
+      const rem=Math.max(0,Math.ceil(TEAM_MODE_DURATION-gameTime));
+      document.getElementById('hudObjective').textContent='Land Red '+redPct+'% | Blue '+bluePct+'%';
+      document.getElementById('hudZone').textContent='\u23F1\uFE0F Team mode '+rem+'s';
+    } else {
+      const zt=Math.max(0,Math.ceil(ZONE_FULL_TIME-gameTime));
+      document.getElementById('hudZone').textContent=gameTime<ZONE_FULL_TIME?'\u2B55 Zone in '+zt+'s':'\u26A0\uFE0F Zone closing!';
+    }
   }
 
   // ── Player 2 ──
@@ -1438,10 +2298,33 @@ function update(dt){
       }
     } else { p2BoostDt=0; }
 
-    const spd2=(boost2 ? snakeBoostSpeed(player2.length) : snakeBaseSpeed(player2.length)) * speedMultFor(player2, boost2);
+    const spd2=(boost2 ? snakeBoostSpeed(player2.length, player2) : snakeBaseSpeed(player2.length)) * speedMultFor(player2, boost2);
     moveSnakeFixed(player2, player2.angle, spd2);
     closeLoopBody(player2, dt);
     clampPlayer(player2);
+
+    // ── Circle barrier: steer P2 away from enemy circle formations ──
+    if(!player2.dead){
+      const ph2 = snakeHead(player2);
+      for(const circler of npcs){
+        if(circler.dead || circler.npcMode !== 'circle_me' || circler.team === player2.team) continue;
+        const cmdr = (circler.commanderAssignment && !circler.commanderAssignment.dead) ? circler.commanderAssignment : [player].find(p => p && !p.dead && sameTeam(p, circler));
+        if(!cmdr) continue;
+        const cx = snakeHead(cmdr).x, cy = snakeHead(cmdr).y;
+        const totalCircle = npcs.filter(n => !n.dead && n.team === circler.team && n.npcMode === 'circle_me').length || 1;
+        const bodyDiam = snakeRadius(circler.length) * 3.6;
+        const barrierR = Math.max(160, (totalCircle * bodyDiam) / (2 * Math.PI)) + snakeRadius(player2.length) * 2;
+        const ddx2 = ph2.x - cx, ddy2 = ph2.y - cy;
+        const dist2b = Math.hypot(ddx2, ddy2);
+        if(dist2b < barrierR && dist2b > 10){
+          const blend2 = Math.max(0, 1 - dist2b / barrierR) * 1.2;
+          const pushAngle2 = Math.atan2(ddy2, ddx2);
+          const dif2 = angDiff(player2.angle, pushAngle2);
+          player2.angle += dif2 * blend2 * Math.min(dt * 6, 0.5);
+        }
+        break;
+      }
+    }
 
     // P2 camera center in world space
     const h2=snakeHead(player2);
@@ -1454,8 +2337,63 @@ function update(dt){
     document.getElementById('hudP2Kills').textContent='\u2694\uFE0F Kills: '+kills2;
     document.getElementById('hudP2Score').textContent='Score: '+Math.floor(runScore2);
     document.getElementById('hudP2Boost').textContent=canBoost2?(boost2?'\uD83D\uDE80 Boosting!':'\u26A1 SHIFT/Enter: Boost'):'Need '+BOOST_MIN_LEN;
-    const zt2=Math.max(0,Math.ceil(ZONE_FULL_TIME-gameTime));
-    document.getElementById('hudP2Zone').textContent=gameTime<ZONE_FULL_TIME?'\u2B55 Zone in '+zt2+'s':'\u26A0\uFE0F Zone closing!';
+    if(teamMode){
+      const rem2=Math.max(0,Math.ceil(TEAM_MODE_DURATION-gameTime));
+      document.getElementById('hudP2Zone').textContent='\u23F1\uFE0F Team mode '+rem2+'s';
+    } else {
+      const zt2=Math.max(0,Math.ceil(ZONE_FULL_TIME-gameTime));
+      document.getElementById('hudP2Zone').textContent=gameTime<ZONE_FULL_TIME?'\u2B55 Zone in '+zt2+'s':'\u26A0\uFE0F Zone closing!';
+    }
+  }
+
+  if(teamMode){
+    if(p1alive) paintFromSnake(player);
+    if(p2alive) paintFromSnake(player2);
+    for(const npc of npcs) if(!npc.dead) paintFromSnake(npc);
+  }
+
+  // ── AI Commander orders ──
+  if(teamMode && allyCommanderEnabled && allyCommander){
+    if(allyCommander.dead){
+      const surviving = npcs.filter(n => !n.dead && n.team === allyCommander.team && !n.isAllyCommander);
+      if(surviving.length > 0){
+        allyCommander = surviving[Math.floor(Math.random() * surviving.length)];
+        allyCommander.isAllyCommander = true;
+        allyCommander.name = '🤖 Commander';
+        allyCmdTimer = 5;
+      } else {
+        allyCommander = null;
+        allyCommanderEnabled = false;
+        const btn = document.getElementById('addBotCmdBtn');
+        if(btn){ btn.textContent = '🤖 Add Bot Commander'; btn.classList.remove('active'); }
+      }
+    } else {
+      allyCmdTimer -= dt;
+      if(allyCmdTimer <= 0){
+        issueAllyAICommanderOrder();
+        allyCmdTimer = 15 + Math.random() * 14;
+      }
+    }
+  }
+  if(teamMode && enemyCommander){
+    if(enemyCommander.dead){
+      // Pick a new commander from surviving enemy bots
+      const surviving = npcs.filter(n => !n.dead && n.team === enemyCommander.team && !n.isCommander);
+      if(surviving.length > 0){
+        enemyCommander = surviving[Math.floor(Math.random() * surviving.length)];
+        enemyCommander.isCommander = true;
+        enemyCommander.name = '⭐ General';
+        enemyCmdTimer = 5;
+      } else {
+        enemyCommander = null;
+      }
+    } else {
+      enemyCmdTimer -= dt;
+      if(enemyCmdTimer <= 0){
+        issueAICommanderOrder();
+        enemyCmdTimer = 15 + Math.random() * 14; // next order in 15–29s
+      }
+    }
   }
 
   // ── NPCs ──
@@ -1466,50 +2404,52 @@ function update(dt){
     if(player.inSecretMap) eatDots(player, secretDots, SECRET_DOT_VALUE, false, eatRadiusMult(player));
     else {
       eatDots(player, foodDots, FOOD_VALUE, false, eatRadiusMult(player));
-      eatDots(player, deathDots, DEATH_DOT_VALUE, false, eatRadiusMult(player));
+      eatDots(player, deathDots, DEATH_DOT_VALUE, true, eatRadiusMult(player));
     }
   }
   if(p2alive){
     if(player2.inSecretMap) eatDots(player2, secretDots, SECRET_DOT_VALUE, false, eatRadiusMult(player2));
     else {
       eatDots(player2, foodDots, FOOD_VALUE, false, eatRadiusMult(player2));
-      eatDots(player2, deathDots, DEATH_DOT_VALUE, false, eatRadiusMult(player2));
+      eatDots(player2, deathDots, DEATH_DOT_VALUE, true, eatRadiusMult(player2));
     }
   }
-  for(const npc of npcs) if(!npc.dead){ eatDots(npc,foodDots,FOOD_VALUE,false,eatRadiusMult(npc)); eatDots(npc,deathDots,DEATH_DOT_VALUE,false,eatRadiusMult(npc)); }
+  for(const npc of npcs) if(!npc.dead){ eatDots(npc,foodDots,FOOD_VALUE,false,eatRadiusMult(npc)); eatDots(npc,deathDots,DEATH_DOT_VALUE,true,eatRadiusMult(npc)); }
 
   if(p1alive) collectPowerUps(player);
   if(p2alive) collectPowerUps(player2);
   for(const npc of npcs) if(!npc.dead) collectPowerUps(npc);
 
   // ── Gradual growth: drain pendingGrowth into actual length ──
-  if(p1alive && player.pendingGrowth>0){ const g=Math.min(player.pendingGrowth,GROWTH_RATE*growthRateMult(player)*dt); player.length+=g; player.pendingGrowth-=g; }
-  if(p2alive && player2.pendingGrowth>0){ const g=Math.min(player2.pendingGrowth,GROWTH_RATE*growthRateMult(player2)*dt); player2.length+=g; player2.pendingGrowth-=g; }
-  for(const npc of npcs) if(!npc.dead && npc.pendingGrowth>0){ const g=Math.min(npc.pendingGrowth,GROWTH_RATE*growthRateMult(npc)*dt); npc.length+=g; npc.pendingGrowth-=g; }
+  const _growRate = teamMode ? GROWTH_RATE*0.42 : GROWTH_RATE;
+  if(p1alive && player.pendingGrowth>0){ const g=Math.min(player.pendingGrowth,_growRate*growthRateMult(player)*dt); player.length+=g; player.pendingGrowth-=g; }
+  if(p2alive && player2.pendingGrowth>0){ const g=Math.min(player2.pendingGrowth,_growRate*growthRateMult(player2)*dt); player2.length+=g; player2.pendingGrowth-=g; }
+  for(const npc of npcs) if(!npc.dead && npc.pendingGrowth>0){ const g=Math.min(npc.pendingGrowth,_growRate*growthRateMult(npc)*dt); npc.length+=g; npc.pendingGrowth-=g; }
 
-  // World expands and more NPCs appear as player grows
-  const biggestLen = Math.max(
-    player&&!player.dead ? player.length : 0,
-    player2&&!player2.dead ? player2.length : 0);
-  if(biggestLen > maxPlayerLen) maxPlayerLen = biggestLen;
-  const grow = Math.max(0, maxPlayerLen - BASE_LENGTH);
-  const targetWorld = worldSizeForLength(maxPlayerLen);
-  if(targetWorld > worldSize){
-    worldSize += (targetWorld - worldSize) * Math.min(dt * 1.2, 1);
-    zoneRadius = Math.max(zoneRadius, worldSize * 0.75);
-  }
-  // Spawn extra NPCs gradually — throttled to once per second
-  const targetNpcs = Math.min(MAX_NPC_COUNT, NPC_COUNT + Math.floor(grow * 8));
-  npcSpawnTimer-=dt;
-  if(npcSpawnTimer<=0){
-    npcSpawnTimer=1.0;
-    // Count live npcs without filter()
-    let liveCount=0; for(const n of npcs) if(!n.dead) liveCount++;
-    if(liveCount < targetNpcs){
-      const pos2 = findSafeSpawnPos(400);
-      const npc = makeSnake(randNpcName(), pos2.x, pos2.y, Math.floor(rng()*SKINS.length), false);
-      npc.length = randomNpcSpawnLength();
-      npcs.push(npc);
+  if(!teamMode){
+    const biggestLen = Math.max(
+      player&&!player.dead ? player.length : 0,
+      player2&&!player2.dead ? player2.length : 0);
+    if(biggestLen > maxPlayerLen) maxPlayerLen = biggestLen;
+    const grow = Math.max(0, maxPlayerLen - BASE_LENGTH);
+    const targetWorld = worldSizeForLength(maxPlayerLen);
+    if(targetWorld > worldSize){
+      worldSize += (targetWorld - worldSize) * Math.min(dt * 1.2, 1);
+      zoneRadius = Math.max(zoneRadius, worldSize * 0.75);
+    }
+    const targetNpcs = Math.min(MAX_NPC_COUNT, NPC_COUNT + Math.floor(grow * 8));
+    if(!teamMode){
+      npcSpawnTimer-=dt;
+      if(npcSpawnTimer<=0){
+        npcSpawnTimer=1.0;
+        let liveCount=0; for(const n of npcs) if(!n.dead) liveCount++;
+        if(liveCount < targetNpcs){
+          const pos2 = findSafeSpawnPos(400);
+          const npc = makeSnake(randNpcName(), pos2.x, pos2.y, Math.floor(rng()*SKINS.length), false);
+          npc.length = Math.min(9000, randomNpcSpawnLength());
+          npcs.push(npc);
+        }
+      }
     }
   }
   // Food count scales with world size — spawn at most 5 per frame
@@ -1540,7 +2480,11 @@ function update(dt){
   powerUpSpawnTimer -= dt;
   if(powerUpSpawnTimer <= 0){
     powerUpSpawnTimer = POWERUP_SPAWN_INTERVAL;
-    if(powerUps.length < POWERUP_MAX_COUNT) powerUps.push(spawnPowerUp());
+    if(powerUps.length < POWERUP_MAX_COUNT){
+      powerUps.push(spawnPowerUp(player));
+      if(twoPlayerMode && player2 && !player2.dead && powerUps.length < POWERUP_MAX_COUNT)
+        powerUps.push(spawnPowerUp(player2));
+    }
   }
 
   checkCollisions();
@@ -1556,7 +2500,11 @@ function update(dt){
   activeEvents = activeEvents.filter(ev => gameTime < ev.end);
 
   if(eventActive('powersurge') && powerUps.length < POWERUP_MAX_COUNT){
-    if(rng() < dt * 1.2) powerUps.push(spawnPowerUp());
+    if(rng() < dt * 1.2){
+      powerUps.push(spawnPowerUp(player));
+      if(twoPlayerMode && player2 && !player2.dead && powerUps.length < POWERUP_MAX_COUNT)
+        powerUps.push(spawnPowerUp(player2));
+    }
   }
 
   for(let i=floatingTexts.length-1; i>=0; i--){
@@ -1569,9 +2517,10 @@ function update(dt){
   if(screenShake>0) screenShake = Math.max(0, screenShake - dt*28);
 
   updateMusicMood(p1alive ? player : null);
+  sendMultiplayerState(dt);
 
   // NPC zone damage
-  if(zoneActive){
+  if(zoneActive && !teamMode){
     for(const npc of npcs){
       if(npc.dead) continue;
       const nh=snakeHead(npc);
@@ -1705,8 +2654,22 @@ function closeLoopBody(snake, dt){
 function clampPlayer(snake){
   const h = snakeHead(snake);
   const mapSize = snake.inSecretMap ? SECRET_WORLD_SIZE : worldSize;
-  const hitEdge = h.x <= 10 || h.x >= mapSize - 10 || h.y <= 10 || h.y >= mapSize - 10;
+  const hitLeft  = h.x <= 10;
+  const hitRight = h.x >= mapSize - 10;
+  const hitTop   = h.y <= 10;
+  const hitBot   = h.y >= mapSize - 10;
+  const hitEdge  = hitLeft || hitRight || hitTop || hitBot;
   if(hitEdge){
+    if(teamMode){
+      // Bounce: reflect angle off the hit wall
+      let a = snake.angle;
+      if(hitLeft || hitRight) a = Math.PI - a;
+      if(hitTop  || hitBot)   a = -a;
+      snake.angle = a;
+      h.x = Math.max(11, Math.min(mapSize - 11, h.x));
+      h.y = Math.max(11, Math.min(mapSize - 11, h.y));
+      return;
+    }
     if(snake.inSecretMap) exitSecretMap(snake);
     else enterSecretMap(snake);
     return;
@@ -1717,25 +2680,42 @@ function clampPlayer(snake){
 function clampNpc(snake){
   const h=snakeHead(snake);
   if(h.x<10||h.x>worldSize-10||h.y<10||h.y>worldSize-10){
-    snake.npcAngle=Math.atan2(worldSize/2-h.y, worldSize/2-h.x);
-    snake.npcMode='zone';
+    if(teamMode){
+      // Bounce off wall
+      let a = snake.npcAngle;
+      if(h.x<10||h.x>worldSize-10) a = Math.PI - a;
+      if(h.y<10||h.y>worldSize-10) a = -a;
+      snake.npcAngle = a;
+      h.x = Math.max(11, Math.min(worldSize-11, h.x));
+      h.y = Math.max(11, Math.min(worldSize-11, h.y));
+    } else {
+      snake.npcAngle=Math.atan2(worldSize/2-h.y, worldSize/2-h.x);
+      snake.npcMode='zone';
+    }
   }
 }
 
 function eatDots(snake, dots, value, instantGrowth, radiusMult){
   const h=snakeHead(snake);
-  const r=snakeRadius(snake.length) * (radiusMult || 1);
+  const r=snakeRadius(snake.length, snake) * (radiusMult || 1);
   for(let i=dots.length-1; i>=0; i--){
     const d=dots[i];
     const dx=h.x-d.x, dy=h.y-d.y;
     if(dx*dx+dy*dy<(r+d.r)*(r+d.r)){
       const gain = d.value!=null ? d.value : value;
-      if(instantGrowth) snake.length += gain;
-      else snake.pendingGrowth += gain;
+      if(teamMode){
+        snake.bulk = (snake.bulk||0) + gain*12;
+        // Cap NPC bulk so bots never paint a radius covering the whole map
+        if(!snake.isPlayer) snake.bulk = Math.min(snake.bulk, FATNESS_LEN_CAP);
+        snake.pendingGrowth += gain*0.28;
+      } else {
+        if(instantGrowth) snake.length += gain;
+        else snake.pendingGrowth += gain;
+      }
       const scoreBase = Math.max(1, Math.floor(gain * (gain >= 100 ? 1 : 18)));
       addScoreForSnake(snake, scoreBase, gain>=100?'BONUS':'');
       if(snake===player){
-        if(d.value!=null && d.value >= DEATH_DOT_VALUE) advanceObjective('death', 1);
+        if(dots === deathDots) advanceObjective('death', 1);
         else advanceObjective('dots', 1);
       }
       dots.splice(i,1);
@@ -1746,60 +2726,1364 @@ function eatDots(snake, dots, value, instantGrowth, radiusMult){
 // =====================================================
 //  NPC AI
 // =====================================================
-function updateNpc(npc, dt){
-  npc.npcTurnTimer-=dt; npc.npcModeTimer-=dt;
-  const h=snakeHead(npc);
+//  AI COMMANDER (enemy general)
+// =====================================================
+function issueAllyAICommanderOrder(){
+  if(!allyCommander || allyCommander.dead) return;
+  const cmdTeam = allyCommander.team;
+  const enemies = npcs.filter(n => !n.dead && n.team !== cmdTeam)
+    .concat([player, player2].filter(p => p && !p.dead && p.team !== cmdTeam));
 
-  // Collect human players as potential targets/threats
+  const allies = npcs.filter(n => !n.dead && n.team === cmdTeam);
+  const allyCount  = allies.length;
+  const enemyCount = enemies.length;
+
+  let ownCells = 0, enemyCells = 0;
+  if(teamGrid){
+    const ownCell = cmdTeam === 'red' ? 1 : 2;
+    const foeCell = cmdTeam === 'red' ? 2 : 1;
+    for(let i = 0; i < teamGrid.length; i++){
+      if(teamGrid[i] === ownCell) ownCells++;
+      else if(teamGrid[i] === foeCell) enemyCells++;
+    }
+  }
+
+  let action;
+  const losing      = enemyCells > ownCells * 1.3;
+  const winning     = ownCells > enemyCells * 1.3;
+  const outnumbered = allyCount < enemyCount * 0.6;
+  const overwhelming = allyCount > enemyCount * 1.5;
+
+  if(outnumbered && losing){
+    action = 'fallback';
+  } else if(overwhelming){
+    const roll = Math.random();
+    if(roll < 0.3) action = 'wave';
+    else if(roll < 0.55) action = 'line_fwd';
+    else if(roll < 0.7) action = 'hunt';
+    else action = 'sacrifice';
+  } else if(losing){
+    const roll = Math.random();
+    if(roll < 0.4) action = 'raid';
+    else if(roll < 0.65) action = 'line_fwd';
+    else action = 'hunt';
+  } else if(winning){
+    const roll = Math.random();
+    if(roll < 0.4) action = 'guard_cmd';
+    else if(roll < 0.7) action = 'raid';
+    else action = 'wave';
+  } else {
+    const roll = Math.random();
+    if(roll < 0.25) action = 'hunt';
+    else if(roll < 0.45) action = 'raid';
+    else if(roll < 0.6) action = 'wave';
+    else if(roll < 0.72) action = 'scatter';
+    else if(roll < 0.85) action = 'line_fwd';
+    else action = 'guard_cmd';
+  }
+
+  // Apply to all living NPCs on allied team — commander directs others, not itself
+  let rank = 0;
+  for(const npc of npcs){
+    if(npc.dead || npc.team !== cmdTeam) continue;
+    if(npc.isAllyCommander) continue; // commander doesn't receive its own orders
+    npc.voiceBoostForced = true;
+    npc.voiceCmdLocked = true;
+    npc.voiceCmdExpiry = Infinity;
+    npc.npcMode = action;
+    npc.npcModeTimer = VOICE_CMD_DURATION + 1;
+    npc.npcTarget = null;
+    if(action === 'hunt' || action === 'sacrifice'){
+      const bh = snakeHead(npc);
+      let bestD = Infinity, tgt = null;
+      for(const s of npcs){ if(s.dead || s.team === cmdTeam) continue; const d=Math.hypot(snakeHead(s).x-bh.x,snakeHead(s).y-bh.y); if(d<bestD){bestD=d;tgt=snakeHead(s);} }
+      for(const hp of [player,player2]){ if(!hp||hp.dead||hp.team===cmdTeam) continue; const d=Math.hypot(snakeHead(hp).x-bh.x,snakeHead(hp).y-bh.y); if(d<bestD){bestD=d;tgt=snakeHead(hp);} }
+      npc.npcTarget = tgt;
+      npc.huntRank = rank;
+    }
+    if(action === 'wave')  npc.waveRank = rank;
+    if(action === 'guard_cmd') npc.guardRank = rank;
+    if(action === 'fallback') npc.fallbackRank = rank;
+    if(/^line_/.test(action)) npc.lineAttackRank = rank;
+    rank++;
+  }
+
+  const label = {hunt:'ATTACK!',wave:'WAVE ATTACK!',raid:'EAT THEIR LAND!',
+    fallback:'FALL BACK!',guard_cmd:'DEFEND!',scatter:'SCATTER!',sacrifice:'CHARGE!',
+    line_fwd:'LINE CHARGE FORWARD!',guard_cmd:'DEFEND!'
+  }[action] || action.toUpperCase();
+  const teamColor = cmdTeam === 'red' ? '#ff8888' : '#88aaff';
+  const toast = document.getElementById('voiceToast');
+  if(toast){
+    toast.style.borderColor = teamColor;
+    toast.innerHTML = `🤖 <b style="color:${teamColor}">BOT COMMANDER</b>: <span style="font-size:.8rem;opacity:.9">→ ${label}</span>`;
+    toast.style.display = 'block';
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(()=>{ toast.style.display='none'; }, 3500);
+  }
+}
+
+// =====================================================
+function issueAICommanderOrder(){
+  if(!enemyCommander || enemyCommander.dead) return;
+  const cmdTeam = enemyCommander.team;
+  const enemies = npcs.filter(n => !n.dead && n.team !== cmdTeam)
+    .concat([player, player2].filter(p => p && !p.dead && p.team !== cmdTeam));
+
+  // Evaluate battlefield state
+  const allies = npcs.filter(n => !n.dead && n.team === cmdTeam);
+  const allyCount  = allies.length;
+  const enemyCount = enemies.length;
+
+  // Territory: how much does the enemy team own?
+  let ownCells = 0, enemyCells = 0;
+  if(teamGrid){
+    const ownCell = cmdTeam === 'red' ? 1 : 2;
+    const foeCell = cmdTeam === 'red' ? 2 : 1;
+    for(let i = 0; i < teamGrid.length; i++){
+      if(teamGrid[i] === ownCell) ownCells++;
+      else if(teamGrid[i] === foeCell) enemyCells++;
+    }
+  }
+
+  // Pick the smartest action for the situation
+  let action;
+  const losing = enemyCells > ownCells * 1.3;   // enemy has much more territory
+  const winning = ownCells > enemyCells * 1.3;   // we have much more territory
+  const outnumbered = allyCount < enemyCount * 0.6;
+  const overwhelming = allyCount > enemyCount * 1.5;
+
+  if(outnumbered && losing){
+    action = 'fallback';
+  } else if(overwhelming){
+    // Overwhelming numbers — pick aggressive formation
+    const roll = Math.random();
+    if(roll < 0.3) action = 'wave';
+    else if(roll < 0.55) action = 'line_fwd';
+    else if(roll < 0.7) action = 'hunt';
+    else action = 'sacrifice';
+  } else if(losing){
+    // We're losing territory — raid aggressively
+    const roll = Math.random();
+    if(roll < 0.4) action = 'raid';
+    else if(roll < 0.65) action = 'line_fwd';
+    else action = 'hunt';
+  } else if(winning){
+    // Comfortably ahead — defend and eat more land
+    const roll = Math.random();
+    if(roll < 0.4) action = 'guard_cmd';
+    else if(roll < 0.7) action = 'raid';
+    else action = 'wave';
+  } else {
+    // Even — mixed tactics
+    const roll = Math.random();
+    if(roll < 0.25) action = 'hunt';
+    else if(roll < 0.45) action = 'raid';
+    else if(roll < 0.6) action = 'wave';
+    else if(roll < 0.72) action = 'scatter';
+    else if(roll < 0.85) action = 'line_fwd';
+    else action = 'guard_cmd';
+  }
+
+  // Apply to all living NPCs on commander's team (same logic as applyVoiceCommand)
+  let rank = 0;
+  for(const npc of npcs){
+    if(npc.dead || npc.team !== cmdTeam) continue;
+    npc.voiceBoostForced = true;
+    npc.voiceCmdLocked = true;
+    npc.voiceCmdExpiry = Infinity;
+    npc.npcMode = action;
+    npc.npcModeTimer = VOICE_CMD_DURATION + 1;
+    npc.npcTarget = null;
+    if(action === 'hunt'){
+      // Each bot targets its own nearest enemy
+      const bh = snakeHead(npc);
+      let bestD = Infinity, tgt = null;
+      for(const e of enemies){
+        const d = Math.hypot(snakeHead(e).x - bh.x, snakeHead(e).y - bh.y);
+        if(d < bestD){ bestD = d; tgt = snakeHead(e); }
+      }
+      npc.npcTarget = tgt;
+      npc.huntRank = rank;
+    }
+    if(action === 'wave')  npc.waveRank = rank;
+    if(action === 'guard_cmd') npc.guardRank = rank;
+    if(action === 'fallback') npc.fallbackRank = rank;
+    if(/^line_/.test(action)) npc.lineAttackRank = rank;
+    rank++;
+  }
+
+  // Show a toast so the player can see the enemy general's order
+  const label = {hunt:'ATTACK!',wave:'WAVE ATTACK!',raid:'EAT THEIR LAND!',
+    fallback:'FALL BACK!',guard_cmd:'DEFEND!',scatter:'SCATTER!',sacrifice:'CHARGE!',
+    line_fwd:'LINE CHARGE FORWARD!',line_left:'LINE CHARGE LEFT!',line_right:'LINE CHARGE RIGHT!'
+  }[action] || action.toUpperCase();
+  const teamColor = cmdTeam === 'red' ? '#ff4444' : '#4488ff';
+  const toast = document.getElementById('voiceToast');
+  if(toast){
+    toast.style.borderColor = teamColor;
+    toast.innerHTML = `🎖️ <b style="color:${teamColor}">ENEMY GENERAL</b>: <span style="font-size:.8rem;opacity:.9">→ ${label}</span>`;
+    toast.style.display = 'block';
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(()=>{ toast.style.display='none'; }, 3500);
+  }
+}
+
+// =====================================================
+//  VOICE COMMANDS
+// =====================================================
+const ACTION_EMOJI = {
+  hunt:'⚔️', guard_cmd:'🛡️', chain:'🔗', scatter:'💨',
+  raid:'🏴', food:'🍕', fallback:'🏃', wave:'🌊', sacrifice:'☠️', follow:'🚶', boost:'🚀',
+  circle_me:'⭕', circle_enemy:'🔄', line:'📏', meteor:'☄️', run:'💨',
+  line_fwd:'➡️', line_left:'⬅️', line_right:'➡️', line_back:'⬅️', line_up:'⬆️', line_down:'⬇️',
+  charge_atk:'⚡',
+  diamond:'💎', wedge:'🔺', wall:'🧱', split:'✂️', pincer:'🦀', bait:'🎣', decoy:'🎭', hold_line:'🛑',
+  eat_all:'🍽️', grow:'📈', push_map:'🗺️', defend_home:'🏠', flood:'🌊', tornado:'🌀', snake_train:'🚂', kamikaze_one:'💣', bodyguard:'🫡'
+};
+const BOT_REPLIES = [
+  'Yes general!', 'Yes commander!', 'Yes sir!', 'Right away sir!',
+  'On it commander!', 'Understood sir!', 'For the team sir!', 'You got it general!'
+];
+
+function speakBotReply(){
+  if(!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance(BOT_REPLIES[Math.floor(Math.random()*BOT_REPLIES.length)]);
+  msg.pitch = 0.18 + Math.random()*0.25;   // deep funky robot voice
+  msg.rate  = 0.72 + Math.random()*0.22;
+  msg.volume = 0.85;
+  // Try to pick a robotic-sounding voice
+  const voices = window.speechSynthesis.getVoices();
+  const funky = voices.find(v=>/google|microsoft|daniel|fred|zarvox|trinoids|cellos/i.test(v.name));
+  if(funky) msg.voice = funky;
+  window.speechSynthesis.speak(msg);
+}
+
+function applyVoiceCommand(team, transcript){
+  const t = transcript.toLowerCase();
+  let action = null;
+  const wantBoost = /\b(boost|turbo|speed up|go fast|sprint|full speed)\b/.test(t);
+
+  // ── Follow me ──
+  if(/\b(follow me|follow|come here|come to me|stay with me|stay close|stick with me)\b/.test(t))
+    action = 'follow';
+  // ── Charge Attack (line up side by side + hunt together) ──
+  else if(/\b(charge attack|charge atk|line up side by side|side by side (and )?charge|formation charge|squad charge|group charge|team charge)\b/.test(t))
+    action = 'charge_atk';
+  // ── Diamond formation ──
+  else if(/\b(diamond( formation)?|diamond shape)\b/.test(t))
+    action = 'diamond';
+  // ── Wedge / Arrow formation ──
+  else if(/\b(wedge( formation)?|arrow( formation)?|v formation|v-formation|v shape|spear(head)?)\b/.test(t))
+    action = 'wedge';
+  // ── Wall ──
+  else if(/\b(wall|shield wall|form a wall|make a wall|hold the line|hold line)\b/.test(t))
+    action = 'wall';
+  // ── Split up ──
+  else if(/\b(split up|split( the )? team|divide|two groups|two squads|divide and conquer)\b/.test(t))
+    action = 'split';
+  // ── Pincer / Flank ──
+  else if(/\b(pincer|flank them|flanking|surround from sides|two sides|left and right|encircle from sides)\b/.test(t))
+    action = 'pincer';
+  // ── Bait and switch ──
+  else if(/\b(bait( and switch)?|lure|draw them (out|in)|ambush|bait switch)\b/.test(t))
+    action = 'bait';
+  // ── Decoy ──
+  else if(/\b(decoy|distract|fake attack|dummy run|draw their attention)\b/.test(t))
+    action = 'decoy';
+  // ── Hold the line ──
+  else if(/\b(hold( the)? line|stand (your )?ground|stationary (wall|barrier)|don'?t move|stop moving)\b/.test(t))
+    action = 'hold_line';
+  // ── Eat everything ──
+  else if(/\b(eat everything|eat all( the)? (food|dots)|vacuum|clean up|grab everything|collect everything)\b/.test(t))
+    action = 'eat_all';
+  // ── Grow grow grow ──
+  else if(/\b(grow( (grow|up|big|bigger|huge|massive))+|get big|get huge|get massive|bulk up|feed yourselves)\b/.test(t))
+    action = 'grow';
+  // ── Push left / right ──
+  else if(/\b(push (all the way )?(left|west)|flood left|swarm left|push the left)\b/.test(t))
+    action = 'push_map_left';
+  else if(/\b(push (all the way )?(right|east)|flood right|swarm right|push the right)\b/.test(t))
+    action = 'push_map_right';
+  // ── Defend home ──
+  else if(/\b(defend (home|base|territory|our (land|side))|return (home|to base|to our side|to our land)|guard (home|base|territory))\b/.test(t))
+    action = 'defend_home';
+  // ── Flood the map ──
+  else if(/\b(flood (the map|everything|the whole map)|spread (out )?everywhere|cover (the map|everything)|fill the map)\b/.test(t))
+    action = 'flood';
+  // ── Tornado ──
+  else if(/\b(tornado|spiral( out)?|spin out|vortex|twister)\b/.test(t))
+    action = 'tornado';
+  // ── Snake train ──
+  else if(/\b(snake train|train formation|single file|head to tail|one big (snake|line|train))\b/.test(t))
+    action = 'snake_train';
+  // ── Kamikaze one ──
+  else if(/\b(kamikaze (one|1|a single|just one)|send one|one (bot|worm) (dies?|sacrifice|kamikaze)|sacrifice one)\b/.test(t))
+    action = 'kamikaze_one';
+  // ── Bodyguard ──
+  else if(/\b(bodyguard|stick beside( me)?|stay (right )?beside( me)?|guard my (side|flank)|escort me)\b/.test(t))
+    action = 'bodyguard';
+  // ── Charge / Attack / Kill ──
+  else if(/\b(attack|charge|kill|fight|destroy|annihilate|obliterate|hunt|help me kill|kill them)\b/.test(t))
+    action = 'hunt';
+  // ── Raid / Eat land ──
+  else if(/\b(eat their land|focus on eating|take their land|raid|invade|push|capture)\b/.test(t))
+    action = 'raid';
+  // ── Wave formation ──
+  else if(/\b(wave|make a wave|wave of worms|worm wave|spread out and attack)\b/.test(t))
+    action = 'wave';
+  // ── Huge circle around me ──
+  else if(/\b(circle (around )?me|circle up|huge circle|orbit me|surround me|ring around me)\b/.test(t))
+    action = 'circle_me';
+  // ── Circle around enemy team ──
+  else if(/\b(circle (around )?(the |all )?(other|enemy|them|their)|encircle|surround them|ring around (them|the enemy|the other team))\b/.test(t))
+    action = 'circle_enemy';
+  // ── Huge line of worms ──
+  else if(/\b(huge line|line of worms|form a line|make a line|battle line|firing line)\b/.test(t))
+    action = 'line';
+  // ── Line side by side + attack direction ──
+  else if(/\b(line (up |side by side |and )?(attack|charge|go|move|march|push|rush)?(ing)? (forward|straight|ahead|forwards?))\b|\b(forward line|line forward|charge straight|charge (straight )?ahead|line charge)\b/.test(t))
+    action = 'line_fwd';
+  else if(/\b(line (up |side by side |and )?(attack|charge|go|move|march|push|rush)?(ing)? (left|to the left|leftward))\b|\b(left line|line left|charge left|flank left|attack left)\b/.test(t))
+    action = 'line_left';
+  else if(/\b(line (up |side by side |and )?(attack|charge|go|move|march|push|rush)?(ing)? (right|to the right|rightward))\b|\b(right line|line right|charge right|flank right|attack right)\b/.test(t))
+    action = 'line_right';
+  else if(/\b(line (up |side by side |and )?(attack|charge|go|move|march|push|rush)?(ing)? (back(ward)?s?|behind|retreat))\b|\b(back line|line back|charge back|push back|attack behind)\b/.test(t))
+    action = 'line_back';
+  else if(/\b(line (up |side by side |and )?(attack|charge|go|move|march|push|rush)?(ing)? (up|north|upward))\b|\b(line up and charge|charge up|push up|go up( top)?|attack up|line north)\b/.test(t))
+    action = 'line_up';
+  else if(/\b(line (up |side by side |and )?(attack|charge|go|move|march|push|rush)?(ing)? (down|south|downward))\b|\b(line down|charge down|push down|go down|attack down|line south)\b/.test(t))
+    action = 'line_down';
+  // ── Meteor shower / Worm rain ──
+  else if(/\b(meteor( shower)?|worm rain|rain of worms|drop (from )?above|bombardment|rain)\b/.test(t))
+    action = 'meteor';
+  // ── Directional movement ──
+  else if(/\b(go up|move up|head up|go north|north|(^|\s)up\b)/.test(t))
+    action = 'dir_up';
+  else if(/\b(go down|move down|head down|go south|south|(^|\s)down\b)/.test(t))
+    action = 'dir_down';
+  else if(/\b(go left|move left|head left|go west|west|(^|\s)left\b)/.test(t))
+    action = 'dir_left';
+  else if(/\b(go right|move right|head right|go east|east|(^|\s)right\b)/.test(t))
+    action = 'dir_right';
+  // ── Run / Sprint forward ──
+  else if(/\b(run\b|sprint|go fast|full speed|max speed|charge forward|floor it)\b/.test(t))
+    action = 'run';
+  // ── Chain ──
+  else if(/\b(chain|worm chain|single file|line up|form up)\b/.test(t))
+    action = 'chain';
+  // ── Guard/Protect ──
+  else if(/\b(help me|protect me|defend|guard|shield|protect|hold)\b/.test(t))
+    action = 'guard_cmd';
+  // ── Fall back / Retreat ──
+  else if(/\b(fall back|retreat|pull back|go back|return to base)\b/.test(t))
+    action = 'fallback';
+  // ── Scatter / Run away ──
+  else if(/\b(scatter|run away|flee|spread|fan out|escape)\b/.test(t))
+    action = 'scatter';
+  // ── Sacrifice ──
+  else if(/\b(sacrifice|sacrifice worms|kamikaze|rush and die)\b/.test(t))
+    action = 'sacrifice';
+  // ── Stop / Eat food ──
+  else if(/\b(stop|stop attacking|stand by|wait|just eat|food|eat|chill)\b/.test(t))
+    action = 'food';
+  // ── Boost / Sprint ──
+  else if(wantBoost)
+    action = 'boost';
+
+  if(!action){
+    // Loose fallback: map ANY text to the closest matching action so bots always obey
+    const loosePairs = [
+      [/circle.?me|circle.?up|orbit.?me|surround.?me|ring.?me/i, 'circle_me'],
+      [/circle.?them|circle.?enemy|encircle|surround.?them|ring.?them/i, 'circle_enemy'],
+      [/meteor|worm.?rain|rain.?worm|bombardment/i, 'meteor'],
+      [/charge.?attack|charge.?atk|side.?by.?side|formation.?charge|squad.?charge|group.?charge|team.?charge/i, 'charge_atk'],
+      [/diamond/i, 'diamond'],
+      [/wedge|arrow.?form|v.?form|spearhead/i, 'wedge'],
+      [/wall|shield.?wall|hold.?the.?line/i, 'wall'],
+      [/split.?up|divide|two.?group|two.?squad/i, 'split'],
+      [/pincer|flank|two.?sides|left.?and.?right/i, 'pincer'],
+      [/bait|lure|ambush/i, 'bait'],
+      [/decoy|distract|fake/i, 'decoy'],
+      [/hold.?line|stand.?ground|stationary|don.?t.?move/i, 'hold_line'],
+      [/eat.?everything|eat.?all|vacuum|grab.?everything/i, 'eat_all'],
+      [/grow|get.?big|bulk.?up|feed.?yourself/i, 'grow'],
+      [/push.*(left|west)|flood.?left|swarm.?left/i, 'push_map_left'],
+      [/push.*(right|east)|flood.?right|swarm.?right/i, 'push_map_right'],
+      [/defend.?(home|base|territory)|return.?(home|base)/i, 'defend_home'],
+      [/flood.?map|spread.?everywhere|fill.?map/i, 'flood'],
+      [/tornado|spiral|vortex|twister/i, 'tornado'],
+      [/snake.?train|train.?form|head.?to.?tail/i, 'snake_train'],
+      [/kamikaze.?one|sacrifice.?one|send.?one/i, 'kamikaze_one'],
+      [/bodyguard|stick.?beside|stay.?beside|escort/i, 'bodyguard'],
+      [/line.?(fwd|forward|straight|ahead|charge)/i, 'line_fwd'],
+      [/line.?left|left.?line|flank.?left|charge.?left/i, 'line_left'],
+      [/line.?right|right.?line|flank.?right|charge.?right/i, 'line_right'],
+      [/line.?back|back.?line|charge.?back/i, 'line_back'],
+      [/line.?up|charge.?up|push.?up|go.?up/i, 'line_up'],
+      [/line.?down|charge.?down|push.?down|go.?down/i, 'line_down'],
+      [/huge.?line|line.?of.?worm|battle.?line|firing.?line/i, 'line'],
+      [/wave|wall|surge|flank/i, 'wave'],
+      [/chain|single.?file|form.?up/i, 'chain'],
+      [/sacrifice|kamikaze|crash.?into/i, 'sacrifice'],
+      [/scatter|fan.?out|split.?up/i, 'scatter'],
+      [/protect|defend|guard|shield|cover/i, 'guard_cmd'],
+      [/follow|come here|stick with|trail/i, 'follow'],
+      [/retreat|fall.?back|flee|pull.?back|withdraw|go back/i, 'fallback'],
+      [/land|territory|capture|claim|take.?over|invade|colonize/i, 'raid'],
+      [/eat|food|grab|collect|feed|nom|munch/i, 'food'],
+      [/\bup\b|go up|move up|north/i, 'dir_up'],
+      [/\bdown\b|go down|move down|south/i, 'dir_down'],
+      [/\bleft\b|go left|move left|west/i, 'dir_left'],
+      [/\bright\b|go right|move right|east/i, 'dir_right'],
+      [/run\b|sprint|full.?speed|floor.?it/i, 'run'],
+      [/boost|fast|speed|quick|turbo|hurry|rush/i, 'boost'],
+      [/attack|fight|kill|hunt|charge|destroy|eliminate|hit|strike|go|move|advance|push|get them|yes|do it|ok|ready|obey/i, 'hunt'],
+    ];
+    for(const [pat, act] of loosePairs){
+      if(pat.test(t)){ action = act; break; }
+    }
+    if(!action) action = 'hunt'; // absolute last resort: bots always listen
+  }
+
+  // Find nearest enemy as hunt target
+  let huntTgt = null;
+  if(action === 'hunt' || action === 'sacrifice' || action === 'wave'){
+    let bestD = Infinity;
+    const allies = [player, player2].filter(p => p && !p.dead && p.team === team);
+    const ref = allies.length ? snakeHead(allies[0]) : {x: worldSize/2, y: worldSize/2};
+    for(const s of npcs){
+      if(s.dead || s.team === team) continue;
+      const d = Math.hypot(snakeHead(s).x - ref.x, snakeHead(s).y - ref.y);
+      if(d < bestD){ bestD = d; huntTgt = snakeHead(s); }
+    }
+    for(const hp of [player, player2]){
+      if(!hp || hp.dead || hp.team === team) continue;
+      const d = Math.hypot(snakeHead(hp).x - ref.x, snakeHead(hp).y - ref.y);
+      if(d < bestD){ bestD = d; huntTgt = snakeHead(hp); }
+    }
+  }
+
+  // Apply to all living NPCs on this team
+  // In 2-player coop (both humans alive on same team), split bots 50/50 between P1 and P2
+  const humanCmdrs = [player, player2].filter(p => p && !p.dead && p.team === team);
+  const splitCommands = new Set(['follow', 'chain', 'guard_cmd', 'circle_me']);
+  let rank = 0;
+  let botCount = 0;
+  const isBoostOnly = action === 'boost';
+  for(const npc of npcs){
+    if(npc.dead || npc.team !== team) continue;
+    botCount++;
+    npc.voiceBoostForced = true; // always boost on any voice command
+    npc.voiceCmdLocked = true;
+    npc.playerCmdLocked = true; // player command always overrides bot commander
+    npc.voiceCmdExpiry = Infinity; // persist until a new command replaces this one
+    if(!isBoostOnly){
+      npc.npcMode = action;
+      npc.npcModeTimer = VOICE_CMD_DURATION + 1; // +1 so timer doesn't immediately expire
+      npc.npcTarget = null;
+      if(action === 'hunt' || action === 'sacrifice'){
+        // Each bot hunts its OWN nearest enemy so they spread out instead of clumping
+        const bh = snakeHead(npc);
+        let bestBotD = Infinity, botTgt = null;
+        for(const s of npcs){
+          if(s.dead || s.team === team) continue;
+          const bd = Math.hypot(snakeHead(s).x - bh.x, snakeHead(s).y - bh.y);
+          if(bd < bestBotD){ bestBotD = bd; botTgt = snakeHead(s); }
+        }
+        for(const hp of [player, player2]){
+          if(!hp || hp.dead || hp.team === team) continue;
+          const bd = Math.hypot(snakeHead(hp).x - bh.x, snakeHead(hp).y - bh.y);
+          if(bd < bestBotD){ bestBotD = bd; botTgt = snakeHead(hp); }
+        }
+        npc.npcTarget = botTgt || huntTgt;
+        npc.huntRank = rank;
+      }
+      // Assign half the bots to P1 and half to P2 for player-relative commands
+      if(splitCommands.has(action) && humanCmdrs.length >= 2){
+        npc.commanderAssignment = humanCmdrs[rank % 2];
+      } else {
+        npc.commanderAssignment = null;
+      }
+      if(action === 'wave')  npc.waveRank = rank++;
+      if(action === 'chain' || action === 'follow') npc.chainRank = rank++;
+      if(action === 'guard_cmd') npc.guardRank = rank++;
+      if(action === 'hunt') rank++;
+      if(action === 'fallback') npc.fallbackRank = rank++;
+      if(action === 'circle_me') npc.circleRank = rank++;
+      if(action === 'circle_enemy') npc.circleEnemyRank = rank++;
+      if(action === 'line') npc.lineRank = rank++;
+      if(action === 'meteor'){ const mr = rank++; npc.meteorRank = mr; npc.meteorAngle = mr * 2.399; } // golden-angle spread
+      if(/^line_(fwd|left|right|back|up|down)$/.test(action)) npc.lineAttackRank = rank++;
+      if(action === 'charge_atk') npc.chargeAtkRank = rank++;
+      if(/^(diamond|wedge|wall|split|pincer|hold_line|tornado|snake_train|bodyguard|push_map_left|push_map_right|defend_home|flood|bait|decoy|eat_all|grow)$/.test(action)) npc.formRank = rank++;
+      if(action === 'bodyguard') npc.bodyguardRank = rank;
+      if(action === 'kamikaze_one') npc.kamikazeOneRank = rank++;
+    }
+  }
+
+  // Bot talks back (only if there are bots to command)
+  if(botCount > 0) speakBotReply();
+
+  if(team === 'red'){
+    p1VoiceCmd = action; p1VoiceCmdTimer = VOICE_CMD_DURATION;
+    blinkMicButton('voiceMic1', action);
+  } else {
+    p2VoiceCmd = action; p2VoiceCmdTimer = VOICE_CMD_DURATION;
+    blinkMicButton('voiceMic2', action);
+  }
+  showVoiceToast(team, action, transcript);
+}
+
+function sameTeamByStr(a, b){ return a && b && a === b; }
+
+function showVoiceToast(team, action, transcript){
+  const toast = document.getElementById('voiceToast');
+  if(!toast) return;
+  const color = team === 'red' ? '#ff4444' : '#4488ff';
+  toast.style.borderColor = color;
+  if(!action){
+    toast.innerHTML = `❓ <b style="color:${color}">${team.toUpperCase()}</b>: <i>"${transcript}"</i><br><span style="font-size:.78rem;opacity:.7">Command not recognized — try again</span>`;
+  } else {
+    const emoji = ACTION_EMOJI[action] || '📢';
+    const labels = {hunt:'ATTACK!',guard_cmd:'PROTECT ME!',chain:'FORM CHAIN!',scatter:'SCATTER!',
+      raid:'EAT THEIR LAND!',food:'JUST EAT!',fallback:'FALL BACK!',wave:'WAVE ATTACK!',sacrifice:'SACRIFICE!',follow:'FOLLOW ME!',boost:'EVERYONE BOOST!',
+      circle_me:'HUGE CIRCLE AROUND ME!',circle_enemy:'CIRCLE THE ENEMY!',line:'BATTLE LINE!',meteor:'METEOR SHOWER!',run:'RUN FULL SPEED!',
+      line_fwd:'LINE UP & CHARGE FORWARD!',line_left:'LINE UP & CHARGE LEFT!',line_right:'LINE UP & CHARGE RIGHT!',
+      line_back:'LINE UP & CHARGE BACK!',line_up:'LINE UP & CHARGE UP!',line_down:'LINE UP & CHARGE DOWN!',
+      charge_atk:'LINE UP & CHARGE ATTACK!',
+      dir_up:'GO UP!',dir_down:'GO DOWN!',dir_left:'GO LEFT!',dir_right:'GO RIGHT!',
+      diamond:'DIAMOND FORMATION!', wedge:'WEDGE / ARROW FORMATION!', wall:'HOLD THE WALL!', split:'SPLIT INTO TWO GROUPS!',
+      pincer:'PINCER ATTACK!', bait:'BAIT AND SWITCH!', decoy:'SEND A DECOY!', hold_line:'HOLD THE LINE!',
+      eat_all:'EAT EVERYTHING!', grow:'GROW GROW GROW!', push_map_left:'PUSH LEFT!', push_map_right:'PUSH RIGHT!',
+      defend_home:'DEFEND HOME!', flood:'FLOOD THE MAP!', tornado:'TORNADO SPIRAL!', snake_train:'SNAKE TRAIN!',
+      kamikaze_one:'KAMIKAZE ONE!', bodyguard:'BODYGUARD ME!'};
+    toast.innerHTML = `${emoji} <b style="color:${color}">${team.toUpperCase()}</b>: <i>"${transcript}"</i><br><span style="font-size:.8rem;opacity:.9">→ ${labels[action]||action.toUpperCase()}</span>`;
+  }
+  toast.style.display = 'block';
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(()=>{ toast.style.display='none'; }, 4500);
+}
+
+function blinkMicButton(id, action){
+  const btn = document.getElementById(id);
+  if(!btn) return;
+  btn.classList.remove('listening');
+  btn.textContent = ACTION_EMOJI[action] || '✅';
+  setTimeout(()=>{ btn.textContent='🎙'; }, 3000);
+}
+
+let _micRecognizers = {};
+function initVoiceMic(btnId, team){
+  const btn      = document.getElementById(btnId);
+  const num      = btnId === 'voiceMic1' ? '1' : '2';
+  const listEl   = document.getElementById('voiceCmdList'+num);
+  const panel    = document.getElementById('voicePending'+num);
+  const audEl    = document.getElementById('vpAudio'+num);
+  const txtEl    = document.getElementById('vpTranscript'+num);
+  const sendBtn  = document.getElementById('vpSend'+num);
+  const cancelBtn= document.getElementById('vpCancel'+num);
+  const labelEl  = panel ? panel.querySelector('.vp-label') : null;
+  if(!btn) return;
+
+  // Show/hide command list on hover (only when panel not open)
+  btn.addEventListener('mouseenter', ()=>{ if(listEl && panel && panel.style.display==='none') listEl.style.display='block'; });
+  btn.addEventListener('mouseleave', ()=>{ if(listEl) listEl.style.display='none'; });
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let pendingTranscript = '';
+  let mediaRecorder = null;
+  let audioChunks   = [];
+  let recActive     = false;
+  let srDone        = false;
+
+  // Words to guess from when no speech is detected
+  const VOICE_GUESS_POOL = ['follow me','attack','charge','eat their land','wave','chain','protect me','fall back','scatter','stop'];
+  function guessTranscript(){ return VOICE_GUESS_POOL[Math.floor(Math.random()*VOICE_GUESS_POOL.length)]; }
+
+  // ── Send button: apply the stored transcript ──
+  if(sendBtn) sendBtn.addEventListener('click', e=>{
+    e.stopPropagation();
+    if(panel) panel.style.display='none';
+    if(!pendingTranscript) pendingTranscript = guessTranscript();
+    applyVoiceCommand(team, pendingTranscript);
+  });
+  if(cancelBtn) cancelBtn.addEventListener('click', e=>{
+    e.stopPropagation();
+    if(panel) panel.style.display='none';
+    pendingTranscript = '';
+  });
+
+  // ── Helper: show the review panel after recording stops ──
+  function showPendingPanel(audioBlob){
+    if(!panel) return;
+    // Audio playback
+    if(audEl && audioBlob){
+      const blobUrl = URL.createObjectURL(audioBlob);
+      audEl.src = blobUrl;
+      audEl.style.display = 'block';
+    } else if(audEl){
+      audEl.style.display = 'none';
+    }
+    // Transcript text
+    if(txtEl){
+      if(pendingTranscript){
+        txtEl.textContent = '"' + pendingTranscript + '"';
+      } else {
+        txtEl.textContent = '(listening...)';
+        // Poll for transcript for up to 3s
+        let polls = 0;
+        const iv = setInterval(()=>{
+          polls++;
+          if(pendingTranscript){ txtEl.textContent = '"' + pendingTranscript + '"'; clearInterval(iv); }
+          else if(polls > 30){    pendingTranscript = guessTranscript(); txtEl.textContent = '"' + pendingTranscript + '" (guessed)'; clearInterval(iv); }
+        }, 100);
+      }
+    }
+    if(labelEl) labelEl.textContent = '🎙 Review your command:';
+    panel.style.display = 'block';
+    if(listEl) listEl.style.display = 'none';
+  }
+
+  // ── Record audio with MediaRecorder ──
+  async function startRecording(){
+    if(recActive) return;
+    recActive = true; srDone = false; pendingTranscript = '';
+    audioChunks = [];
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e=>{ if(e.data.size>0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = ()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        const blob = new Blob(audioChunks, {type:'audio/webm'});
+        recActive = false;
+        btn.classList.remove('listening');
+        showPendingPanel(blob);
+      };
+      mediaRecorder.start();
+      btn.classList.add('listening');
+      if(labelEl) labelEl.textContent = '🔴 Recording... release to stop';
+      if(panel) panel.style.display = 'none'; // hide previous panel while recording
+    } catch(err){
+      recActive = false;
+      btn.classList.remove('listening');
+      console.warn('Mic access denied:', err);
+    }
+  }
+
+  function stopRecording(){
+    if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  }
+
+  // ── Speech Recognition runs in parallel for transcription ──
+  if(SpeechRecognition){
+    const rec = new SpeechRecognition();
+    rec.lang='en-US'; rec.continuous=false; rec.interimResults=false;
+    rec.onresult = e=>{ pendingTranscript = e.results[0][0].transcript; srDone=true; };
+    rec.onerror  = e=>{ if(!pendingTranscript){ pendingTranscript = guessTranscript(); } srDone=true; };
+    rec.onend    = ()=>{ srDone=true; };
+    _micRecognizers[team] = rec;
+    // Override start/stop to also control SR
+    const origStart = startRecording;
+    btn.addEventListener('pointerdown', async e=>{
+      e.preventDefault();
+      pendingTranscript='';
+      try{ rec.abort(); rec.start(); }catch(ex){}
+      await origStart();
+    });
+    btn.addEventListener('pointerup', ()=>{
+      try{ rec.stop(); }catch(ex){}
+      stopRecording();
+    });
+  } else {
+    // No SR — just use MediaRecorder, send with manual text
+    btn.addEventListener('pointerdown', async e=>{ e.preventDefault(); await startRecording(); });
+    btn.addEventListener('pointerup', ()=>{ stopRecording(); });
+    if(sendBtn) sendBtn.textContent = '✅ SEND (no speech API)';
+  }
+}
+
+function initVoiceTypeInput(inputId, sendBtnId, team){
+  const inp = document.getElementById(inputId);
+  const btn = document.getElementById(sendBtnId);
+  if(!inp || !btn) return;
+  // Remove old listeners by replacing element clone
+  const newInp = inp.cloneNode(true);
+  const newBtn = btn.cloneNode(true);
+  inp.parentNode.replaceChild(newInp, inp);
+  btn.parentNode.replaceChild(newBtn, btn);
+
+  function send(){
+    const txt = newInp.value.trim();
+    if(!txt){ hideRow(); return; }
+    applyVoiceCommand(team, txt);
+    newInp.value = '';
+    hideRow();
+  }
+  function hideRow(){
+    const row = newInp.closest('.voiceTypeRow');
+    if(row) row.style.display = 'none';
+    newInp.blur();
+  }
+  newBtn.addEventListener('click', e=>{ e.stopPropagation(); send(); });
+  newInp.addEventListener('keydown', e=>{
+    e.stopPropagation(); // prevent game keys from firing
+    if(e.code==='Enter'){ e.preventDefault(); send(); }
+    if(e.code==='Escape'){ e.preventDefault(); newInp.value=''; hideRow(); }
+  });
+}
+
+// =====================================================
+//  NPC AI
+// =====================================================
+function updateNpc(npc, dt){
+  npc.npcTurnTimer-=dt;
+  // While under a persistent voice command, keep modeTimer positive so steering stays active
+  if(npc.voiceCmdLocked){ npc.npcModeTimer = 999; } else { npc.npcModeTimer-=dt; }
+  const h=snakeHead(npc);
+  const isBlue = teamMode && npc.team === 'blue'; // blue bots use enhanced AI
+  const isCommander = !!(npc.isCommander && npc === enemyCommander) || !!npc.isAllyCommander; // AI generals never flee & have wide hunt range
+
   const humans=[];
-  if(player&&!player.dead&&!player.inSecretMap)   humans.push(player);
+  if(player&&!player.dead&&!player.inSecretMap) humans.push(player);
   if(player2&&!player2.dead&&!player2.inSecretMap) humans.push(player2);
 
-  if(npc.npcModeTimer<=0||npc.npcMode==='wander'){
-    let huntTarget=null, bestDist=600;
+  let enemies = [];
+  let biggerThreats = [];
+  if(teamMode){
     for(const hp of humans){
-      const d=Math.hypot(snakeHead(hp).x-h.x, snakeHead(hp).y-h.y);
-      if(d<bestDist&&hp.length<npc.length*1.2){ bestDist=d; huntTarget=snakeHead(hp); }
+      if(!sameTeam(npc, hp)) enemies.push(hp);
+      // Blue bots only flee from threats 1.8× their size; red bots flee at 0.9×
+      // Commander never flees — regular bots use normal thresholds
+      const fleeThresh = isCommander ? 999 : (isBlue ? 1.8 : 0.9);
+      if(!sameTeam(npc, hp) && hp.length > npc.length*fleeThresh) biggerThreats.push(hp);
     }
     for(const other of npcs){
-      if(other===npc||other.dead||other.length>=npc.length) continue;
-      const d=Math.hypot(snakeHead(other).x-h.x, snakeHead(other).y-h.y);
-      if(d<bestDist){ bestDist=d; huntTarget=snakeHead(other); }
+      if(other===npc||other.dead) continue;
+      if(sameTeam(npc, other)) continue;
+      enemies.push(other);
+      const fleeThresh = isCommander ? 999 : (isBlue ? 1.8 : 1.0);
+      if(other.length > npc.length*fleeThresh) biggerThreats.push(other);
     }
-    if(huntTarget&&bestDist<500){ npc.npcMode='hunt'; npc.npcTarget=huntTarget; npc.npcModeTimer=1.5; }
-    else { npc.npcMode='food'; npc.npcModeTimer=0.8; }
+  } else {
+    enemies = humans.slice();
+    for(const hp of humans){ if(hp.length > npc.length*0.85) biggerThreats.push(hp); }
+    for(const other of npcs){
+      if(other===npc||other.dead) continue;
+      if(other.length > npc.length) biggerThreats.push(other);
+    }
   }
 
-  // Flee larger humans
-  for(const hp of humans){
-    const d=Math.hypot(snakeHead(hp).x-h.x, snakeHead(hp).y-h.y);
-    if(d<200&&hp.length>npc.length*0.85){ npc.npcMode='flee'; npc.npcModeTimer=1; break; }
+  if((npc.npcModeTimer<=0||npc.npcMode==='wander') && !npc.voiceCmdLocked){
+    // Blue pack hunting: if the shared blue target is nearby, join the hunt immediately
+    if(isBlue && bluePackTarget && npc.npcMode !== 'defend'){
+      const pd = Math.hypot(bluePackTarget.x - h.x, bluePackTarget.y - h.y);
+      if(pd < 850){
+        npc.npcMode='hunt'; npc.npcTarget=bluePackTarget; npc.npcModeTimer=1.2;
+        // skip further evaluation this tick
+      }
+    }
+
+    // Commander has a much wider hunt radius and ignores size limits
+    let huntTarget=null, bestDist = isCommander ? 2200 : (isBlue ? 950 : 600);
+
+    // Territorial defense: always prioritize enemies standing on own land
+    if(teamMode){
+      const ownCell = npc.team === 'red' ? 1 : 2;
+      let defDist = Infinity, defTarget = null;
+      for(const target of enemies){
+        const th = snakeHead(target);
+        const cx = Math.max(0, Math.min(teamCols-1, Math.floor(th.x / TEAM_CELL_SIZE)));
+        const cy = Math.max(0, Math.min(teamRows-1, Math.floor(th.y / TEAM_CELL_SIZE)));
+        if(teamGrid && teamGrid[cy*teamCols+cx] === ownCell){
+          const d = Math.hypot(th.x-h.x, th.y-h.y);
+          if(d < defDist){ defDist = d; defTarget = th; }
+        }
+      }
+      if(defTarget){
+        npc.npcMode='defend'; npc.npcTarget=defTarget; npc.npcModeTimer=1.8;
+        // skip remaining mode logic
+        defTarget = null; // fall through handled below
+      }
+    }
+
+    if(npc.npcMode !== 'defend') {
+    for(const target of enemies){
+      const th = snakeHead(target);
+      const d = Math.hypot(th.x-h.x, th.y-h.y);
+      // Commander attacks anything; blue bots attack regardless of size; red bots attack smaller
+      const sizeLimit = (isCommander || isBlue) ? Infinity : npc.length*1.25;
+      if(d<bestDist && target.length<sizeLimit){ bestDist=d; huntTarget=th; }
+    }
+    if(!teamMode){
+      for(const other of npcs){
+        if(other===npc||other.dead||other.length>=npc.length) continue;
+        const d=Math.hypot(snakeHead(other).x-h.x, snakeHead(other).y-h.y);
+        if(d<bestDist){ bestDist=d; huntTarget=snakeHead(other); }
+      }
+    }
+    const huntActivationDist = isCommander ? 2200 : (isBlue ? 950 : 560);
+    if(huntTarget&&bestDist<huntActivationDist){
+      npc.npcMode='hunt'; npc.npcTarget=huntTarget; npc.npcModeTimer= isCommander ? 3.0 : 1.5;
+      if(isBlue) bluePackTarget = huntTarget; // publish for pack teammates
+    } else if(teamMode){
+      const landTarget = nearestEnemyLandTarget(h.x, h.y, npc.team || 'red', isCommander ? 60 : 24);
+      if(landTarget){
+        npc.npcMode='raid'; npc.npcTarget=landTarget; npc.npcModeTimer= isCommander ? 2.5 : 1.1;
+      } else {
+        npc.npcMode='food'; npc.npcModeTimer=0.8;
+      }
+    } else {
+      npc.npcMode='food'; npc.npcModeTimer=0.8;
+    }
+    }
   }
-  // Flee bigger NPCs
-  for(const other of npcs){
-    if(other===npc||other.dead||other.length<=npc.length) continue;
-    if(Math.hypot(snakeHead(other).x-h.x, snakeHead(other).y-h.y)<150){ npc.npcMode='flee'; npc.npcModeTimer=0.8; break; }
+
+  // Expire voice-command lock first so subsequent checks see fresh state
+  if(npc.voiceCmdLocked && gameTime > (npc.voiceCmdExpiry||0)){
+    npc.voiceCmdLocked = false; npc.npcMode = 'wander'; npc.npcModeTimer = 0;
   }
-  // Zone avoidance
+
+  // Flee/zone overrides only apply when NOT following a voice command
+  if(!npc.voiceCmdLocked){
+    for(const threat of biggerThreats){
+      const d=Math.hypot(snakeHead(threat).x-h.x, snakeHead(threat).y-h.y);
+      const fleeRange = isBlue ? 120 : (teamMode ? 220 : 200);
+      if(d < fleeRange){ npc.npcMode='flee'; npc.npcModeTimer=0.9; break; }
+    }
+  }
+
   const zcnx=worldSize/2, zcny=worldSize/2;
-  if(gameTime>ZONE_FULL_TIME-20&&Math.hypot(h.x-zcnx, h.y-zcny)>zoneRadius*0.92){
+  if(!teamMode && !npc.voiceCmdLocked && gameTime>ZONE_FULL_TIME-20&&Math.hypot(h.x-zcnx, h.y-zcny)>zoneRadius*0.92){
     npc.npcMode='zone'; npc.npcModeTimer=1;
   }
 
   let desiredAngle=npc.npcAngle;
-  if(npc.npcMode==='hunt'&&npc.npcTarget){
-    desiredAngle=Math.atan2(npc.npcTarget.y-h.y, npc.npcTarget.x-h.x);
-    npc.npcBoost=npc.length>=BOOST_MIN_LEN;
+
+  if((npc.npcMode==='hunt'||npc.npcMode==='defend')&&npc.npcTarget){
+    // Periodically refresh hunt target so bots track closest enemy individually
+    if(npc.npcMode==='hunt' && Math.random()<0.06){
+      let bestBotD = Infinity, freshTgt = null;
+      for(const s of npcs){
+        if(s.dead || s.team === npc.team) continue;
+        const bd = Math.hypot(snakeHead(s).x - h.x, snakeHead(s).y - h.y);
+        if(bd < bestBotD){ bestBotD = bd; freshTgt = snakeHead(s); }
+      }
+      for(const hp of [player, player2]){
+        if(!hp || hp.dead || hp.team === npc.team) continue;
+        const bd = Math.hypot(snakeHead(hp).x - h.x, snakeHead(hp).y - h.y);
+        if(bd < bestBotD){ bestBotD = bd; freshTgt = snakeHead(hp); }
+      }
+      if(freshTgt) npc.npcTarget = freshTgt;
+    }
+    const baseHuntAngle = Math.atan2(npc.npcTarget.y-h.y, npc.npcTarget.x-h.x);
+    // Spread approach angles when far — converge tightly when close
+    const huntDist = Math.hypot(npc.npcTarget.x-h.x, npc.npcTarget.y-h.y);
+    const hRank = npc.huntRank !== undefined ? npc.huntRank : 0;
+    const spreadA = huntDist > 280 ? (hRank % 5 - 2) * 0.18 : 0;
+    desiredAngle = baseHuntAngle + spreadA;
+    npc.npcBoost = npc.length>=BOOST_MIN_LEN;
+  } else if(npc.npcMode==='chain'){
+    // Follow the commander (player on same team) or a rally point in single file
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    if(commander && commander.segs.length > 1){
+      const rank = npc.chainRank || 0;
+      const idx = Math.min(commander.segs.length - 1, rank * 14 + 14);
+      const tgt = commander.segs[idx];
+      desiredAngle = Math.atan2(tgt.y - h.y, tgt.x - h.x);
+    }
+    npc.npcBoost = false;
+  } else if(npc.npcMode==='guard_cmd'){
+    // Orbit the commander in a circular guard ring
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    if(commander){
+      const cx = snakeHead(commander).x, cy = snakeHead(commander).y;
+      const rank = npc.guardRank || 0;
+      const totalGuards = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'guard_cmd').length || 1;
+      const orbitAngle = gameTime * 0.9 + rank * (2 * Math.PI / totalGuards);
+      const orbitR = 180 + snakeRadius(npc.length) * 2;
+      const tx = cx + Math.cos(orbitAngle) * orbitR;
+      const ty = cy + Math.sin(orbitAngle) * orbitR;
+      desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+    }
+    npc.npcBoost = false;
+  } else if(npc.npcMode==='follow'){
+    // Trail behind the commanding player on their team
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    if(commander && commander.segs.length > 1){
+      const rank = npc.chainRank || 0;
+      // Space bots out behind the commander — further back per rank
+      const idx = Math.min(commander.segs.length - 1, 10 + rank * 8);
+      const tgt = commander.segs[idx];
+      desiredAngle = Math.atan2(tgt.y - h.y, tgt.x - h.x);
+    }
+    npc.npcBoost = false;
+  } else if(npc.npcMode==='fallback'){
+    // Retreat toward own territory — each bot goes to a different spread position
+    const safeX = npc.team === 'red' ? worldSize * 0.25 : worldSize * 0.75;
+    const fallRank = npc.fallbackRank !== undefined ? npc.fallbackRank : 0;
+    const totalFallback = npcs.filter(n=>!n.dead&&n.team===npc.team&&n.npcMode==='fallback').length || 1;
+    const spacing = Math.min(360, worldSize * 0.65 / totalFallback);
+    const safeY = worldSize * 0.5 + (fallRank - (totalFallback - 1) / 2) * spacing;
+    desiredAngle = Math.atan2(safeY - h.y, safeX - h.x) + (Math.random()-0.5)*0.12;
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='wave'){
+    // Spread in a horizontal wall and advance toward enemy territory
+    const totalWave = npcs.filter(n=>!n.dead && n.team===npc.team && n.npcMode==='wave').length || 1;
+    const rank = npc.waveRank !== undefined ? npc.waveRank : 0;
+    const spacing = Math.min(260, worldSize * 0.7 / totalWave);
+    const waveY = worldSize * 0.5 + (rank - totalWave/2) * spacing;
+    const advX = npc.team === 'red' ? Math.min(h.x + 300, worldSize * 0.8) : Math.max(h.x - 300, worldSize * 0.2);
+    desiredAngle = Math.atan2(waveY - h.y, advX - h.x);
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='sacrifice'){
+    // Kamikaze — rush nearest enemy at full speed, ignoring size
+    let closestEnemy = null, closestD = Infinity;
+    for(const other of npcs){
+      if(other===npc||other.dead||other.team===npc.team) continue;
+      const d=Math.hypot(snakeHead(other).x-h.x,snakeHead(other).y-h.y);
+      if(d<closestD){closestD=d;closestEnemy=snakeHead(other);}
+    }
+    for(const hp of [player,player2]){
+      if(!hp||hp.dead||hp.team===npc.team) continue;
+      const d=Math.hypot(snakeHead(hp).x-h.x,snakeHead(hp).y-h.y);
+      if(d<closestD){closestD=d;closestEnemy=snakeHead(hp);}
+    }
+    if(closestEnemy) desiredAngle=Math.atan2(closestEnemy.y-h.y,closestEnemy.x-h.x);
+    else if(npc.npcTarget) desiredAngle=Math.atan2(npc.npcTarget.y-h.y,npc.npcTarget.x-h.x);
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='circle_me'){
+    // Perfect circle around the commanding player — tight formation that moves with them
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    if(commander){
+      const cx = snakeHead(commander).x, cy = snakeHead(commander).y;
+      const rank = npc.circleRank || 0;
+      const totalCircle = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'circle_me').length || 1;
+      // Radius sized so bots are shoulder-to-shoulder with no gaps: circumference = N * bodyDiam
+      const bodyDiam = snakeRadius(npc.length) * 3.6;
+      const orbitR = Math.max(160, (totalCircle * bodyDiam) / (2 * Math.PI));
+      // Fixed angle per rank — no time-based spin, so the formation holds shape as the player moves
+      const orbitAngle = rank * (2 * Math.PI / totalCircle);
+      const tx = cx + Math.cos(orbitAngle) * orbitR;
+      const ty = cy + Math.sin(orbitAngle) * orbitR;
+      desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+    }
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='circle_enemy'){
+    // Orbit the centroid of all enemy snakes in a large circle
+    let ex = 0, ey = 0, ec = 0;
+    for(const s of npcs){
+      if(s.dead || s.team === npc.team) continue;
+      ex += snakeHead(s).x; ey += snakeHead(s).y; ec++;
+    }
+    for(const hp of [player, player2]){
+      if(!hp || hp.dead || hp.team === npc.team) continue;
+      ex += snakeHead(hp).x; ey += snakeHead(hp).y; ec++;
+    }
+    if(ec > 0){
+      ex /= ec; ey /= ec;
+      const rank = npc.circleEnemyRank || 0;
+      const totalCircle = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'circle_enemy').length || 1;
+      const orbitAngle = gameTime * 0.5 + rank * (2 * Math.PI / totalCircle);
+      const orbitR = 380 + snakeRadius(npc.length) * 2;
+      const tx = ex + Math.cos(orbitAngle) * orbitR;
+      const ty = ey + Math.sin(orbitAngle) * orbitR;
+      desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+    }
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='line'){
+    // Huge horizontal battle line advancing toward enemy side
+    const totalLine = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'line').length || 1;
+    const rank = npc.lineRank !== undefined ? npc.lineRank : 0;
+    const spacing = Math.min(340, worldSize * 0.85 / totalLine);
+    const lineY = worldSize * 0.5 + (rank - (totalLine - 1) / 2) * spacing;
+    const advX = npc.team === 'red' ? Math.min(h.x + 400, worldSize * 0.82) : Math.max(h.x - 400, worldSize * 0.18);
+    desiredAngle = Math.atan2(lineY - h.y, advX - h.x);
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='meteor'){
+    // Worm rain — each bot picks a staggered entry angle and dives at enemies from outside
+    const rank = npc.meteorRank !== undefined ? npc.meteorRank : 0;
+    const totalMeteor = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'meteor').length || 1;
+    // Find centroid of enemies as the "ground" target
+    let tx = worldSize / 2, ty = worldSize / 2, ec2 = 0;
+    for(const s of npcs){
+      if(s.dead || s.team === npc.team) continue;
+      tx += snakeHead(s).x; ty += snakeHead(s).y; ec2++;
+    }
+    for(const hp of [player, player2]){
+      if(!hp || hp.dead || hp.team === npc.team) continue;
+      tx += snakeHead(hp).x; ty += snakeHead(hp).y; ec2++;
+    }
+    if(ec2 > 0){ tx /= (ec2 + 1); ty /= (ec2 + 1); }
+    // Each bot dives from its own angle (golden-angle spread)
+    const diveAngle = (npc.meteorAngle !== undefined ? npc.meteorAngle : rank * 2.399);
+    const diveR = 700;
+    const originX = tx + Math.cos(diveAngle) * diveR;
+    const originY = ty + Math.sin(diveAngle) * diveR;
+    // If far from dive start, head there; once close, dive toward target
+    const distToOrigin = Math.hypot(h.x - originX, h.y - originY);
+    if(distToOrigin > 280){
+      desiredAngle = Math.atan2(originY - h.y, originX - h.x);
+    } else {
+      desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+    }
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='dir_up'){
+    desiredAngle = -Math.PI / 2; // straight up (north)
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='dir_down'){
+    desiredAngle = Math.PI / 2;  // straight down (south)
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='dir_left'){
+    desiredAngle = Math.PI;      // straight left (west)
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='dir_right'){
+    desiredAngle = 0;            // straight right (east)
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='run'){
+    // Full-speed sprint — keep current heading and just boost
+    // desiredAngle stays as npc.npcAngle (no change)
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='charge_atk'){
+    // Line up side by side perpendicular to nearest enemy, then all charge at them together
+    const commander = [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    const anchorX = commander ? snakeHead(commander).x : worldSize / 2;
+    const anchorY = commander ? snakeHead(commander).y : worldSize / 2;
+    // Find nearest enemy to use as charge target
+    let chargeAngle = npc.team === 'red' ? 0 : Math.PI; // default if no enemy found
+    let bestD = Infinity;
+    for(const s of npcs){
+      if(s.dead || s.team === npc.team) continue;
+      const d = Math.hypot(snakeHead(s).x - anchorX, snakeHead(s).y - anchorY);
+      if(d < bestD){ bestD = d; chargeAngle = Math.atan2(snakeHead(s).y - anchorY, snakeHead(s).x - anchorX); }
+    }
+    for(const hp of [player, player2]){
+      if(!hp || hp.dead || hp.team === npc.team) continue;
+      const d = Math.hypot(snakeHead(hp).x - anchorX, snakeHead(hp).y - anchorY);
+      if(d < bestD){ bestD = d; chargeAngle = Math.atan2(snakeHead(hp).y - anchorY, snakeHead(hp).x - anchorX); }
+    }
+    const perp = chargeAngle + Math.PI / 2;
+    const totalInLine = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'charge_atk').length || 1;
+    const botRank = npc.chargeAtkRank !== undefined ? npc.chargeAtkRank : 0;
+    const spacing = Math.min(300, worldSize * 0.75 / totalInLine);
+    const offset = (botRank - (totalInLine - 1) / 2) * spacing;
+    const formDepth = 160;
+    const lineX = anchorX + Math.cos(chargeAngle) * formDepth + Math.cos(perp) * offset;
+    const lineY = anchorY + Math.sin(chargeAngle) * formDepth + Math.sin(perp) * offset;
+    const toFormationDist = Math.hypot(lineX - h.x, lineY - h.y);
+    if(toFormationDist > 120){
+      desiredAngle = Math.atan2(lineY - h.y, lineX - h.x);
+    } else {
+      desiredAngle = chargeAngle;
+    }
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(/^line_(fwd|left|right|back|up|down)$/.test(npc.npcMode)){
+    // Side-by-side line formation then charge in the commanded direction
+    const lineMode = npc.npcMode; // e.g. 'line_fwd'
+    // Determine the charge angle based on direction
+    const chargeAngles = {
+      line_fwd:  npc.team === 'red' ?  0          : Math.PI,      // red charges right, blue left
+      line_back: npc.team === 'red' ?  Math.PI    : 0,            // opposite
+      line_left: Math.PI,                                          // always left (west)
+      line_right: 0,                                               // always right (east)
+      line_up:   -Math.PI / 2,                                     // up (north)
+      line_down:  Math.PI / 2                                      // down (south)
+    };
+    const chargeAngle = chargeAngles[lineMode];
+    const perp = chargeAngle + Math.PI / 2; // perpendicular = the line axis
+    // Place each bot side by side along the perpendicular, then march forward
+    const totalInLine = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === lineMode).length || 1;
+    const botRank = npc.lineAttackRank !== undefined ? npc.lineAttackRank : 0;
+    const spacing = Math.min(300, worldSize * 0.75 / totalInLine);
+    const offset = (botRank - (totalInLine - 1) / 2) * spacing;
+    // Target point: line anchor = player position (or map center), shifted along perp, then advance in charge direction
+    const commander = [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    const anchorX = commander ? snakeHead(commander).x : worldSize / 2;
+    const anchorY = commander ? snakeHead(commander).y : worldSize / 2;
+    const formDepth = 220; // how far ahead of anchor the line forms
+    const lineX = anchorX + Math.cos(chargeAngle) * formDepth + Math.cos(perp) * offset;
+    const lineY = anchorY + Math.sin(chargeAngle) * formDepth + Math.sin(perp) * offset;
+    // Check if bot is in formation position
+    const toFormationDist = Math.hypot(lineX - h.x, lineY - h.y);
+    if(toFormationDist > 120){
+      // Rush to formation spot first
+      desiredAngle = Math.atan2(lineY - h.y, lineX - h.x);
+    } else {
+      // In position — charge forward in the commanded direction
+      desiredAngle = chargeAngle;
+    }
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='scatter'){
+    // Rush toward nearest enemy land at speed
+    if(teamMode){
+      const lt = nearestEnemyLandTarget(h.x, h.y, npc.team||'red', 30);
+      if(lt) desiredAngle = Math.atan2(lt.y - h.y, lt.x - h.x);
+    }
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='diamond'){
+    // Diamond: 4 anchor points (front, back, left, right); extras fill in around them
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    if(commander){
+      const cx = snakeHead(commander).x, cy = snakeHead(commander).y;
+      const rank = npc.formRank || 0;
+      const total = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'diamond').length || 1;
+      const r = Math.max(180, total * 22);
+      const angles = [0, Math.PI/2, Math.PI, -Math.PI/2]; // right, down, left, up = diamond points
+      const angle = rank < 4 ? angles[rank] : angles[rank % 4] + (Math.floor(rank/4)) * 0.42;
+      const layer = Math.floor(rank / 4) + 1;
+      const tx = cx + Math.cos(angle) * r * layer * 0.55;
+      const ty = cy + Math.sin(angle) * r * layer * 0.55;
+      desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+    }
+    npc.npcBoost = false;
+  } else if(npc.npcMode==='wedge'){
+    // Wedge/arrow: bots fan out in a V ahead of the player pointing at the nearest enemy
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    if(commander){
+      const cx = snakeHead(commander).x, cy = snakeHead(commander).y;
+      // Aim the wedge at the nearest enemy
+      let wedgeAngle = npc.team === 'red' ? 0 : Math.PI;
+      let bestD = Infinity;
+      for(const s of npcs){ if(s.dead || s.team === npc.team) continue; const d=Math.hypot(snakeHead(s).x-cx,snakeHead(s).y-cy); if(d<bestD){bestD=d;wedgeAngle=Math.atan2(snakeHead(s).y-cy,snakeHead(s).x-cx);} }
+      for(const hp of [player,player2]){ if(!hp||hp.dead||hp.team===npc.team) continue; const d=Math.hypot(snakeHead(hp).x-cx,snakeHead(hp).y-cy); if(d<bestD){bestD=d;wedgeAngle=Math.atan2(snakeHead(hp).y-cy,snakeHead(hp).x-cx);} }
+      const rank = npc.formRank || 0;
+      const total = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'wedge').length || 1;
+      // Each bot goes at wedgeAngle offset by ±spread based on rank
+      const spread = Math.min(0.55, (total * 0.04));
+      const side = rank % 2 === 0 ? 1 : -1;
+      const row = Math.floor(rank / 2);
+      const fanAngle = wedgeAngle + side * spread * (row + 1);
+      const depth = 200 + row * 120;
+      const tx = cx + Math.cos(fanAngle) * depth;
+      const ty = cy + Math.sin(fanAngle) * depth;
+      desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+    }
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='wall'){
+    // Wall: bots form a stationary horizontal line directly in front of the player
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    if(commander){
+      const cx = snakeHead(commander).x, cy = snakeHead(commander).y;
+      const fwd = commander.angle || 0;
+      const perp = fwd + Math.PI / 2;
+      const rank = npc.formRank || 0;
+      const total = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'wall').length || 1;
+      const spacing = Math.min(260, worldSize * 0.7 / total);
+      const offset = (rank - (total - 1) / 2) * spacing;
+      const tx = cx + Math.cos(fwd) * 280 + Math.cos(perp) * offset;
+      const ty = cy + Math.sin(fwd) * 280 + Math.sin(perp) * offset;
+      const dist = Math.hypot(tx - h.x, ty - h.y);
+      if(dist > 80) desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+      // else stay still (keep current angle)
+    }
+    npc.npcBoost = false;
+  } else if(npc.npcMode==='split'){
+    // Split: even ranks attack left flank, odd ranks attack right flank
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    const cx = commander ? snakeHead(commander).x : worldSize / 2;
+    const cy = commander ? snakeHead(commander).y : worldSize / 2;
+    let tgtAngle = npc.team === 'red' ? 0 : Math.PI;
+    let bestD = Infinity;
+    for(const s of npcs){ if(s.dead||s.team===npc.team) continue; const d=Math.hypot(snakeHead(s).x-cx,snakeHead(s).y-cy); if(d<bestD){bestD=d;tgtAngle=Math.atan2(snakeHead(s).y-cy,snakeHead(s).x-cx);} }
+    const rank = npc.formRank || 0;
+    const flankOffset = rank % 2 === 0 ? -Math.PI * 0.28 : Math.PI * 0.28;
+    desiredAngle = tgtAngle + flankOffset;
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='pincer'){
+    // Pincer: half go 90° left of enemy, half go 90° right
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    const cx = commander ? snakeHead(commander).x : worldSize / 2;
+    const cy = commander ? snakeHead(commander).y : worldSize / 2;
+    let tgtAngle = npc.team === 'red' ? 0 : Math.PI;
+    let bestD = Infinity;
+    for(const s of npcs){ if(s.dead||s.team===npc.team) continue; const d=Math.hypot(snakeHead(s).x-cx,snakeHead(s).y-cy); if(d<bestD){bestD=d;tgtAngle=Math.atan2(snakeHead(s).y-cy,snakeHead(s).x-cx);} }
+    const rank = npc.formRank || 0;
+    const pincerOffset = rank % 2 === 0 ? -Math.PI / 2 : Math.PI / 2;
+    desiredAngle = tgtAngle + pincerOffset;
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='bait'){
+    // Bait: lowest-rank bots (decoys) charge the nearest enemy; rest hang back then rush
+    const rank = npc.formRank || 0;
+    const total = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'bait').length || 1;
+    const isDecoy = rank < Math.max(1, Math.floor(total * 0.25));
+    if(isDecoy){
+      // Decoys rush the nearest enemy
+      let closestE = null, closestD = Infinity;
+      for(const s of npcs){ if(s.dead||s.team===npc.team) continue; const d=Math.hypot(snakeHead(s).x-h.x,snakeHead(s).y-h.y); if(d<closestD){closestD=d;closestE=snakeHead(s);} }
+      for(const hp of[player,player2]){ if(!hp||hp.dead||hp.team===npc.team) continue; const d=Math.hypot(snakeHead(hp).x-h.x,snakeHead(hp).y-h.y); if(d<closestD){closestD=d;closestE=snakeHead(hp);} }
+      if(closestE) desiredAngle = Math.atan2(closestE.y-h.y, closestE.x-h.x);
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+    } else {
+      // Ambushers flank from the other direction
+      let closestE = null, closestD = Infinity;
+      for(const s of npcs){ if(s.dead||s.team===npc.team) continue; const d=Math.hypot(snakeHead(s).x-h.x,snakeHead(s).y-h.y); if(d<closestD){closestD=d;closestE=snakeHead(s);} }
+      if(closestE) desiredAngle = Math.atan2(closestE.y-h.y, closestE.x-h.x) + Math.PI * 0.7;
+      npc.npcBoost = false;
+    }
+  } else if(npc.npcMode==='decoy'){
+    // Decoy: one bot charges head-on, rest sneak around behind
+    const rank = npc.formRank || 0;
+    let closestE = null, closestD = Infinity;
+    for(const s of npcs){ if(s.dead||s.team===npc.team) continue; const d=Math.hypot(snakeHead(s).x-h.x,snakeHead(s).y-h.y); if(d<closestD){closestD=d;closestE=snakeHead(s);} }
+    for(const hp of[player,player2]){ if(!hp||hp.dead||hp.team===npc.team) continue; const d=Math.hypot(snakeHead(hp).x-h.x,snakeHead(hp).y-h.y); if(d<closestD){closestD=d;closestE=snakeHead(hp);} }
+    if(closestE){
+      if(rank === 0) desiredAngle = Math.atan2(closestE.y-h.y, closestE.x-h.x); // one decoy charges straight
+      else desiredAngle = Math.atan2(closestE.y-h.y, closestE.x-h.x) + Math.PI + (rank % 2 === 0 ? 0.5 : -0.5) * (rank * 0.2); // rest sneak around
+    }
+    npc.npcBoost = rank === 0 ? (npc.length >= BOOST_MIN_LEN) : false;
+  } else if(npc.npcMode==='hold_line'){
+    // Hold the line: bots form a stationary perpendicular wall facing the enemy and stay put
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    if(commander){
+      const cx = snakeHead(commander).x, cy = snakeHead(commander).y;
+      let wallAngle = npc.team === 'red' ? 0 : Math.PI;
+      let bestD = Infinity;
+      for(const s of npcs){ if(s.dead||s.team===npc.team) continue; const d=Math.hypot(snakeHead(s).x-cx,snakeHead(s).y-cy); if(d<bestD){bestD=d;wallAngle=Math.atan2(snakeHead(s).y-cy,snakeHead(s).x-cx);} }
+      const perp = wallAngle + Math.PI / 2;
+      const rank = npc.formRank || 0;
+      const total = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'hold_line').length || 1;
+      const spacing = Math.min(240, worldSize * 0.7 / total);
+      const offset = (rank - (total - 1) / 2) * spacing;
+      const tx = cx + Math.cos(wallAngle) * 240 + Math.cos(perp) * offset;
+      const ty = cy + Math.sin(wallAngle) * 240 + Math.sin(perp) * offset;
+      const dist = Math.hypot(tx - h.x, ty - h.y);
+      if(dist > 60) desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+    }
+    npc.npcBoost = false;
+  } else if(npc.npcMode==='eat_all'){
+    // Eat everything: ignore enemies, vacuum the nearest food dot
+    let bestDist = Infinity, bestDot = null;
+    for(const d of foodDots){ const dist=Math.hypot(d.x-h.x,d.y-h.y); if(dist<bestDist){bestDist=dist;bestDot=d;} }
+    for(const d of deathDots){ const dist=Math.hypot(d.x-h.x,d.y-h.y); if(dist<bestDist){bestDist=dist;bestDot=d;} }
+    if(bestDot) desiredAngle = Math.atan2(bestDot.y-h.y, bestDot.x-h.x);
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='grow'){
+    // Grow: same as eat_all but prioritise death dots (value) and power-ups
+    let bestScore = -1, bestDot = null;
+    for(const d of deathDots){ const v=d.value||1; const dist=Math.max(1,Math.hypot(d.x-h.x,d.y-h.y)); const score=v/dist; if(score>bestScore){bestScore=score;bestDot=d;} }
+    for(const d of foodDots){ const dist=Math.max(1,Math.hypot(d.x-h.x,d.y-h.y)); const score=1/dist; if(score>bestScore){bestScore=score;bestDot=d;} }
+    for(const p of powerUps){ const dist=Math.max(1,Math.hypot(p.x-h.x,p.y-h.y)); const score=5/dist; if(score>bestScore){bestScore=score;bestDot=p;} }
+    if(bestDot) desiredAngle = Math.atan2(bestDot.y-h.y, bestDot.x-h.x);
+    npc.npcBoost = false; // don't burn length
+  } else if(npc.npcMode==='push_map_left'){
+    // Push left: bots spread out vertically then all drive hard left while painting
+    const rank = npc.formRank || 0;
+    const total = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'push_map_left').length || 1;
+    const targetY = (worldSize / total) * (rank + 0.5);
+    if(Math.abs(h.y - targetY) > 80) desiredAngle = Math.atan2(targetY - h.y, -1); // drift to lane then go left
+    else desiredAngle = Math.PI; // straight left
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='push_map_right'){
+    // Push right: same but drive right
+    const rank = npc.formRank || 0;
+    const total = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'push_map_right').length || 1;
+    const targetY = (worldSize / total) * (rank + 0.5);
+    if(Math.abs(h.y - targetY) > 80) desiredAngle = Math.atan2(targetY - h.y, 1);
+    else desiredAngle = 0; // straight right
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='defend_home'){
+    // Defend home: return to own territory and patrol it
+    const safeX = npc.team === 'red' ? worldSize * 0.2 : worldSize * 0.8;
+    const rank = npc.formRank || 0;
+    const total = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'defend_home').length || 1;
+    const spacing = Math.min(380, worldSize * 0.7 / total);
+    const safeY = worldSize * 0.5 + (rank - (total - 1) / 2) * spacing;
+    desiredAngle = Math.atan2(safeY - h.y, safeX - h.x);
+    // Once home, patrol in a lazy orbit
+    if(Math.hypot(h.x - safeX, h.y - safeY) < 150){
+      desiredAngle = npc.npcAngle + 0.03; // slow circle patrol
+    }
+    npc.npcBoost = false;
+  } else if(npc.npcMode==='flood'){
+    // Flood the map: each bot takes a unique grid cell to cover as much territory as possible
+    const rank = npc.formRank || 0;
+    const total = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'flood').length || 1;
+    const gridSide = Math.ceil(Math.sqrt(total));
+    const cellW = worldSize / gridSide, cellH = worldSize / gridSide;
+    const col = rank % gridSide, row = Math.floor(rank / gridSide);
+    const tx = cellW * col + cellW / 2, ty = cellH * row + cellH / 2;
+    desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+    if(Math.hypot(tx - h.x, ty - h.y) < 120) desiredAngle = npc.npcAngle + 0.25; // reached cell, cruise around
+    npc.npcBoost = false;
+  } else if(npc.npcMode==='tornado'){
+    // Tornado: bots spiral outward from player position
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    if(commander){
+      const cx = snakeHead(commander).x, cy = snakeHead(commander).y;
+      const rank = npc.formRank || 0;
+      const total = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'tornado').length || 1;
+      const spiralAngle = gameTime * 1.8 + rank * (2 * Math.PI / total);
+      const spiralR = 160 + rank * 28;
+      const tx = cx + Math.cos(spiralAngle) * spiralR;
+      const ty = cy + Math.sin(spiralAngle) * spiralR;
+      desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+    }
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='snake_train'){
+    // Snake train: each bot latches onto the tail of the previous bot, forming one giant chain
+    const teamBots = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'snake_train');
+    const rank = npc.formRank || 0;
+    if(rank === 0){
+      // Lead bot follows the player/commander
+      const commander = [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+      if(commander && commander.segs.length > 5){
+        const tgt = commander.segs[Math.min(commander.segs.length-1, 20)];
+        desiredAngle = Math.atan2(tgt.y-h.y, tgt.x-h.x);
+      }
+    } else {
+      const leader = teamBots.find(n => (n.formRank||0) === rank - 1);
+      if(leader && leader.segs.length > 10){
+        const tgt = leader.segs[Math.min(leader.segs.length-1, 12)];
+        desiredAngle = Math.atan2(tgt.y-h.y, tgt.x-h.x);
+      }
+    }
+    npc.npcBoost = false;
+  } else if(npc.npcMode==='kamikaze_one'){
+    // Kamikaze one: only rank-0 bot charges; all others just eat food normally
+    const rank = npc.formRank || 0;
+    if(rank === 0){
+      let closestE = null, closestD = Infinity;
+      for(const s of npcs){ if(s.dead||s.team===npc.team) continue; const d=Math.hypot(snakeHead(s).x-h.x,snakeHead(s).y-h.y); if(d<closestD){closestD=d;closestE=snakeHead(s);} }
+      for(const hp of[player,player2]){ if(!hp||hp.dead||hp.team===npc.team) continue; const d=Math.hypot(snakeHead(hp).x-h.x,snakeHead(hp).y-h.y); if(d<closestD){closestD=d;closestE=snakeHead(hp);} }
+      if(closestE) desiredAngle = Math.atan2(closestE.y-h.y, closestE.x-h.x);
+      npc.npcBoost = true; // always charge at max speed
+    } else {
+      // Everyone else eats normally
+      let bestDist=300, bestDot=null;
+      for(const d of foodDots){ const dist=Math.hypot(d.x-h.x,d.y-h.y); if(dist<bestDist){bestDist=dist;bestDot=d;} }
+      if(bestDot) desiredAngle = Math.atan2(bestDot.y-h.y,bestDot.x-h.x);
+      npc.npcBoost = false;
+    }
+  } else if(npc.npcMode==='bodyguard'){
+    // Bodyguard: stay tightly beside the commanding player (offset perpendicular to their heading)
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    if(commander){
+      const ch = snakeHead(commander);
+      const cAngle = commander.angle || commander.npcAngle || 0;
+      const rank = npc.bodyguardRank || 0;
+      const side = rank % 2 === 0 ? 1 : -1;
+      const row = Math.floor(rank / 2);
+      const sideOffset = (row + 1) * (snakeRadius(npc.length) * 3.5 + 28);
+      const tx = ch.x + Math.cos(cAngle + side * Math.PI / 2) * sideOffset;
+      const ty = ch.y + Math.sin(cAngle + side * Math.PI / 2) * sideOffset;
+      desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+    }
+    npc.npcBoost = false;
+  } else if(npc.npcMode==='raid'&&npc.npcTarget){
+    desiredAngle=Math.atan2(npc.npcTarget.y-h.y, npc.npcTarget.x-h.x) + (Math.random()-0.5)*0.18;
+    // Always boost during voice-commanded raid/invade; otherwise occasional boost
+    npc.npcBoost = npc.length>=BOOST_MIN_LEN && (npc.voiceCmdLocked || Math.random()<0.45);
+  } else if(npc.npcMode==='boost'){
+    // Standalone boost command — keep current heading, just sprint
+    // desiredAngle stays as npc.npcAngle
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
   } else if(npc.npcMode==='flee'){
     let fx=0,fy=0,fc=0;
-    for(const hp of humans){
-      const hh=snakeHead(hp), d=Math.hypot(hh.x-h.x, hh.y-h.y);
-      if(d<300){ fx+=(h.x-hh.x)/d; fy+=(h.y-hh.y)/d; fc++; }
-    }
-    for(const other of npcs){
-      if(other===npc||other.dead||other.length<=npc.length) continue;
-      const oh=snakeHead(other), d=Math.hypot(oh.x-h.x, oh.y-h.y);
-      if(d<200){ fx+=(h.x-oh.x)/d; fy+=(h.y-oh.y)/d; fc++; }
+    for(const threat of biggerThreats){
+      const th=snakeHead(threat), d=Math.max(1, Math.hypot(th.x-h.x, th.y-h.y));
+      if(d<(teamMode?340:300)){ fx+=(h.x-th.x)/d; fy+=(h.y-th.y)/d; fc++; }
     }
     if(fc>0) desiredAngle=Math.atan2(fy,fx);
     npc.npcBoost=false;
@@ -1809,7 +4093,6 @@ function updateNpc(npc, dt){
   } else {
     npc.npcBoost=false;
     let bestDist2=300, bestDot=null;
-    // Search a random subset of dots for performance (max 80 checks)
     const fLen=foodDots.length, dLen=deathDots.length;
     const fStep=fLen>80?Math.floor(fLen/80):1;
     const dStep=dLen>80?Math.floor(dLen/80):1;
@@ -1825,10 +4108,58 @@ function updateNpc(npc, dt){
       const p=powerUps[i], dx=p.x-h.x, dy=p.y-h.y, dist2=dx*dx+dy*dy;
       if(dist2<bestDist2*bestDist2){ bestDist2=Math.sqrt(dist2); bestDot=p; }
     }
-    if(bestDot){ desiredAngle=Math.atan2(bestDot.y-h.y, bestDot.x-h.x); }
-    else {
+    if(teamMode){
+      const landTarget = nearestEnemyLandTarget(h.x, h.y, npc.team || 'red', isBlue ? 40 : 16);
+      const raidProb = isBlue ? 0.92 : 0.6;
+      if(landTarget && (!bestDot || Math.random()<raidProb)){
+        desiredAngle=Math.atan2(landTarget.y-h.y, landTarget.x-h.x);
+      } else if(bestDot){
+        desiredAngle=Math.atan2(bestDot.y-h.y, bestDot.x-h.x);
+      } else {
+        if(npc.npcTurnTimer<=0){ npc.npcAngle+=(Math.random()-.5)*0.65; npc.npcTurnTimer=0.5+Math.random()*.8; }
+        desiredAngle=npc.npcAngle;
+      }
+    } else if(bestDot){
+      desiredAngle=Math.atan2(bestDot.y-h.y, bestDot.x-h.x);
+    } else {
       if(npc.npcTurnTimer<=0){ npc.npcAngle+=(Math.random()-.5)*0.65; npc.npcTurnTimer=0.5+Math.random()*.8; }
       desiredAngle=npc.npcAngle;
+    }
+  }
+
+  // Voice boost modifier — forces boost on top of any other command
+  if(npc.voiceBoostForced && npc.voiceCmdLocked){
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  }
+
+  // ── Circle barrier: deflect enemy worms from entering a circle_me formation ──
+  // Only check for enemies that are NOT in a circle_me themselves
+  if(npc.npcMode !== 'circle_me'){
+    for(const other of npcs){
+      if(other.dead || other.npcMode !== 'circle_me' || other.team === npc.team) continue;
+      const cmdr = (other.commanderAssignment && !other.commanderAssignment.dead) ? other.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, other));
+      if(!cmdr) continue;
+      const cx = snakeHead(cmdr).x, cy = snakeHead(cmdr).y;
+      const totalCircle = npcs.filter(n => !n.dead && n.team === other.team && n.npcMode === 'circle_me').length || 1;
+      const bodyDiam = snakeRadius(other.length) * 3.6;
+      const orbitR = Math.max(160, (totalCircle * bodyDiam) / (2 * Math.PI));
+      const barrierR = orbitR + snakeRadius(npc.length) * 2; // barrier just outside the ring
+      const dx = h.x - cx, dy = h.y - cy;
+      const dist = Math.hypot(dx, dy);
+      if(dist < barrierR && dist > 10){
+        // Push enemy outward — override desiredAngle to steer away from center
+        const pushAngle = Math.atan2(dy, dx);
+        const blend = Math.max(0, 1 - dist / barrierR); // stronger as they get closer
+        const dif = angDiff(desiredAngle, pushAngle);
+        desiredAngle = desiredAngle + dif * blend * 0.85;
+      }
+      break; // only apply one circle barrier per enemy per frame
+    }
+    // Also deflect enemy players (P1/P2) at barrier boundaries
+    for(const enemyPlayer of [player, player2]){
+      if(!enemyPlayer || enemyPlayer.dead) continue;
+      // Check if this npc is guarding a player from the same team as the enemy
+      // We want circle barriers to repel players from the OTHER team
     }
   }
 
@@ -1851,7 +4182,7 @@ function updateNpc(npc, dt){
     }
   } else { npc.npcBoostDrain=0; npc.npcBoost=false; }
 
-  const spd=(npc.npcBoost ? snakeBoostSpeed(npc.length) : snakeBaseSpeed(npc.length)) * speedMultFor(npc, npc.npcBoost);
+  const spd=(npc.npcBoost ? snakeBoostSpeed(npc.length, npc) : snakeBaseSpeed(npc.length)) * speedMultFor(npc, npc.npcBoost);
   moveSnakeFixed(npc, npc.npcAngle, spd);
   closeLoopBody(npc, dt);
 }
@@ -1872,7 +4203,15 @@ function checkCollisions(){
     const ph=snakeHead(player);
     for(const npc of npcs){
       if(npc.dead) continue;
+      if(teamMode && sameTeam(player, npc)) continue;
       const nr=snakeRadius(npc.length);
+      // Enemy player hitting a circle_me shield worm dies
+      if(npc.npcMode === 'circle_me'){
+        const nh2=snakeHead(npc);
+        const cd=Math.hypot(ph.x-nh2.x, ph.y-nh2.y);
+        if(cd < nr+p1r){ killPlayer('npc'); return; }
+        continue; // circle worms can't be crashed into by P1 (already handled)
+      }
       for(let i=3; i<npc.segs.length; i++){
         const s=npc.segs[i], dx=ph.x-s.x, dy=ph.y-s.y;
         if(dx*dx+dy*dy<nr*nr){ killPlayer('npc'); return; }
@@ -1890,7 +4229,15 @@ function checkCollisions(){
     const ph2=snakeHead(player2);
     for(const npc of npcs){
       if(npc.dead) continue;
+      if(teamMode && sameTeam(player2, npc)) continue;
       const nr=snakeRadius(npc.length);
+      // Enemy player2 hitting a circle_me shield worm dies
+      if(npc.npcMode === 'circle_me'){
+        const nh2=snakeHead(npc);
+        const cd=Math.hypot(ph2.x-nh2.x, ph2.y-nh2.y);
+        if(cd < nr+p2r){ killPlayer2('npc'); return; }
+        continue;
+      }
       for(let i=3; i<npc.segs.length; i++){
         const s=npc.segs[i], dx=ph2.x-s.x, dy=ph2.y-s.y;
         if(dx*dx+dy*dy<nr*nr){ killPlayer2('npc'); return; }
@@ -1904,7 +4251,7 @@ function checkCollisions(){
   }
 
   // P1 vs P2 (mutual)
-  if(p1a&&p2a && !p1Secret && !p2Secret){
+  if(p1a&&p2a && !p1Secret && !p2Secret && !(teamMode && sameTeam(player, player2))){
     const ph =snakeHead(player);
     const ph2=snakeHead(player2);
     // P1 head into P2 body
@@ -1919,30 +4266,80 @@ function checkCollisions(){
     }
   }
 
-  // NPC vs NPC — only check nearby pairs to keep O(n) manageable
-  const NPC_COLL_RADIUS = 400;
+  // NPC vs NPC — pairwise checks for reliable bot kills
+  const NPC_COLL_RADIUS = 420;
+  const NPC_COLL_RADIUS_SQ = NPC_COLL_RADIUS * NPC_COLL_RADIUS;
   for(let a=0; a<npcs.length; a++){
-    if(npcs[a].dead) continue;
-    const ah=snakeHead(npcs[a]), ar=snakeRadius(npcs[a].length);
-    for(let b=0; b<npcs.length; b++){
-      if(a===b||npcs[b].dead) continue;
-      const bh=snakeHead(npcs[b]);
-      const qx=ah.x-bh.x, qy=ah.y-bh.y;
-      if(qx*qx+qy*qy > NPC_COLL_RADIUS*NPC_COLL_RADIUS) continue; // skip far-away npcs
-      const br=snakeRadius(npcs[b].length);
-      const thresh=(ar+br)*(ar+br);
-      // Only check every 3rd segment and cap at 60 segments
-      const step=Math.max(1,Math.floor(npcs[b].segs.length/60));
-      for(let i=3; i<npcs[b].segs.length; i+=step){
-        const s=npcs[b].segs[i], dx=ah.x-s.x, dy=ah.y-s.y;
-        if(dx*dx+dy*dy<thresh){ killNpc(npcs[a],null); break; }
+    const na = npcs[a];
+    if(!na || na.dead) continue;
+    const ah = snakeHead(na), ar = snakeRadius(na.length);
+
+    for(let b=a+1; b<npcs.length; b++){
+      const nb = npcs[b];
+      if(!nb || nb.dead) continue;
+      if(teamMode && sameTeam(na, nb)) continue;
+      const bh = snakeHead(nb), br = snakeRadius(nb.length);
+
+      const hx = ah.x - bh.x, hy = ah.y - bh.y;
+      const hdistSq = hx*hx + hy*hy;
+      if(hdistSq > NPC_COLL_RADIUS_SQ) continue;
+
+      const headThreshSq = (ar + br) * (ar + br);
+
+      // Head-to-head crash: shorter dies; tie means both die
+      if(hdistSq < headThreshSq){
+        if(na.length > nb.length + 0.5){
+          if(!nb.dead) killNpc(nb, na);
+        } else if(nb.length > na.length + 0.5){
+          if(!na.dead) killNpc(na, nb);
+        } else {
+          if(!na.dead) killNpc(na, nb);
+          if(!nb.dead) killNpc(nb, na);
+        }
+        if(na.dead) break;
+        if(nb.dead) continue;
+      }
+
+      // A head into B body
+      if(!na.dead){
+        const stepB = Math.max(1, Math.floor(nb.segs.length / 80));
+        for(let i=3; i<nb.segs.length; i+=stepB){
+          const s = nb.segs[i], dx = ah.x - s.x, dy = ah.y - s.y;
+          if(dx*dx + dy*dy < headThreshSq){
+            killNpc(na, nb);
+            break;
+          }
+        }
+      }
+      if(na.dead) break;
+
+      // B head into A body
+      if(!nb.dead){
+        const stepA = Math.max(1, Math.floor(na.segs.length / 80));
+        for(let i=3; i<na.segs.length; i+=stepA){
+          const s = na.segs[i], dx = bh.x - s.x, dy = bh.y - s.y;
+          if(dx*dx + dy*dy < headThreshSq){
+            killNpc(nb, na);
+            break;
+          }
+        }
       }
     }
   }
 }
 
+function isOnOwnLand(snake){
+  if(!teamMode || !teamGrid || !snake || !snake.team) return false;
+  const h = snakeHead(snake);
+  const cx = Math.max(0, Math.min(teamCols-1, Math.floor(h.x / TEAM_CELL_SIZE)));
+  const cy = Math.max(0, Math.min(teamRows-1, Math.floor(h.y / TEAM_CELL_SIZE)));
+  const cell = teamGrid[cy * teamCols + cx];
+  return snake.team === 'red' ? cell === 1 : cell === 2;
+}
+
 function killPlayer(cause){
   if(!player||player.dead) return;
+  if(isOnOwnLand(player)) return;
   player.dead=true; spawnDeathDots(player); boostClick=false;
   const entry={name:player.name, score:Math.floor(player.length), kills, date:new Date().toLocaleDateString()};
   leaderboard.push(entry); leaderboard.sort((a,b)=>b.score-a.score);
@@ -1975,11 +4372,13 @@ function killPlayer(cause){
 
 function killPlayer2(cause){
   if(!player2||player2.dead) return;
+  if(isOnOwnLand(player2)) return;
   player2.dead=true; spawnDeathDots(player2);
   p2BoostKey=false;
   document.getElementById('p2DeadMsg').innerHTML='';
   document.getElementById('p2DeadPanel').style.display='none';
   document.getElementById('hudP2').style.display='none';
+  const _m2=document.getElementById('voiceMic2'); if(_m2) _m2.style.display='none';
 
   // If P1 also dead, end game
   if(!player||player.dead){
@@ -1999,10 +4398,39 @@ function hideGameUI(){
   document.getElementById('zoneBannerP2').style.display='none';
   document.getElementById('p2DeadPanel').style.display='none';
   document.getElementById('splitDivider').style.display='none';
+  const mic1=document.getElementById('voiceMic1');
+  const mic2=document.getElementById('voiceMic2');
+  const vt=document.getElementById('voiceToast');
+  const cl1=document.getElementById('voiceCmdList1');
+  const cl2=document.getElementById('voiceCmdList2');
+  const vp1=document.getElementById('voicePending1');
+  const vp2=document.getElementById('voicePending2');
+  const vtr1b=document.getElementById('voiceTypeRow1');
+  const vtr2b=document.getElementById('voiceTypeRow2');
+  if(mic1) mic1.style.display='none';
+  if(mic2) mic2.style.display='none';
+  if(vt)   vt.style.display='none';
+  if(cl1)  cl1.style.display='none';
+  if(cl2)  cl2.style.display='none';
+  if(vp1)  vp1.style.display='none';
+  if(vp2)  vp2.style.display='none';
+  if(vtr1b) vtr1b.style.display='none';
+  if(vtr2b) vtr2b.style.display='none';
 }
 
 function killNpc(npc, killer){
   if(npc.dead) return;
+  // Bot commander is immortal — cannot be killed
+  if(npc.isAllyCommander) return;
+  // Worms in circle_me shield mode are invincible — attacker dies instead
+  if(npc.npcMode === 'circle_me'){
+    if(killer && killer !== player && killer !== player2 && !killer.dead && !killer.isAllyCommander){
+      if(killer.npcMode !== 'circle_me') killNpc(killer, npc);
+    }
+    return;
+  }
+  if(isOnOwnLand(npc)) return;
+  const deadTeam = npc.team || null;
   npc.dead=true; spawnDeathDots(npc);
   if(killer===player)  kills++;
   if(killer===player2) kills2++;
@@ -2010,9 +4438,18 @@ function killNpc(npc, killer){
   if(killer===player2){ addScoreForSnake(player2, 850, 'KILL'); }
   const idx=npcs.indexOf(npc);
   setTimeout(()=>{
-    const pos=findSafeSpawnPos(400);
-    const fresh=makeSnake(randNpcName(), pos.x, pos.y, Math.floor(rng()*SKINS.length), false);
-    fresh.length = randomNpcSpawnLength();
+    const pos = (teamMode && deadTeam) ? findTeamSpawnPos(deadTeam, 120) : findSafeSpawnPos(400);
+    let freshSkinIdx = Math.floor(rng()*SKINS.length);
+    const fresh=makeSnake(randNpcName(), pos.x, pos.y, freshSkinIdx, false);
+    if(teamMode && deadTeam){
+      fresh.team = deadTeam;
+      fresh.skin = deadTeam === 'red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE;
+      fresh.length = TEAM_START_LENGTH;
+      // Blue bots respawn with more bulk so they can reclaim territory faster
+      fresh.bulk = deadTeam === 'blue' ? TEAM_START_LENGTH * 4 : TEAM_START_LENGTH * 0.7;
+    } else {
+      fresh.length = Math.min(9000, randomNpcSpawnLength());
+    }
     if(idx>=0&&idx<npcs.length){
       npcs[idx]=fresh; // reuse slot — keeps array bounded
     } else {
@@ -2031,13 +4468,58 @@ function killNpc(npc, killer){
 //  LIVE LEADERBOARD
 // =====================================================
 function updateIngameLB(){
-  const all=[player, player2, ...npcs.filter(n=>!n.dead)].filter(s=>s&&!s.dead);
+  const lb = document.getElementById('ingameLB');
+  const title = document.getElementById('ingameLBTitle');
+  const ul = document.getElementById('ingameLBList');
+
+  if(teamMode){
+    lb.classList.add('team-lb');
+    title.textContent = '\uD83D\uDDFA\uFE0F TERRITORY';
+    refreshTeamScores();
+    const total = Math.max(1, teamScoreRed + teamScoreBlue + (teamGrid ? teamGrid.length - teamScoreRed - teamScoreBlue : 0));
+    const gridTotal = teamGrid ? teamGrid.length : 1;
+    const redPct  = ((teamScoreRed  / gridTotal) * 100).toFixed(1);
+    const bluePct = ((teamScoreBlue / gridTotal) * 100).toFixed(1);
+    const redW  = (teamScoreRed  / gridTotal * 100).toFixed(2);
+    const blueW = (teamScoreBlue / gridTotal * 100).toFixed(2);
+    ul.innerHTML =
+      '<li class="lb-team-row">'
+        +'<div class="lb-team-label"><span style="color:#ff4444">\uD83D\uDD34 RED</span><span style="color:#ff4444">'+redPct+'%</span></div>'
+        +'<div class="lb-team-bar-bg"><div class="lb-team-bar-fill" style="width:'+redW+'%;background:#ff2222"></div></div>'
+      +'</li>'
+      +'<li class="lb-team-row" style="border-bottom:none">'
+        +'<div class="lb-team-label"><span style="color:#4488ff">\uD83D\uDD35 BLUE</span><span style="color:#4488ff">'+bluePct+'%</span></div>'
+        +'<div class="lb-team-bar-bg"><div class="lb-team-bar-fill" style="width:'+blueW+'%;background:#2266ff"></div></div>'
+      +'</li>'
+      +'<li style="border-bottom:none;padding-top:5px">'
+        +'<div class="lb-split-bar">'
+          +'<div class="lb-split-red" style="width:'+redW+'%"></div>'
+          +'<div class="lb-split-blue" style="width:'+blueW+'%"></div>'
+        +'</div>'
+      +'</li>';
+    return;
+  }
+
+  lb.classList.remove('team-lb');
+  title.textContent = '\uD83C\uDFC6 TOP 10';
+  const peerSnakes = [];
+  for(const peer of netPeers.values()){
+    if(peer.dead || !peer.segs || peer.segs.length < 1) continue;
+    peerSnakes.push({
+      name: peer.name,
+      length: peer.length,
+      skin: SKINS[peer.skinIdx] || SKINS[0],
+      dead: false,
+      isPeer: true,
+    });
+  }
+  const all=[player, player2, ...npcs.filter(n=>!n.dead), ...peerSnakes].filter(s=>s&&!s.dead);
   all.sort((a,b)=>b.length-a.length);
   const top=all.slice(0,10);
-  const ul=document.getElementById('ingameLBList');
   ul.innerHTML=top.map((s,i)=>{
     const isP1=s===player, isP2=s===player2;
-    const nm=s.name.length>11?s.name.slice(0,10)+'\u2026':s.name;
+    const nmBase=s.isPeer?(s.name+' LAN'):s.name;
+    const nm=nmBase.length>11?nmBase.slice(0,10)+'\u2026':nmBase;
     const exactLen = formatLengthExact(s.length);
     return '<li class="'+(isP1||isP2?'me':'')+'">'
       +'<span class="lb-in-rank">#'+(i+1)+'</span>'
@@ -2108,12 +4590,35 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
   ctx.strokeRect(0,0,mapSize,mapSize);
   // Zone
   if(!inSecret) drawZone();
+  // Team territory tiles
+  if(teamMode && !inSecret && teamGrid){
+    for(let tcy=0; tcy<teamRows; tcy++){
+      for(let tcx=0; tcx<teamCols; tcx++){
+        const cell = teamGrid[tcy*teamCols+tcx];
+        if(!cell) continue;
+        ctx.fillStyle = cell===1 ? 'rgba(255,60,60,0.22)' : 'rgba(60,120,255,0.22)';
+        ctx.fillRect(tcx*TEAM_CELL_SIZE, tcy*TEAM_CELL_SIZE, TEAM_CELL_SIZE, TEAM_CELL_SIZE);
+      }
+    }
+  }
   // Dots (viewport culled accounting for zoom)
   const pad=100/zoom;
   const vx1=cx-vpW/(2*zoom)-pad, vx2=cx+vpW/(2*zoom)+pad;
   const vy1=cy-canvas.height/(2*zoom)-pad, vy2=cy+canvas.height/(2*zoom)+pad;
   if(inSecret){
     for(const d of secretDots) if(d.x>=vx1&&d.x<=vx2&&d.y>=vy1&&d.y<=vy2) drawDot(d);
+    for(const peer of netPeers.values()){
+      if(peer.dead || !peer.inSecretMap || !peer.segs || peer.segs.length < 2) continue;
+      const h = peer.segs[0];
+      if(h.x<vx1||h.x>vx2||h.y<vy1||h.y>vy2) continue;
+      drawSnake({
+        segs: peer.segs,
+        skin: SKINS[peer.skinIdx] || SKINS[0],
+        name: peer.name,
+        length: peer.length,
+        npcBoost: false,
+      });
+    }
     if(player2 && !player2.dead && player2.inSecretMap) drawSnake(player2);
     if(player  && !player.dead  && player.inSecretMap)  drawSnake(player);
   } else {
@@ -2121,10 +4626,22 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
     for(const d of deathDots) if(d.x>=vx1&&d.x<=vx2&&d.y>=vy1&&d.y<=vy2) drawDot(d);
     for(const d of foodDots)  if(d.x>=vx1&&d.x<=vx2&&d.y>=vy1&&d.y<=vy2) drawDot(d);
     for(const npc of npcs) if(!npc.dead) drawSnake(npc);
+    for(const peer of netPeers.values()){
+      if(peer.dead || peer.inSecretMap || !peer.segs || peer.segs.length < 2) continue;
+      const h = peer.segs[0];
+      if(h.x<vx1||h.x>vx2||h.y<vy1||h.y>vy2) continue;
+      drawSnake({
+        segs: peer.segs,
+        skin: SKINS[peer.skinIdx] || SKINS[0],
+        name: peer.name,
+        length: peer.length,
+        npcBoost: false,
+      });
+    }
     if(player2&&!player2.dead&&!player2.inSecretMap) drawSnake(player2);
     if(player &&!player.dead &&!player.inSecretMap)  drawSnake(player);
   }
-  if(eventActive('fog')){
+  if(!teamMode && eventActive('fog')){
     ctx.fillStyle='rgba(0,0,0,0.52)';
     ctx.fillRect(0,0,mapSize,mapSize);
     for(let i=0; i<45; i++){
@@ -2263,7 +4780,8 @@ function drawSkinCircle(cx, x, y, r, skin){
 }
 
 function drawSnake(snake){
-  const {segs,skin,name}=snake;
+  const segs=snake.segs, name=snake.name;
+  const skin = (teamMode && snake.team) ? (snake.team==='red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE) : snake.skin;
   if(segs.length<2) return;
   const r=snakeRadius(snake.length);
   const head=segs[0];
@@ -2314,6 +4832,10 @@ function drawSnake(snake){
     ctx.fillText(name, head.x, head.y-r*1.65-1);
     ctx.shadowBlur=0;
   }
+
+  // Commander hat (team mode players OR the AI commander NPC)
+  if(teamMode && (snake.isPlayer || snake.isCommander)) drawCommanderHat(ctx, head, faceAngle, r, snake.team);
+
   ctx.restore();
 }
 
@@ -2494,6 +5016,82 @@ function drawDogEyes(head, angle, r){
   ctx.fillStyle='rgba(255,255,255,.45)'; ctx.fill();
 }
 
+function drawCommanderHat(c, head, angle, r, team){
+  // Military peaked commander cap centered on the snake head, crown points visually up
+  const isRed = team === 'red';
+  const capMain  = isRed ? '#b81010' : '#0d3dbf';
+  const capDark  = isRed ? '#6e0808' : '#072280';
+  const brimCol  = isRed ? '#8a0c0c' : '#0c2d94';
+  const gold     = '#ffd700';
+
+  const h2 = r * 1.1; // hat height
+  const hw = r * 1.0; // half-width at base
+  const tw = r * 0.55; // half-width at top
+
+  // Pivot: brim center sits at the VISUAL TOP of the head circle, always centered
+  const px = head.x;
+  const py = head.y - r * 1.15;  // directly above head center
+
+  c.save();
+  c.translate(px, py);
+  // Subtle lean based on movement direction (tilt left/right slightly, never flip upside-down)
+  const lean = Math.sin(angle) * 0.22;
+  c.rotate(lean);
+
+  // Brim (ellipse at bottom of hat)
+  c.beginPath();
+  c.ellipse(0, 0, hw * 1.35, r * 0.22, 0, 0, Math.PI * 2);
+  c.fillStyle = brimCol;
+  c.fill();
+  c.strokeStyle = gold; c.lineWidth = r * 0.07; c.stroke();
+
+  // Hat body (trapezoid) — crown points upward (local -y = visual up)
+  c.beginPath();
+  c.moveTo(-hw, 0);
+  c.lineTo(hw, 0);
+  c.lineTo(tw, -h2);
+  c.lineTo(-tw, -h2);
+  c.closePath();
+  const grad = c.createLinearGradient(-hw, 0, hw, 0);
+  grad.addColorStop(0, capDark); grad.addColorStop(0.5, capMain); grad.addColorStop(1, capDark);
+  c.fillStyle = grad; c.fill();
+  c.strokeStyle = capDark; c.lineWidth = r * 0.05; c.stroke();
+
+  // Gold band near brim
+  c.beginPath();
+  const bw = hw - (hw - tw) * 0.15;
+  c.moveTo(-bw, -h2 * 0.18);
+  c.lineTo(bw, -h2 * 0.18);
+  c.lineTo(bw - (hw - tw) * 0.05, -h2 * 0.33);
+  c.lineTo(-bw + (hw - tw) * 0.05, -h2 * 0.33);
+  c.closePath();
+  c.fillStyle = gold; c.fill();
+
+  // Gold star badge in center
+  c.save();
+  c.translate(0, -h2 * 0.6);
+  _drawStar(c, 0, 0, r * 0.28, r * 0.13, 5, gold, '#cc8800');
+  c.restore();
+
+  c.restore();
+}
+
+function _drawStar(c, x, y, outerR, innerR, points, fillCol, strokeCol){
+  c.save();
+  c.translate(x, y);
+  c.beginPath();
+  for(let i = 0; i < points * 2; i++){
+    const a = (i * Math.PI / points) - Math.PI / 2;
+    const rad = i % 2 === 0 ? outerR : innerR;
+    if(i === 0) c.moveTo(Math.cos(a)*rad, Math.sin(a)*rad);
+    else        c.lineTo(Math.cos(a)*rad, Math.sin(a)*rad);
+  }
+  c.closePath();
+  c.fillStyle = fillCol; c.fill();
+  c.strokeStyle = strokeCol; c.lineWidth = outerR * 0.15; c.stroke();
+  c.restore();
+}
+
 function drawMinimap(){
   _drawMinimapOnto(mmCtx, mmCanvas.width, mmCanvas.height, player);
 }
@@ -2524,6 +5122,18 @@ function _drawMinimapOnto(mc, W, H, focusPlayer){
   // Zone
   mc.beginPath(); mc.arc(worldSize/2*sx, worldSize/2*sy, zoneRadius*sx, 0, Math.PI*2);
   mc.strokeStyle=gameTime>ZONE_FULL_TIME?'#ff4400':'#446644'; mc.lineWidth=1.5; mc.stroke();
+  // Team territory on minimap
+  if(teamMode && teamGrid){
+    for(let tcy=0; tcy<teamRows; tcy++){
+      for(let tcx=0; tcx<teamCols; tcx++){
+        const cell = teamGrid[tcy*teamCols+tcx];
+        if(!cell) continue;
+        mc.fillStyle = cell===1 ? 'rgba(255,80,80,0.55)' : 'rgba(80,140,255,0.55)';
+        mc.fillRect(tcx*TEAM_CELL_SIZE*sx, tcy*TEAM_CELL_SIZE*sy,
+                    TEAM_CELL_SIZE*sx+1, TEAM_CELL_SIZE*sy+1);
+      }
+    }
+  }
   // Food
   mc.fillStyle='#00aa44';
   for(const d of foodDots)  mc.fillRect(d.x*sx-1, d.y*sy-1, 2, 2);
@@ -2534,6 +5144,14 @@ function _drawMinimapOnto(mc, W, H, focusPlayer){
   // NPCs
   for(const npc of npcs){ if(!npc.dead){ const hh=snakeHead(npc);
     mc.fillStyle=npc.skin.body; mc.beginPath(); mc.arc(hh.x*sx, hh.y*sy, 2.5, 0, Math.PI*2); mc.fill(); }}
+  // Network peers
+  for(const peer of netPeers.values()){
+    if(peer.dead || peer.inSecretMap || !peer.segs || !peer.segs.length) continue;
+    const hh = peer.segs[0];
+    mc.beginPath(); mc.arc(hh.x*sx, hh.y*sy, 3,0,Math.PI*2);
+    mc.fillStyle = (SKINS[peer.skinIdx] || SKINS[0]).body;
+    mc.fill();
+  }
   // Both players (small)
   for(const p of [player, player2]){
     if(!p||p.dead||p===focusPlayer) continue;
@@ -2554,6 +5172,8 @@ function _drawMinimapOnto(mc, W, H, focusPlayer){
 //  TITLE SCREEN
 // =====================================================
 function showTitle(){
+  connectMultiplayer();
+  document.body.classList.remove('one-player-team');
   document.getElementById('titleScreen').style.display  ='flex';
   document.getElementById('deathScreen').style.display  ='none';
   document.getElementById('hud').style.display          ='none';
@@ -2571,7 +5191,7 @@ function showTitle(){
   const dc = dailyChallengeData && dailyChallengeData.challenge
     ? (dailyChallengeData.challenge.text + (dailyChallengeData.done ? ' \u2713' : ''))
     : 'No daily challenge';
-  document.querySelector('.subtitle').textContent = 'Grow big. Eat everything. Survive the zone.  |  '+dc;
+  document.querySelector('.subtitle').textContent = 'Grow big. Eat everything. Survive the zone. LAN works on any device on the same WiFi.  |  '+dc;
   renderSkinPreview(1);
   renderSkinPreview(2);
 }
@@ -2636,22 +5256,51 @@ function closeSkinPicker(){ document.getElementById('skinPicker').style.display=
 // =====================================================
 //  BUTTON HANDLERS
 // =====================================================
+function updateTeamConfigRow(){
+  const show2P = teamMode && twoPlayerMode;
+  const show1P = teamMode && !twoPlayerMode;
+  document.getElementById('teamConfigRow').style.display = show2P ? 'flex' : 'none';
+  document.getElementById('teamP1ConfigRow').style.display = show1P ? 'flex' : 'none';
+}
 document.getElementById('btn1P').addEventListener('click',()=>{
   twoPlayerMode=false;
   document.getElementById('btn1P').classList.add('active');
   document.getElementById('btn2P').classList.remove('active');
   document.getElementById('p2Setup').style.display='none';
+  updateTeamConfigRow();
 });
 document.getElementById('btn2P').addEventListener('click',()=>{
   twoPlayerMode=true;
   document.getElementById('btn2P').classList.add('active');
   document.getElementById('btn1P').classList.remove('active');
   document.getElementById('p2Setup').style.display='flex';
+  updateTeamConfigRow();
 });
 document.getElementById('btnDaily').addEventListener('click',()=>{
   dailySeedMode = !dailySeedMode;
   document.getElementById('btnDaily').classList.toggle('active', dailySeedMode);
 });
+document.getElementById('btnTeam').addEventListener('click',()=>{
+  teamMode = !teamMode;
+  document.getElementById('btnTeam').classList.toggle('active', teamMode);
+  updateTeamConfigRow();
+});
+function setTeamP2Config(val){
+  teamP2Config = val;
+  ['tcVs','tcBothRed','tcBothBlue'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  const map = {'vs':'tcVs','both-red':'tcBothRed','both-blue':'tcBothBlue'};
+  document.getElementById(map[val]).classList.add('active');
+}
+document.getElementById('tcVs').addEventListener('click',()=>setTeamP2Config('vs'));
+document.getElementById('tcBothRed').addEventListener('click',()=>setTeamP2Config('both-red'));
+document.getElementById('tcBothBlue').addEventListener('click',()=>setTeamP2Config('both-blue'));
+function setTeamP1Config(val){
+  teamP1Config = val;
+  document.getElementById('tc1PRed').classList.toggle('active', val === 'red');
+  document.getElementById('tc1PBlue').classList.toggle('active', val === 'blue');
+}
+document.getElementById('tc1PRed').addEventListener('click',()=>setTeamP1Config('red'));
+document.getElementById('tc1PBlue').addEventListener('click',()=>setTeamP1Config('blue'));
 document.getElementById('pickSkinBtn1').addEventListener('click',()=>openSkinPicker(1));
 document.getElementById('pickSkinBtn2').addEventListener('click',()=>openSkinPicker(2));
 document.getElementById('skinCloseBtn').addEventListener('click', closeSkinPicker);
@@ -2660,8 +5309,8 @@ document.getElementById('backBtn').addEventListener('click',()=>{ window.locatio
 
 document.getElementById('titlePlayBtn').addEventListener('click',()=>{
   startMusic();
-  playerName =(document.getElementById('nicknameInput').value.trim()||'Player 1').slice(0,20);
-  playerName2=(document.getElementById('nicknameInput2').value.trim()||'Player 2').slice(0,20);
+  playerName =(document.getElementById('nicknameInput').value.trim()||'Player 1').slice(0,25);
+  playerName2=(document.getElementById('nicknameInput2').value.trim()||'Player 2').slice(0,25);
   document.getElementById('titleScreen').style.display='none';
   initGame();
 });
@@ -2671,6 +5320,8 @@ document.getElementById('deathBackBtn').addEventListener('click',()=>{
   gameRunning=false; boostClick=false; p2BoostKey=false;
   showTitle();
 });
+
+window.addEventListener('beforeunload', disconnectMultiplayer);
 
 // ── Start ──
 showTitle();
