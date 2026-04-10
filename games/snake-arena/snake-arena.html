@@ -2007,15 +2007,16 @@ function initGame(){
   powerUpSpawnTimer = POWERUP_SPAWN_INTERVAL;
   // deathDots intentionally NOT reset between rounds
 
-  // Spawn permanent bodyguards for each human player
-  for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player, i));
-  if(twoPlayerMode && player2){
-    for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player2, i));
-  }
-  // Spawn invincible circlers that ring the player
-  for(let i=0; i<CIRCLER_COUNT; i++) npcs.push(spawnCirclerFor(player, i));
-  if(twoPlayerMode && player2){
-    for(let i=0; i<CIRCLER_COUNT; i++) npcs.push(spawnCirclerFor(player2, i));
+  // Spawn permanent bodyguards and circlers only in team mode
+  if(teamMode){
+    for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player, i));
+    if(twoPlayerMode && player2){
+      for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player2, i));
+    }
+    for(let i=0; i<CIRCLER_COUNT; i++) npcs.push(spawnCirclerFor(player, i));
+    if(twoPlayerMode && player2){
+      for(let i=0; i<CIRCLER_COUNT; i++) npcs.push(spawnCirclerFor(player2, i));
+    }
   }
   // Spawn bodyguards for the enemy commander
   if(teamMode && enemyCommander) spawnEnemyCommanderGuards(enemyCommander);
@@ -3120,7 +3121,7 @@ function applyVoiceCommand(team, transcript){
   const wantBoost = /\b(boost|turbo|speed up|go fast|sprint|full speed)\b/.test(t);
 
   // ── Follow me ──
-  if(/\b(follow me|follow|come here|come to me|stay with me|stay close|stick with me)\b/.test(t))
+  if(/\b(follow me|follow|come here|come to me|come back|stay with me|stay close|stick with me)\b/.test(t))
     action = 'follow';
   // ── Charge Attack (line up side by side + hunt together) ──
   else if(/\b(charge attack|charge atk|line up side by side|side by side (and )?charge|formation charge|squad charge|group charge|team charge)\b/.test(t))
@@ -3324,6 +3325,18 @@ function applyVoiceCommand(team, transcript){
       if(!hp || hp.dead || hp.team === team) continue;
       const d = Math.hypot(snakeHead(hp).x - ref.x, snakeHead(hp).y - ref.y);
       if(d < bestD){ bestD = d; huntTgt = snakeHead(hp); }
+    }
+  }
+
+  // ── Ring worm (circler) flee/return commands ──
+  const isStopCmd    = /\bstop\b/.test(t);
+  const isComeBack   = /\bcome back\b/.test(t);
+  if(isStopCmd || isComeBack){
+    for(const npc of npcs){
+      if(!npc.isCircler || npc.dead) continue;
+      // In team mode only affect circlers owned by this team's player
+      if(teamMode && npc.circlerFor && npc.circlerFor.team !== team) continue;
+      npc.circlerFleeing = isStopCmd;
     }
   }
 
@@ -3616,6 +3629,10 @@ function updateNpc(npc, dt){
   if(npc.isCircler){
     if(!npc.circlerFor || npc.circlerFor.dead){
       npc.npcMode = 'wander';
+    } else if(npc.circlerFleeing){
+      npc.npcMode = 'circler_flee';
+      npc.npcModeTimer = 999;
+      npc.voiceCmdLocked = false;
     } else {
       npc.npcMode = 'circler';
       npc.npcModeTimer = 999;
@@ -4464,6 +4481,17 @@ function updateNpc(npc, dt){
       npc._circlerMatchSpd = null;
       npc.npcBoost = false;
     }
+  } else if(npc.npcMode==='circler_flee'){
+    // Ring worm obeying "stop" command — zoom directly away from their orbit target
+    const fleeTgt = (npc.circlerFor && !npc.circlerFor.dead) ? npc.circlerFor : null;
+    if(fleeTgt){
+      const ph = snakeHead(fleeTgt);
+      desiredAngle = Math.atan2(h.y - ph.y, h.x - ph.x);
+      npc._circlerMatchSpd = 44; // fast hard-coded flee speed (no boost-poop drain)
+    } else {
+      npc._circlerMatchSpd = 44;
+    }
+    npc.npcBoost = false; // avoid length drain since circlers are short
   } else if(npc.npcMode==='raid'&&npc.npcTarget){
     desiredAngle=Math.atan2(npc.npcTarget.y-h.y, npc.npcTarget.x-h.x) + (Math.random()-0.5)*0.18;
     // Always boost during voice-commanded raid/invade; otherwise occasional boost
@@ -4577,7 +4605,7 @@ function updateNpc(npc, dt){
 
   const spd = (npc.npcMode === 'bodyguard' && npc._guardMatchSpd != null)
     ? npc._guardMatchSpd
-    : (npc.npcMode === 'circler' && npc._circlerMatchSpd != null)
+    : ((npc.npcMode === 'circler' || npc.npcMode === 'circler_flee') && npc._circlerMatchSpd != null)
     ? npc._circlerMatchSpd
     : (npc.npcBoost ? snakeBoostSpeed(npc.length, npc) : snakeBaseSpeed(npc.length)) * speedMultFor(npc, npc.npcBoost);
   moveSnakeFixed(npc, npc.npcAngle, spd);
@@ -4601,6 +4629,8 @@ function checkCollisions(){
     for(const npc of npcs){
       if(npc.dead) continue;
       if(teamMode && sameTeam(player, npc)) continue;
+      // Player's own circlers and bodyguards never kill them
+      if((npc.isCircler && npc.circlerFor === player) || (npc.isBodyguard && npc.bodyguardFor === player)) continue;
       const nr=snakeRadius(npc.length);
       // Enemy player hitting a circle_me shield worm dies
       if(npc.npcMode === 'circle_me'){
@@ -4627,6 +4657,8 @@ function checkCollisions(){
     for(const npc of npcs){
       if(npc.dead) continue;
       if(teamMode && sameTeam(player2, npc)) continue;
+      // Player's own circlers and bodyguards never kill them
+      if((npc.isCircler && npc.circlerFor === player2) || (npc.isBodyguard && npc.bodyguardFor === player2)) continue;
       const nr=snakeRadius(npc.length);
       // Enemy player2 hitting a circle_me shield worm dies
       if(npc.npcMode === 'circle_me'){
@@ -4798,6 +4830,8 @@ function killPlayer(cause){
     const causeMsg = cause==='zone'?'You got caught outside the zone!'
                    : cause==='p2'  ?'Player 2 ran you over!'
                    : 'Your head hit a snake!';
+    playerCoins += 20;
+    localStorage.setItem('snakeArenaCoins', String(playerCoins));
     document.getElementById('deathMsg').innerHTML=causeMsg
       +'<br>Length: <strong style="color:#ffcc44">'+Math.floor(player.length)+'</strong>'
       +' &nbsp;|&nbsp; Kills: <strong style="color:#ff4466">'+kills+'</strong>'
@@ -4806,7 +4840,8 @@ function killPlayer(cause){
       +' &nbsp;|&nbsp; Top Speed: <strong style="color:#88ddff">'+bestSpeed.toFixed(1)+'</strong>'
       +' &nbsp;|&nbsp; Longest Boost: <strong style="color:#ffaa66">'+longestBoostChain.toFixed(1)+'s</strong>'
       +(dailySeedMode?'<br><span style="color:#88ddff">Daily Seed: '+seedLabel+'</span>':'')
-      +'<br><span style="color:#99ffaa">Daily: '+(dailyChallengeData.challenge?dailyChallengeData.challenge.text:'-')+' ['+(dailyChallengeData.done?'DONE':'OPEN')+']</span>';
+      +'<br><span style="color:#99ffaa">Daily: '+(dailyChallengeData.challenge?dailyChallengeData.challenge.text:'-')+' ['+(dailyChallengeData.done?'DONE':'OPEN')+']</span>'
+      +'<br><span style="color:#ffd700;font-size:.95em">&#x1F4B0; +20 coins! Total: '+playerCoins+'</span>';
     document.getElementById('deathScreen').style.display='flex';
   }
   triggerShake(14);
@@ -5245,37 +5280,38 @@ function drawTurboJetsFire(snake){
   const tail  = segs[segs.length - 1];
   const tail2 = segs[Math.max(0, segs.length - 5)];
   const rocketAngle = Math.atan2(tail.y - tail2.y, tail.x - tail2.x);
+  const rr = r * 2.2; // rocket scale multiplier — bigger rockets
   for(const side of [-1, 1]){
     const offAng = rocketAngle + side * Math.PI / 2.6;
-    const rx = tail.x + Math.cos(offAng) * r * 0.65;
-    const ry = tail.y + Math.sin(offAng) * r * 0.65;
+    const rx = tail.x + Math.cos(offAng) * r * 1.2;
+    const ry = tail.y + Math.sin(offAng) * r * 1.2;
     ctx.save();
     ctx.translate(rx, ry);
     ctx.rotate(rocketAngle);
     // Rocket nozzle body
     ctx.beginPath();
-    ctx.ellipse(0, 0, r * 0.3, r * 0.52, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, rr * 0.3, rr * 0.52, 0, 0, Math.PI * 2);
     ctx.fillStyle = '#999999';
     ctx.fill();
-    ctx.strokeStyle = '#555'; ctx.lineWidth = r * 0.08; ctx.stroke();
+    ctx.strokeStyle = '#555'; ctx.lineWidth = rr * 0.08; ctx.stroke();
     // Nose tip
     ctx.beginPath();
-    ctx.moveTo(-r*0.3, 0); ctx.lineTo(0, -r*0.65); ctx.lineTo(r*0.3, 0);
+    ctx.moveTo(-rr*0.3, 0); ctx.lineTo(0, -rr*0.65); ctx.lineTo(rr*0.3, 0);
     ctx.fillStyle = '#cc3300'; ctx.fill();
     // Fire flame when boosting
     if(isBoosting){
       const flameT = gameTime * 18;
-      const fl = r * (1.6 + Math.sin(flameT + side) * 0.5);
+      const fl = rr * (1.6 + Math.sin(flameT + side) * 0.5);
       ctx.beginPath();
-      ctx.moveTo(-r*0.26, 0);
-      ctx.quadraticCurveTo(-r*0.35, fl*0.5, 0, fl);
-      ctx.quadraticCurveTo(r*0.35, fl*0.5, r*0.26, 0);
+      ctx.moveTo(-rr*0.26, 0);
+      ctx.quadraticCurveTo(-rr*0.35, fl*0.5, 0, fl);
+      ctx.quadraticCurveTo(rr*0.35, fl*0.5, rr*0.26, 0);
       ctx.fillStyle = '#ff6600'; ctx.fill();
       const fl2 = fl * 0.6;
       ctx.beginPath();
-      ctx.moveTo(-r*0.14, 0);
-      ctx.quadraticCurveTo(-r*0.18, fl2*0.5, 0, fl2);
-      ctx.quadraticCurveTo(r*0.18, fl2*0.5, r*0.14, 0);
+      ctx.moveTo(-rr*0.14, 0);
+      ctx.quadraticCurveTo(-rr*0.18, fl2*0.5, 0, fl2);
+      ctx.quadraticCurveTo(rr*0.18, fl2*0.5, rr*0.14, 0);
       ctx.fillStyle = '#ffee00'; ctx.fill();
     }
     ctx.restore();
