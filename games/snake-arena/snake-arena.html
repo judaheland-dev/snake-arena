@@ -417,6 +417,7 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
   <span>🏠 defend home / defend base / return home</span><br>
   <span>🌊 flood the map / spread everywhere / cover the map</span><br>
   <span>🌀 tornado / spiral out / vortex</span><br>
+  <span>🌪️ cyclone / worm ball / spiral formation</span><br>
   <span>🚂 snake train / single file / conga line</span><br>
   <span>💣 kamikaze one / send one / sacrifice one</span><br>
   <span>🫡 bodyguard / stick beside me / escort me</span><br>
@@ -466,6 +467,7 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
   <span>defend home / defend base / return home 🏠</span><br>
   <span>flood the map / spread everywhere / cover the map 🌊</span><br>
   <span>tornado / spiral out / vortex 🌀</span><br>
+  <span>cyclone / worm ball / spiral formation 🌪️</span><br>
   <span>snake train / single file / conga line 🚂</span><br>
   <span>kamikaze one / send one / sacrifice one 💣</span><br>
   <span>bodyguard / stick beside me / escort me 🫡</span><br>
@@ -2971,7 +2973,7 @@ const ACTION_EMOJI = {
   line_fwd:'➡️', line_left:'⬅️', line_right:'➡️', line_back:'⬅️', line_up:'⬆️', line_down:'⬇️',
   charge_atk:'⚡',
   diamond:'💎', wedge:'🔺', wall:'🧱', split:'✂️', pincer:'🦀', bait:'🎣', decoy:'🎭', hold_line:'🛑',
-  eat_all:'🍽️', grow:'📈', push_map:'🗺️', defend_home:'🏠', flood:'🌊', tornado:'🌀', snake_train:'🚂', kamikaze_one:'💣', bodyguard:'🫡'
+  eat_all:'🍽️', grow:'📈', push_map:'🗺️', defend_home:'🏠', flood:'🌊', tornado:'🌀', snake_train:'🚂', kamikaze_one:'💣', bodyguard:'🫡', cyclone:'🌪️'
 };
 const BOT_REPLIES = [
   'Yes general!', 'Yes commander!', 'Yes sir!', 'Right away sir!',
@@ -3047,6 +3049,9 @@ function applyVoiceCommand(team, transcript){
   // ── Tornado ──
   else if(/\b(tornado|spiral( out)?|spin out|vortex|twister)\b/.test(t))
     action = 'tornado';
+  // ── Cyclone ──
+  else if(/\b(cyclone|spinning( ball)?|ball of worms|worm ball|worm cyclone|spiral ball|spiral and kill|spiral formation)\b/.test(t))
+    action = 'cyclone';
   // ── Snake train ──
   else if(/\b(snake train|train formation|single file|head to tail|one big (snake|line|train))\b/.test(t))
     action = 'snake_train';
@@ -3146,6 +3151,7 @@ function applyVoiceCommand(team, transcript){
       [/defend.?(home|base|territory)|return.?(home|base)/i, 'defend_home'],
       [/flood.?map|spread.?everywhere|fill.?map/i, 'flood'],
       [/tornado|spiral|vortex|twister/i, 'tornado'],
+      [/cyclone|worm.?ball|ball.?of.?worms|spiral.?(ball|formation|kill)/i, 'cyclone'],
       [/snake.?train|train.?form|head.?to.?tail/i, 'snake_train'],
       [/kamikaze.?one|sacrifice.?one|send.?one/i, 'kamikaze_one'],
       [/bodyguard|stick.?beside|stay.?beside|escort/i, 'bodyguard'],
@@ -3250,7 +3256,7 @@ function applyVoiceCommand(team, transcript){
       if(action === 'meteor'){ const mr = rank++; npc.meteorRank = mr; npc.meteorAngle = mr * 2.399; } // golden-angle spread
       if(/^line_(fwd|left|right|back|up|down)$/.test(action)) npc.lineAttackRank = rank++;
       if(action === 'charge_atk') npc.chargeAtkRank = rank++;
-      if(/^(diamond|wedge|wall|split|pincer|hold_line|tornado|snake_train|bodyguard|push_map_left|push_map_right|defend_home|flood|bait|decoy|eat_all|grow)$/.test(action)) npc.formRank = rank++;
+      if(/^(diamond|wedge|wall|split|pincer|hold_line|tornado|snake_train|bodyguard|push_map_left|push_map_right|defend_home|flood|bait|decoy|eat_all|grow|cyclone)$/.test(action)) npc.formRank = rank++;
       if(action === 'bodyguard') npc.bodyguardRank = rank;
       if(action === 'kamikaze_one') npc.kamikazeOneRank = rank++;
     }
@@ -3291,7 +3297,7 @@ function showVoiceToast(team, action, transcript){
       pincer:'PINCER ATTACK!', bait:'BAIT AND SWITCH!', decoy:'SEND A DECOY!', hold_line:'HOLD THE LINE!',
       eat_all:'EAT EVERYTHING!', grow:'GROW GROW GROW!', push_map_left:'PUSH LEFT!', push_map_right:'PUSH RIGHT!',
       defend_home:'DEFEND HOME!', flood:'FLOOD THE MAP!', tornado:'TORNADO SPIRAL!', snake_train:'SNAKE TRAIN!',
-      kamikaze_one:'KAMIKAZE ONE!', bodyguard:'BODYGUARD ME!'};
+      kamikaze_one:'KAMIKAZE ONE!', bodyguard:'BODYGUARD ME!', cyclone:'CYCLONE FORMATION!'};
     toast.innerHTML = `${emoji} <b style="color:${color}">${team.toUpperCase()}</b>: <i>"${transcript}"</i><br><span style="font-size:.8rem;opacity:.9">→ ${labels[action]||action.toUpperCase()}</span>`;
   }
   toast.style.display = 'block';
@@ -3477,7 +3483,6 @@ function updateNpc(npc, dt){
   if(npc.isBodyguard){
     // Re-link to protected player if they respawned
     if(!npc.bodyguardFor || npc.bodyguardFor.dead){
-      // keep npcMode=bodyguard, commanderAssignment stays, just don't move toward dead player
       npc.npcMode = 'wander';
     } else {
       npc.npcMode = 'bodyguard';
@@ -3485,6 +3490,12 @@ function updateNpc(npc, dt){
       npc.npcModeTimer = 999;
       npc.voiceCmdLocked = false;
     }
+  }
+  // Clear cyclone intercept state if the worm has been reassigned to a different mode
+  if(npc.cycloneIntercepting && npc.npcMode !== 'cyclone'){
+    npc.cycloneIntercepting = false;
+    npc.cycloneIntruder = null;
+    npc.cycloneReturnTimer = 0;
   }
   // While under a persistent voice command, keep modeTimer positive so steering stays active
   if(npc.voiceCmdLocked){ npc.npcModeTimer = 999; } else { npc.npcModeTimer-=dt; }
@@ -4067,6 +4078,74 @@ function updateNpc(npc, dt){
       desiredAngle = Math.atan2(ty - h.y, tx - h.x);
     }
     npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode==='cyclone'){
+    // Cyclone: all worms orbit the player in a tight inward-to-outward Archimedean spiral,
+    // single-file. Worms on the outer rings act as sentinels — if enemies enter the spiral
+    // they peel off to intercept, kill, then return to formation.
+    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
+    const cx = commander ? snakeHead(commander).x : worldSize / 2;
+    const cy = commander ? snakeHead(commander).y : worldSize / 2;
+    const rank  = npc.formRank || 0;
+    const total = npcs.filter(n => !n.dead && n.team === npc.team && (n.npcMode === 'cyclone' || n.cycloneIntercepting)).length || 1;
+
+    // Spiral parameters: inner ring tight, each step adds a small radius increment
+    const armSpacing = 42;            // distance between spiral arms
+    const innerR     = 90;            // minimum orbit radius (innermost worm)
+    const spiralR    = innerR + rank * armSpacing;
+    // Each worm gets a fixed angular position based on rank so the spiral isn't clumped
+    // The whole formation rotates slowly over time for visual effect
+    const spinSpeed  = 0.6;           // radians/second
+    const baseAngle  = rank * 2.618 + gameTime * spinSpeed; // golden angle spacing + slow spin
+    const formX = cx + Math.cos(baseAngle) * spiralR;
+    const formY = cy + Math.sin(baseAngle) * spiralR;
+
+    // Count enemies inside the spiral's outermost radius
+    const outerR = innerR + (total - 1) * armSpacing + armSpacing;
+    if(!npc.cycloneIntercepting){
+      // Find enemies inside the formation
+      let intruders = [];
+      for(const e of npcs){
+        if(e.dead || e.team === npc.team) continue;
+        if(Math.hypot(snakeHead(e).x - cx, snakeHead(e).y - cy) < outerR) intruders.push(e);
+      }
+      for(const hp of [player, player2]){
+        if(!hp || hp.dead || hp.team === npc.team) continue;
+        if(Math.hypot(snakeHead(hp).x - cx, snakeHead(hp).y - cy) < outerR) intruders.push(hp);
+      }
+      // Outermost worms (highest ranks) peel off — one per intruder
+      const interceptorSlot = total - 1 - rank; // outer ranks have lower interceptorSlot
+      if(intruders.length > 0 && interceptorSlot < intruders.length){
+        npc.cycloneIntercepting = true;
+        npc.cycloneIntruder = intruders[interceptorSlot];
+        npc.cycloneReturnTimer = 8; // max 8 s hunting before returning
+      }
+    }
+
+    if(npc.cycloneIntercepting){
+      // Intercept mode: charge the assigned intruder
+      const intruder = npc.cycloneIntruder;
+      npc.cycloneReturnTimer = (npc.cycloneReturnTimer || 8) - dt;
+      const intruderGone = !intruder || intruder.dead ||
+        Math.hypot(snakeHead(intruder).x - cx, snakeHead(intruder).y - cy) > outerR * 1.6;
+      const timedOut = npc.cycloneReturnTimer <= 0;
+      if(intruderGone || timedOut){
+        // Return to formation
+        npc.cycloneIntercepting = false;
+        npc.cycloneIntruder = null;
+        npc.cycloneReturnTimer = 0;
+        desiredAngle = Math.atan2(formY - h.y, formX - h.x);
+        npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+      } else {
+        const ih = snakeHead(intruder);
+        desiredAngle = Math.atan2(ih.y - h.y, ih.x - h.x);
+        npc.npcBoost = true;
+      }
+    } else {
+      // Formation mode: steer toward spiral position
+      const dist = Math.hypot(formX - h.x, formY - h.y);
+      desiredAngle = Math.atan2(formY - h.y, formX - h.x);
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN && dist > 200;
+    }
   } else if(npc.npcMode==='snake_train'){
     // Snake train: each bot latches onto the tail of the previous bot, forming one giant chain
     const teamBots = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'snake_train');
@@ -4115,8 +4194,19 @@ function updateNpc(npc, dt){
       const tx = ch.x + Math.cos(cAngle + side * Math.PI / 2) * sideOffset;
       const ty = ch.y + Math.sin(cAngle + side * Math.PI / 2) * sideOffset;
       desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+      // Mirror the commander's boost state
+      const cBoosting = commander === player ? (boostKey||boostClick) && player.length >= BOOST_MIN_LEN
+                       : commander === player2 ? p2BoostKey && player2.length >= BOOST_MIN_LEN
+                       : (commander.npcBoost || false);
+      npc.npcBoost = cBoosting && npc.length >= BOOST_MIN_LEN;
+      // Store commander's exact speed so the bodyguard matches it precisely
+      npc._guardMatchSpd = cBoosting
+        ? snakeBoostSpeed(commander.length, commander) * speedMultFor(commander, true)
+        : snakeBaseSpeed(commander.length) * speedMultFor(commander, false);
+    } else {
+      npc.npcBoost = false;
+      npc._guardMatchSpd = null;
     }
-    npc.npcBoost = false;
   } else if(npc.npcMode==='raid'&&npc.npcTarget){
     desiredAngle=Math.atan2(npc.npcTarget.y-h.y, npc.npcTarget.x-h.x) + (Math.random()-0.5)*0.18;
     // Always boost during voice-commanded raid/invade; otherwise occasional boost
@@ -4228,7 +4318,9 @@ function updateNpc(npc, dt){
     }
   } else { npc.npcBoostDrain=0; npc.npcBoost=false; }
 
-  const spd=(npc.npcBoost ? snakeBoostSpeed(npc.length, npc) : snakeBaseSpeed(npc.length)) * speedMultFor(npc, npc.npcBoost);
+  const spd = (npc.npcMode === 'bodyguard' && npc._guardMatchSpd != null)
+    ? npc._guardMatchSpd
+    : (npc.npcBoost ? snakeBoostSpeed(npc.length, npc) : snakeBaseSpeed(npc.length)) * speedMultFor(npc, npc.npcBoost);
   moveSnakeFixed(npc, npc.npcAngle, spd);
   closeLoopBody(npc, dt);
 }
