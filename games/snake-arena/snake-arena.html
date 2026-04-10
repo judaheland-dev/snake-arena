@@ -3908,23 +3908,23 @@ function updateNpc(npc, dt){
     }
     npc.npcBoost = npc.length >= BOOST_MIN_LEN;
   } else if(npc.npcMode==='wall'){
-    // Wall: bots form a stationary horizontal line directly in front of the player
-    const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
-    if(commander){
-      const cx = snakeHead(commander).x, cy = snakeHead(commander).y;
-      const fwd = commander.angle || 0;
-      const perp = fwd + Math.PI / 2;
-      const rank = npc.formRank || 0;
-      const total = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'wall').length || 1;
-      const spacing = Math.min(260, worldSize * 0.7 / total);
-      const offset = (rank - (total - 1) / 2) * spacing;
-      const tx = cx + Math.cos(fwd) * 280 + Math.cos(perp) * offset;
-      const ty = cy + Math.sin(fwd) * 280 + Math.sin(perp) * offset;
-      const dist = Math.hypot(tx - h.x, ty - h.y);
-      if(dist > 80) desiredAngle = Math.atan2(ty - h.y, tx - h.x);
-      // else stay still (keep current angle)
+    // Wall: form a solid vertical line across the center of the map, blocking enemy passage.
+    // Red faces right (toward blue territory), blue faces left (toward red territory).
+    const rank  = npc.formRank || 0;
+    const total = npcs.filter(n => !n.dead && n.team === npc.team && n.npcMode === 'wall').length || 1;
+    // Space worms evenly across the full map height
+    const spacing = worldSize / (total + 1);
+    const targetX = worldSize / 2;                          // the center line
+    const targetY = spacing * (rank + 1);
+    const dist = Math.hypot(targetX - h.x, targetY - h.y);
+    if(dist > 55){
+      desiredAngle = Math.atan2(targetY - h.y, targetX - h.x);
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN && dist > 300;
+    } else {
+      // On the line — face the enemy to block / intercept
+      desiredAngle = npc.team === 'red' ? 0 : Math.PI;
+      npc.npcBoost = false;
     }
-    npc.npcBoost = false;
   } else if(npc.npcMode==='split'){
     // Split: even ranks attack left flank, odd ranks attack right flank
     const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
