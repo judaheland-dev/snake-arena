@@ -602,8 +602,9 @@ const POWERUP_COUNT    = 12;
 const POWERUP_MAX_COUNT = 28;
 const POWERUP_SPAWN_INTERVAL = 3.5;
 const POWERUP_RADIUS   = 18;
-const BODYGUARD_COUNT  = 10;   // permanent bodyguards per player (0-2 = defenders, 3-9 = hunters)
+const BODYGUARD_COUNT  = 10;   // permanent bodyguards per player
 const BODYGUARD_DEFENDERS = 3; // how many are purely defensive (stay near player)
+const CIRCLER_COUNT    = 25;   // invincible ring-worms that circle around the player
 
 // =====================================================
 //  STATE
@@ -1453,6 +1454,27 @@ function spawnBodyguardFor(protectedPlayer, rank){
   return guard;
 }
 
+// Spawn an invincible circler that orbits around the player
+function spawnCirclerFor(protectedPlayer, rank){
+  const ph = snakeHead(protectedPlayer);
+  const angle = (rank / CIRCLER_COUNT) * Math.PI * 2;
+  const spawnR = 120;
+  const spawnX = ph.x + Math.cos(angle) * spawnR;
+  const spawnY = ph.y + Math.sin(angle) * spawnR;
+  const CIRCLER_SKIN_IDX = 52; // Cyber Cyan — bright and distinct
+  const c = makeSnake('⭕ Ring', spawnX, spawnY, CIRCLER_SKIN_IDX, false);
+  c.isCircler        = true;
+  c.circlerFor       = protectedPlayer;
+  c.circlerRank      = rank;
+  c.npcMode          = 'circler';
+  c.npcModeTimer     = 999;
+  c.voiceCmdLocked   = false;
+  c.team             = protectedPlayer.team;
+  c.skin             = SKINS[CIRCLER_SKIN_IDX] || SKINS[0];
+  c.length           = 12; // short and thin so 25 pack tightly
+  return c;
+}
+
 // Spawn bodyguards for the enemy commander (enemy-team colored)
 function spawnEnemyCommanderGuards(cmdSnake){
   if(!cmdSnake) return;
@@ -1929,6 +1951,11 @@ function initGame(){
   for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player, i));
   if(twoPlayerMode && player2){
     for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player2, i));
+  }
+  // Spawn invincible circlers that ring the player
+  for(let i=0; i<CIRCLER_COUNT; i++) npcs.push(spawnCirclerFor(player, i));
+  if(twoPlayerMode && player2){
+    for(let i=0; i<CIRCLER_COUNT; i++) npcs.push(spawnCirclerFor(player2, i));
   }
   // Spawn bodyguards for the enemy commander
   if(teamMode && enemyCommander) spawnEnemyCommanderGuards(enemyCommander);
@@ -2836,6 +2863,8 @@ function issueAllyAICommanderOrder(){
     if(npc.dead || npc.team !== cmdTeam) continue;
     if(npc.isAllyCommander) continue; // commander doesn't receive its own orders
     if(npc.isBodyguard) continue; // bodyguards are permanently assigned
+    if(npc.isCircler) continue;   // circlers are permanently orbiting
+    if(npc.playerCmdLocked) continue; // player commands take priority over bot commander
     npc.voiceBoostForced = true;
     npc.voiceCmdLocked = true;
     npc.voiceCmdExpiry = Infinity;
@@ -2939,6 +2968,8 @@ function issueAICommanderOrder(){
   for(const npc of npcs){
     if(npc.dead || npc.team !== cmdTeam) continue;
     if(npc.isBodyguard) continue; // bodyguards are permanently assigned
+    if(npc.isCircler) continue;   // circlers are permanently orbiting
+    if(npc.playerCmdLocked) continue; // player commands take priority over bot commander
     npc.voiceBoostForced = true;
     npc.voiceCmdLocked = true;
     npc.voiceCmdExpiry = Infinity;
@@ -2989,7 +3020,7 @@ const ACTION_EMOJI = {
   line_fwd:'➡️', line_left:'⬅️', line_right:'➡️', line_back:'⬅️', line_up:'⬆️', line_down:'⬇️',
   charge_atk:'⚡',
   diamond:'💎', wedge:'🔺', wall:'🧱', split:'✂️', pincer:'🦀', bait:'🎣', decoy:'🎭', hold_line:'🛑',
-  eat_all:'🍽️', grow:'📈', push_map:'🗺️', defend_home:'🏠', flood:'🌊', tornado:'🌀', snake_train:'🚂', kamikaze_one:'💣', bodyguard:'🫡', cyclone:'🌪️'
+  eat_all:'🍽️', grow:'📈', push_map:'🗺️', defend_home:'🏠', flood:'🌊', tornado:'🌀', snake_train:'🚂', kamikaze_one:'💣', bodyguard:'🫡', cyclone:'🌪️', attack_commander:'🎯'
 };
 const BOT_REPLIES = [
   'Yes general!', 'Yes commander!', 'Yes sir!', 'Right away sir!',
@@ -3077,6 +3108,9 @@ function applyVoiceCommand(team, transcript){
   // ── Bodyguard ──
   else if(/\b(bodyguard|stick beside( me)?|stay (right )?beside( me)?|guard my (side|flank)|escort me)\b/.test(t))
     action = 'bodyguard';
+  // ── Attack the enemy commander ──
+  else if(/\b(attack (the |their )?(enemy |other )?commander|kill (the |their )?(enemy |other )?commander|target (the |their )?(enemy |other )?commander|take out (the |their )?(enemy |other )?commander|get (the |their )?(enemy |other )?commander|focus (on )?(the |their )?(enemy |other )?commander|destroy (the |their )?(enemy |other )?commander|assassinate)\b/.test(t))
+    action = 'attack_commander';
   // ── Charge / Attack / Kill ──
   else if(/\b(attack|charge|kill|fight|destroy|annihilate|obliterate|hunt|help me kill|kill them)\b/.test(t))
     action = 'hunt';
@@ -3171,6 +3205,7 @@ function applyVoiceCommand(team, transcript){
       [/snake.?train|train.?form|head.?to.?tail/i, 'snake_train'],
       [/kamikaze.?one|sacrifice.?one|send.?one/i, 'kamikaze_one'],
       [/bodyguard|stick.?beside|stay.?beside|escort/i, 'bodyguard'],
+      [/attack.?(the.?)?(enemy.?|other.?)?commander|kill.?(the.?)?(enemy.?|other.?)?commander|target.?(the)?commander|assassinate/i, 'attack_commander'],
       [/line.?(fwd|forward|straight|ahead|charge)/i, 'line_fwd'],
       [/line.?left|left.?line|flank.?left|charge.?left/i, 'line_left'],
       [/line.?right|right.?line|flank.?right|charge.?right/i, 'line_right'],
@@ -3229,6 +3264,7 @@ function applyVoiceCommand(team, transcript){
   for(const npc of npcs){
     if(npc.dead || npc.team !== team) continue;
     if(npc.isBodyguard) continue; // bodyguards are permanently assigned
+    if(npc.isCircler) continue;   // circlers are permanently orbiting
     botCount++;
     npc.voiceBoostForced = true; // always boost on any voice command
     npc.voiceCmdLocked = true;
@@ -3255,6 +3291,14 @@ function applyVoiceCommand(team, transcript){
         npc.npcTarget = botTgt || huntTgt;
         npc.huntRank = rank;
       }
+      if(action === 'attack_commander'){
+        // All bots focus on the enemy commander
+        const cmdTarget = enemyCommander && !enemyCommander.dead ? enemyCommander : null;
+        npc.npcMode = 'hunt';
+        npc.npcTarget = cmdTarget ? snakeHead(cmdTarget) : huntTgt;
+        npc._attackCommander = !!cmdTarget; // flag so target tracks dynamically
+        npc.huntRank = rank;
+      }
       // Assign half the bots to P1 and half to P2 for player-relative commands
       if(splitCommands.has(action) && humanCmdrs.length >= 2){
         npc.commanderAssignment = humanCmdrs[rank % 2];
@@ -3264,7 +3308,7 @@ function applyVoiceCommand(team, transcript){
       if(action === 'wave')  npc.waveRank = rank++;
       if(action === 'chain' || action === 'follow') npc.chainRank = rank++;
       if(action === 'guard_cmd') npc.guardRank = rank++;
-      if(action === 'hunt') rank++;
+      if(action === 'hunt' || action === 'attack_commander') rank++;
       if(action === 'fallback') npc.fallbackRank = rank++;
       if(action === 'circle_me') npc.circleRank = rank++;
       if(action === 'circle_enemy') npc.circleEnemyRank = rank++;
@@ -3313,7 +3357,7 @@ function showVoiceToast(team, action, transcript){
       pincer:'PINCER ATTACK!', bait:'BAIT AND SWITCH!', decoy:'SEND A DECOY!', hold_line:'HOLD THE LINE!',
       eat_all:'EAT EVERYTHING!', grow:'GROW GROW GROW!', push_map_left:'PUSH LEFT!', push_map_right:'PUSH RIGHT!',
       defend_home:'DEFEND HOME!', flood:'FLOOD THE MAP!', tornado:'TORNADO SPIRAL!', snake_train:'SNAKE TRAIN!',
-      kamikaze_one:'KAMIKAZE ONE!', bodyguard:'BODYGUARD ME!', cyclone:'CYCLONE FORMATION!'};
+      kamikaze_one:'KAMIKAZE ONE!', bodyguard:'BODYGUARD ME!', cyclone:'CYCLONE FORMATION!', attack_commander:'ATTACK THE COMMANDER!'};
     toast.innerHTML = `${emoji} <b style="color:${color}">${team.toUpperCase()}</b>: <i>"${transcript}"</i><br><span style="font-size:.8rem;opacity:.9">→ ${labels[action]||action.toUpperCase()}</span>`;
   }
   toast.style.display = 'block';
@@ -3495,6 +3539,16 @@ function initVoiceTypeInput(inputId, sendBtnId, team){
 // =====================================================
 function updateNpc(npc, dt){
   npc.npcTurnTimer-=dt;
+  // Invincible circlers are permanently locked into circler mode — ignore all commands
+  if(npc.isCircler){
+    if(!npc.circlerFor || npc.circlerFor.dead){
+      npc.npcMode = 'wander';
+    } else {
+      npc.npcMode = 'circler';
+      npc.npcModeTimer = 999;
+      npc.voiceCmdLocked = false;
+    }
+  }
   // Permanent bodyguards are always locked into bodyguard mode — ignore all commands
   if(npc.isBodyguard){
     // Re-link to protected player if they respawned
@@ -3636,8 +3690,17 @@ function updateNpc(npc, dt){
   let desiredAngle=npc.npcAngle;
 
   if((npc.npcMode==='hunt'||npc.npcMode==='defend')&&npc.npcTarget){
+    // If this bot is assigned to kill the enemy commander, always track their live head
+    if(npc._attackCommander){
+      if(enemyCommander && !enemyCommander.dead){
+        npc.npcTarget = snakeHead(enemyCommander);
+      } else {
+        // Commander is dead — fall back to nearest enemy
+        npc._attackCommander = false;
+      }
+    }
     // Periodically refresh hunt target so bots track closest enemy individually
-    if(npc.npcMode==='hunt' && Math.random()<0.06){
+    if(npc.npcMode==='hunt' && !npc._attackCommander && Math.random()<0.06){
       let bestBotD = Infinity, freshTgt = null;
       for(const s of npcs){
         if(s.dead || s.team === npc.team) continue;
@@ -4304,6 +4367,27 @@ function updateNpc(npc, dt){
         npc.npcBoost = cBoosting2;
       }
     }
+  } else if(npc.npcMode==='circler'){
+    // Invincible ring: 25 worms form a tight gapless circle around the player's head.
+    // The ring stays locked to the player — if the player moves the ring moves with them.
+    const target = (npc.circlerFor && !npc.circlerFor.dead) ? npc.circlerFor : null;
+    if(target){
+      const ph  = snakeHead(target);
+      const bodyR  = snakeRadius(npc.length);
+      // Pack all CIRCLER_COUNT worms so circumference ≈ total * (2 * bodyR + 1)
+      const orbitR = Math.max(bodyR * 2.2 * CIRCLER_COUNT / (2 * Math.PI), bodyR * 3);
+      const rank   = npc.circlerRank || 0;
+      // Evenly spaced angles + gentle constant rotation so the ring spins
+      const angle  = (rank / CIRCLER_COUNT) * Math.PI * 2 + gameTime * 0.4;
+      const tx = ph.x + Math.cos(angle) * orbitR;
+      const ty = ph.y + Math.sin(angle) * orbitR;
+      desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+      // Boost if far from position so they snap back instantly after being bumped
+      const dist = Math.hypot(tx - h.x, ty - h.y);
+      npc.npcBoost = dist > orbitR * 0.35 && npc.length >= BOOST_MIN_LEN;
+    } else {
+      npc.npcBoost = false;
+    }
   } else if(npc.npcMode==='raid'&&npc.npcTarget){
     desiredAngle=Math.atan2(npc.npcTarget.y-h.y, npc.npcTarget.x-h.x) + (Math.random()-0.5)*0.18;
     // Always boost during voice-commanded raid/invade; otherwise occasional boost
@@ -4657,6 +4741,8 @@ function killNpc(npc, killer){
   if(npc.dead) return;
   // Bot commander is immortal — cannot be killed
   if(npc.isAllyCommander) return;
+  // Circlers are invincible — nothing can kill them
+  if(npc.isCircler) return;
   // Worms in circle_me shield mode are invincible — attacker dies instead
   if(npc.npcMode === 'circle_me'){
     if(killer && killer !== player && killer !== player2 && !killer.dead && !killer.isAllyCommander){
@@ -5077,8 +5163,8 @@ function drawSnake(snake){
     ctx.shadowBlur=0;
   }
 
-  // Commander hat (team mode players OR the AI commander NPC)
-  if(teamMode && (snake.isPlayer || snake.isCommander)) drawCommanderHat(ctx, head, faceAngle, r, snake.team);
+  // Commander hat (team mode players OR the AI commander NPC OR ally bot commander)
+  if(teamMode && (snake.isPlayer || snake.isCommander || snake.isAllyCommander)) drawCommanderHat(ctx, head, faceAngle, r, snake.team);
 
   ctx.restore();
 }
