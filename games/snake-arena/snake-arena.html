@@ -600,6 +600,7 @@ const POWERUP_COUNT    = 12;
 const POWERUP_MAX_COUNT = 28;
 const POWERUP_SPAWN_INTERVAL = 3.5;
 const POWERUP_RADIUS   = 18;
+const BODYGUARD_COUNT  = 3;    // permanent bodyguards per player
 
 // =====================================================
 //  STATE
@@ -1426,6 +1427,29 @@ function makeSnake(name, x, y, skinIdx, isPlayer){
   };
 }
 
+// Spawn one permanent bodyguard (rank 0-2) for a given player
+function spawnBodyguardFor(protectedPlayer, rank){
+  const px = snakeHead(protectedPlayer).x;
+  const py = snakeHead(protectedPlayer).y;
+  const offset = (rank + 1) * 60;
+  const spawnX = px + Math.cos(protectedPlayer.angle + Math.PI / 2) * offset;
+  const spawnY = py + Math.sin(protectedPlayer.angle + Math.PI / 2) * offset;
+  // Pick a gold/amber skin that stands out as protectors
+  const GUARD_SKIN_IDX = 34; // Golden — vivid gold/amber stripe that looks distinct from any team
+  const guard = makeSnake('🛡️ Guard', spawnX, spawnY, GUARD_SKIN_IDX, false);
+  guard.isBodyguard    = true;
+  guard.bodyguardFor   = protectedPlayer;
+  guard.bodyguardRank  = rank;
+  guard.commanderAssignment = protectedPlayer;
+  guard.npcMode         = 'bodyguard';
+  guard.npcModeTimer    = 999;
+  guard.voiceCmdLocked  = false;
+  guard.team            = protectedPlayer.team;
+  guard.skin            = SKINS[GUARD_SKIN_IDX] || SKINS[0];
+  guard.length          = 60;
+  return guard;
+}
+
 // =====================================================
 //  DOTS
 // =====================================================
@@ -1886,6 +1910,12 @@ function initGame(){
   for(let i=0; i<POWERUP_COUNT; i++) powerUps.push(spawnPowerUp());
   powerUpSpawnTimer = POWERUP_SPAWN_INTERVAL;
   // deathDots intentionally NOT reset between rounds
+
+  // Spawn permanent bodyguards for each human player
+  for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player, i));
+  if(twoPlayerMode && player2){
+    for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player2, i));
+  }
 
   boostKey=false; boostClick=false; boostDrainTimer=0;
   lbTimer=0; npcSpawnTimer=0;
@@ -2787,6 +2817,7 @@ function issueAllyAICommanderOrder(){
   for(const npc of npcs){
     if(npc.dead || npc.team !== cmdTeam) continue;
     if(npc.isAllyCommander) continue; // commander doesn't receive its own orders
+    if(npc.isBodyguard) continue; // bodyguards are permanently assigned
     npc.voiceBoostForced = true;
     npc.voiceCmdLocked = true;
     npc.voiceCmdExpiry = Infinity;
@@ -2889,6 +2920,7 @@ function issueAICommanderOrder(){
   let rank = 0;
   for(const npc of npcs){
     if(npc.dead || npc.team !== cmdTeam) continue;
+    if(npc.isBodyguard) continue; // bodyguards are permanently assigned
     npc.voiceBoostForced = true;
     npc.voiceCmdLocked = true;
     npc.voiceCmdExpiry = Infinity;
@@ -3174,6 +3206,7 @@ function applyVoiceCommand(team, transcript){
   const isBoostOnly = action === 'boost';
   for(const npc of npcs){
     if(npc.dead || npc.team !== team) continue;
+    if(npc.isBodyguard) continue; // bodyguards are permanently assigned
     botCount++;
     npc.voiceBoostForced = true; // always boost on any voice command
     npc.voiceCmdLocked = true;
@@ -3440,6 +3473,19 @@ function initVoiceTypeInput(inputId, sendBtnId, team){
 // =====================================================
 function updateNpc(npc, dt){
   npc.npcTurnTimer-=dt;
+  // Permanent bodyguards are always locked into bodyguard mode — ignore all commands
+  if(npc.isBodyguard){
+    // Re-link to protected player if they respawned
+    if(!npc.bodyguardFor || npc.bodyguardFor.dead){
+      // keep npcMode=bodyguard, commanderAssignment stays, just don't move toward dead player
+      npc.npcMode = 'wander';
+    } else {
+      npc.npcMode = 'bodyguard';
+      npc.commanderAssignment = npc.bodyguardFor;
+      npc.npcModeTimer = 999;
+      npc.voiceCmdLocked = false;
+    }
+  }
   // While under a persistent voice command, keep modeTimer positive so steering stays active
   if(npc.voiceCmdLocked){ npc.npcModeTimer = 999; } else { npc.npcModeTimer-=dt; }
   const h=snakeHead(npc);
@@ -4431,6 +4477,9 @@ function killNpc(npc, killer){
   }
   if(isOnOwnLand(npc)) return;
   const deadTeam = npc.team || null;
+  const deadIsBodyguard  = !!npc.isBodyguard;
+  const deadBodyguardFor = npc.bodyguardFor  || null;
+  const deadBodyguardRank= npc.bodyguardRank != null ? npc.bodyguardRank : 0;
   npc.dead=true; spawnDeathDots(npc);
   if(killer===player)  kills++;
   if(killer===player2) kills2++;
@@ -4438,17 +4487,23 @@ function killNpc(npc, killer){
   if(killer===player2){ addScoreForSnake(player2, 850, 'KILL'); }
   const idx=npcs.indexOf(npc);
   setTimeout(()=>{
-    const pos = (teamMode && deadTeam) ? findTeamSpawnPos(deadTeam, 120) : findSafeSpawnPos(400);
-    let freshSkinIdx = Math.floor(rng()*SKINS.length);
-    const fresh=makeSnake(randNpcName(), pos.x, pos.y, freshSkinIdx, false);
-    if(teamMode && deadTeam){
-      fresh.team = deadTeam;
-      fresh.skin = deadTeam === 'red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE;
-      fresh.length = TEAM_START_LENGTH;
-      // Blue bots respawn with more bulk so they can reclaim territory faster
-      fresh.bulk = deadTeam === 'blue' ? TEAM_START_LENGTH * 4 : TEAM_START_LENGTH * 0.7;
+    let fresh;
+    if(deadIsBodyguard && deadBodyguardFor && !deadBodyguardFor.dead){
+      // Respawn as a new bodyguard for the same player
+      fresh = spawnBodyguardFor(deadBodyguardFor, deadBodyguardRank);
     } else {
-      fresh.length = Math.min(9000, randomNpcSpawnLength());
+      const pos = (teamMode && deadTeam) ? findTeamSpawnPos(deadTeam, 120) : findSafeSpawnPos(400);
+      let freshSkinIdx = Math.floor(rng()*SKINS.length);
+      fresh = makeSnake(randNpcName(), pos.x, pos.y, freshSkinIdx, false);
+      if(teamMode && deadTeam){
+        fresh.team = deadTeam;
+        fresh.skin = deadTeam === 'red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE;
+        fresh.length = TEAM_START_LENGTH;
+        // Blue bots respawn with more bulk so they can reclaim territory faster
+        fresh.bulk = deadTeam === 'blue' ? TEAM_START_LENGTH * 4 : TEAM_START_LENGTH * 0.7;
+      } else {
+        fresh.length = Math.min(9000, randomNpcSpawnLength());
+      }
     }
     if(idx>=0&&idx<npcs.length){
       npcs[idx]=fresh; // reuse slot — keeps array bounded
