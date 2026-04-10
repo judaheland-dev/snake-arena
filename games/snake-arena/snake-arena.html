@@ -602,7 +602,8 @@ const POWERUP_COUNT    = 12;
 const POWERUP_MAX_COUNT = 28;
 const POWERUP_SPAWN_INTERVAL = 3.5;
 const POWERUP_RADIUS   = 18;
-const BODYGUARD_COUNT  = 3;    // permanent bodyguards per player
+const BODYGUARD_COUNT  = 10;   // permanent bodyguards per player (0-2 = defenders, 3-9 = hunters)
+const BODYGUARD_DEFENDERS = 3; // how many are purely defensive (stay near player)
 
 // =====================================================
 //  STATE
@@ -4079,28 +4080,31 @@ function updateNpc(npc, dt){
     }
     npc.npcBoost = npc.length >= BOOST_MIN_LEN;
   } else if(npc.npcMode==='cyclone'){
-    // Cyclone: all worms orbit the player in a tight inward-to-outward Archimedean spiral,
-    // single-file. Worms on the outer rings act as sentinels — if enemies enter the spiral
-    // they peel off to intercept, kill, then return to formation.
+    // Cyclone: worms form a tight ball at the center then unroll into a single-file
+    // Archimedean spiral growing outward — rank 0 is the innermost clump, each higher
+    // rank is one step further along the continuous spiral path.
     const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
     const cx = commander ? snakeHead(commander).x : worldSize / 2;
     const cy = commander ? snakeHead(commander).y : worldSize / 2;
     const rank  = npc.formRank || 0;
     const total = npcs.filter(n => !n.dead && n.team === npc.team && (n.npcMode === 'cyclone' || n.cycloneIntercepting)).length || 1;
 
-    // Spiral parameters: inner ring tight, each step adds a small radius increment
-    const armSpacing = 42;            // distance between spiral arms
-    const innerR     = 90;            // minimum orbit radius (innermost worm)
-    const spiralR    = innerR + rank * armSpacing;
-    // Each worm gets a fixed angular position based on rank so the spiral isn't clumped
-    // The whole formation rotates slowly over time for visual effect
-    const spinSpeed  = 0.6;           // radians/second
-    const baseAngle  = rank * 2.618 + gameTime * spinSpeed; // golden angle spacing + slow spin
-    const formX = cx + Math.cos(baseAngle) * spiralR;
-    const formY = cy + Math.sin(baseAngle) * spiralR;
+    // Archimedean spiral: r = minR + spiralB * θ
+    // arcStep: angular gap between adjacent worms along the spiral (~18° = one worm apart)
+    // spiralB: radius per radian — set so spiral arm gap ≈ 1 worm diameter (~28px)
+    const arcStep   = 0.32;   // rad between consecutive worms — ~19 worms per revolution
+    const spiralB   = 5.0;    // arm spacing = 2π * 5 ≈ 31px ≈ 1 worm diameter
+    const minR      = 18;     // innermost worm sits just 18px from center (tight clump)
+    const spinSpeed = 0.55;   // rad/s — whole spiral slowly rotates
 
-    // Count enemies inside the spiral's outermost radius
-    const outerR = innerR + (total - 1) * armSpacing + armSpacing;
+    const spiralAngle = rank * arcStep;              // how far along spiral this worm sits
+    const orbitalR    = minR + spiralAngle * spiralB; // Archimedean radius for this rank
+    const totalAngle  = spiralAngle + gameTime * spinSpeed; // add slow rotation to whole formation
+    const formX = cx + Math.cos(totalAngle) * orbitalR;
+    const formY = cy + Math.sin(totalAngle) * orbitalR;
+
+    // Enemies inside the spiral's outermost boundary trigger intercept
+    const outerR = minR + (total - 1) * arcStep * spiralB + spiralB * arcStep;
     if(!npc.cycloneIntercepting){
       // Find enemies inside the formation
       let intruders = [];
@@ -4182,30 +4186,139 @@ function updateNpc(npc, dt){
       npc.npcBoost = false;
     }
   } else if(npc.npcMode==='bodyguard'){
-    // Bodyguard: stay tightly beside the commanding player (offset perpendicular to their heading)
     const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
-    if(commander){
+    const guardRank = npc.bodyguardRank || 0;
+    const isHunter = guardRank >= BODYGUARD_DEFENDERS; // ranks 3-9 are hunters
+
+    // All bodyguards must stay within sight range of the commander
+    const BODYGUARD_SIGHT = 700;
+    const distToCommander = commander ? Math.hypot(h.x - snakeHead(commander).x, h.y - snakeHead(commander).y) : Infinity;
+    const tooFar = distToCommander > BODYGUARD_SIGHT;
+
+    if(tooFar && commander){
+      // Rush back to commander immediately — ignore everything else
+      const ch = snakeHead(commander);
+      desiredAngle = Math.atan2(ch.y - h.y, ch.x - h.x);
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+      npc._guardMatchSpd = null;
+      npc._guardTarget = null;
+    } else if(isHunter){
+      // Hunter guards: chase any enemy visible near the commander
+      const SIGHT_RADIUS = BODYGUARD_SIGHT;
+      // Drop target if it died or drifted out of commander's sight
+      if(npc._guardTarget){
+        const tDist = commander ? Math.hypot(snakeHead(npc._guardTarget).x - snakeHead(commander).x, snakeHead(npc._guardTarget).y - snakeHead(commander).y) : Infinity;
+        if(npc._guardTarget.dead || tDist > SIGHT_RADIUS * 1.2) npc._guardTarget = null;
+      }
+      if(!npc._guardTarget && commander){
+        // Find nearest enemy within commander's sight
+        const ch = snakeHead(commander);
+        let best = null, bestD = SIGHT_RADIUS;
+        for(const e of npcs){
+          if(e.dead || sameTeam(e, npc)) continue;
+          const d = Math.hypot(snakeHead(e).x - ch.x, snakeHead(e).y - ch.y);
+          if(d < bestD){ bestD = d; best = e; }
+        }
+        for(const ep of [player, player2]){
+          if(!ep || ep.dead || sameTeam(ep, npc)) continue;
+          const d = Math.hypot(snakeHead(ep).x - ch.x, snakeHead(ep).y - ch.y);
+          if(d < bestD){ bestD = d; best = ep; }
+        }
+        npc._guardTarget = best;
+      }
+      if(npc._guardTarget){
+        const th = snakeHead(npc._guardTarget);
+        desiredAngle = Math.atan2(th.y - h.y, th.x - h.x);
+        npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+        npc._guardMatchSpd = null;
+      } else if(commander){
+        // No enemies nearby — orbit close to commander
+        const ch = snakeHead(commander);
+        const hunterIdx = guardRank - BODYGUARD_DEFENDERS;
+        const orbitAngle = (hunterIdx / (BODYGUARD_COUNT - BODYGUARD_DEFENDERS)) * Math.PI * 2 + performance.now() * 0.0003;
+        const orbitR = 180;
+        const tx = ch.x + Math.cos(orbitAngle) * orbitR;
+        const ty = ch.y + Math.sin(orbitAngle) * orbitR;
+        desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+        const cBoosting = commander === player ? (boostKey||boostClick) && player.length >= BOOST_MIN_LEN
+                         : commander === player2 ? p2BoostKey && player2.length >= BOOST_MIN_LEN
+                         : (commander.npcBoost || false);
+        npc.npcBoost = cBoosting && npc.length >= BOOST_MIN_LEN;
+        npc._guardMatchSpd = cBoosting
+          ? snakeBoostSpeed(commander.length, commander) * speedMultFor(commander, true)
+          : snakeBaseSpeed(commander.length) * speedMultFor(commander, false);
+      } else {
+        npc.npcBoost = false;
+        npc._guardMatchSpd = null;
+      }
+    } else {
+      // Defender guards (ranks 0-2): intercept threats near commander, otherwise flank
+      const GUARD_PROTECT_DIST = 500;
+      let threat = null;
+      if(commander){
+        const ch = snakeHead(commander);
+        let threats = [];
+        for(const e of npcs){
+          if(e.dead || sameTeam(e, npc)) continue;
+          const d = Math.hypot(snakeHead(e).x - ch.x, snakeHead(e).y - ch.y);
+          if(d < GUARD_PROTECT_DIST) threats.push({e, d});
+        }
+        for(const ep of [player, player2]){
+          if(!ep || ep.dead || sameTeam(ep, npc)) continue;
+          const d = Math.hypot(snakeHead(ep).x - ch.x, snakeHead(ep).y - ch.y);
+          if(d < GUARD_PROTECT_DIST) threats.push({e: ep, d});
+        }
+        threats.sort((a, b) => a.d - b.d);
+        if(guardRank < threats.length) threat = threats[guardRank].e;
+      }
+      if(threat && !threat.dead){
+        const eh = snakeHead(threat);
+        desiredAngle = Math.atan2(eh.y - h.y, eh.x - h.x);
+        npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+        npc._guardMatchSpd = null;
+      } else if(commander){
+        const ch = snakeHead(commander);
+        const cAngle = commander.angle || commander.npcAngle || 0;
+        const side = guardRank % 2 === 0 ? 1 : -1;
+        const row = Math.floor(guardRank / 2);
+        const sideOffset = (row + 1) * (snakeRadius(npc.length) * 3.5 + 28);
+        const tx = ch.x + Math.cos(cAngle + side * Math.PI / 2) * sideOffset;
+        const ty = ch.y + Math.sin(cAngle + side * Math.PI / 2) * sideOffset;
+        desiredAngle = Math.atan2(ty - h.y, tx - h.x);
+        const cBoosting = commander === player ? (boostKey||boostClick) && player.length >= BOOST_MIN_LEN
+                         : commander === player2 ? p2BoostKey && player2.length >= BOOST_MIN_LEN
+                         : (commander.npcBoost || false);
+        npc.npcBoost = cBoosting && npc.length >= BOOST_MIN_LEN;
+        npc._guardMatchSpd = cBoosting
+          ? snakeBoostSpeed(commander.length, commander) * speedMultFor(commander, true)
+          : snakeBaseSpeed(commander.length) * speedMultFor(commander, false);
+      } else {
+        npc.npcBoost = false;
+        npc._guardMatchSpd = null;
+      }
+    }
+
+    // Sprint ahead of commander: if guard is behind the commander's heading, go faster until ahead
+    if(commander && !tooFar && !(npc._guardTarget && !npc._guardTarget.dead)){
       const ch = snakeHead(commander);
       const cAngle = commander.angle || commander.npcAngle || 0;
-      const rank = npc.bodyguardRank || 0;
-      const side = rank % 2 === 0 ? 1 : -1;
-      const row = Math.floor(rank / 2);
-      const sideOffset = (row + 1) * (snakeRadius(npc.length) * 3.5 + 28);
-      const tx = ch.x + Math.cos(cAngle + side * Math.PI / 2) * sideOffset;
-      const ty = ch.y + Math.sin(cAngle + side * Math.PI / 2) * sideOffset;
-      desiredAngle = Math.atan2(ty - h.y, tx - h.x);
-      // Mirror the commander's boost state
-      const cBoosting = commander === player ? (boostKey||boostClick) && player.length >= BOOST_MIN_LEN
-                       : commander === player2 ? p2BoostKey && player2.length >= BOOST_MIN_LEN
-                       : (commander.npcBoost || false);
-      npc.npcBoost = cBoosting && npc.length >= BOOST_MIN_LEN;
-      // Store commander's exact speed so the bodyguard matches it precisely
-      npc._guardMatchSpd = cBoosting
+      const relX = h.x - ch.x, relY = h.y - ch.y;
+      const dotAhead = relX * Math.cos(cAngle) + relY * Math.sin(cAngle);
+      const cBoosting2 = commander === player ? (boostKey||boostClick) && player.length >= BOOST_MIN_LEN
+                        : commander === player2 ? p2BoostKey && player2.length >= BOOST_MIN_LEN
+                        : (commander.npcBoost || false);
+      const cmdrSpd = cBoosting2
         ? snakeBoostSpeed(commander.length, commander) * speedMultFor(commander, true)
         : snakeBaseSpeed(commander.length) * speedMultFor(commander, false);
-    } else {
-      npc.npcBoost = false;
-      npc._guardMatchSpd = null;
+      if(dotAhead < 80){
+        // Behind or level — sprint faster than the commander
+        npc._guardMatchSpd = Math.min(cmdrSpd * 1.5, snakeBoostSpeed(npc.length, npc) * speedMultFor(npc, true));
+        npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+      } else {
+        // Already ahead — match commander speed so we don't run away
+        npc._guardMatchSpd = cmdrSpd;
+        npc.npcBoost = cBoosting2;
+      }
     }
   } else if(npc.npcMode==='raid'&&npc.npcTarget){
     desiredAngle=Math.atan2(npc.npcTarget.y-h.y, npc.npcTarget.x-h.x) + (Math.random()-0.5)*0.18;
