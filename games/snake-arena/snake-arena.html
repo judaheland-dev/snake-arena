@@ -25,6 +25,11 @@ canvas{display:block;}
 .modeBtn.active{border-color:#00ff66;background:#003308;color:#00ff66;}
 #btnDaily.active{border-color:#ffcc44;background:#332700;color:#ffcc44;}
 #btnTeam.active{border-color:#ff5566;background:#330910;color:#ff8899;}
+#btnCTF.active{border-color:#ffaa44;background:#2a1500;color:#ffcc66;}
+#ctfHud{position:fixed;top:0;left:50%;transform:translateX(-50%);padding:5px 18px;
+  display:none;background:rgba(0,0,0,.86);border-radius:0 0 14px 14px;
+  font-weight:900;z-index:26;pointer-events:none;font-size:.93rem;white-space:nowrap;
+  gap:16px;align-items:center;flex-direction:row;text-align:center;}
 .tcBtn{padding:6px 14px;font-size:.80rem;font-weight:800;border-radius:8px;cursor:pointer;
   border:2px solid #333;background:#111;color:#666;transition:all .12s;}
 .tcBtn.active{border-color:#ff5566;background:#330910;color:#ff8899;}
@@ -277,6 +282,7 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
     <button class="modeBtn active" id="btn1P">&#x1F3AE; 1 Player</button>
     <button class="modeBtn"        id="btn2P">&#x1F46B; 2 Players</button>
     <button class="modeBtn"        id="btnTeam">&#x1F534; Team Mode</button>
+    <button class="modeBtn"        id="btnCTF">&#x1F6A9; Capture the Flag</button>
     <button class="modeBtn"        id="btnDaily">&#x1F4C5; Daily Seed</button>
   </div>
   <div id="teamConfigRow" style="display:none;flex-direction:column;align-items:center;gap:6px;margin-bottom:8px;">
@@ -358,6 +364,90 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
       <div class="shopCardDesc">Two spinning saws orbit your head and slice enemy worms on contact!</div>
       <div class="shopCardPrice">&#x1FA99; 200 coins</div>
       <button class="shopCardBtn poor" id="shopBuySaw">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardMine">
+      <div class="shopCardIcon">&#x1F4A5;</div>
+      <div class="shopCardName">Mine Layer</div>
+      <div class="shopCardDesc">Drops red mines on your trail every 0.6s. Enemy heads trigger instant explosion!</div>
+      <div class="shopCardPrice">&#x1FA99; 150 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyMine">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardShockwave">
+      <div class="shopCardIcon">&#x26A1;</div>
+      <div class="shopCardName">Shockwave</div>
+      <div class="shopCardDesc">Each time you start boosting, a blast kills all enemies within 150 units!</div>
+      <div class="shopCardPrice">&#x1FA99; 150 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyShockwave">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardVenom">
+      <div class="shopCardIcon">&#x1F9EA;</div>
+      <div class="shopCardName">Venom Bite</div>
+      <div class="shopCardDesc">Enemies that touch your head get poisoned and die after 2.5 seconds!</div>
+      <div class="shopCardPrice">&#x1FA99; 150 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyVenom">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardShield">
+      <div class="shopCardIcon">&#x1F6E1;&#xFE0F;</div>
+      <div class="shopCardName">Shield Bubble</div>
+      <div class="shopCardDesc">A glowing bubble absorbs one killing hit! Recharges after 15 seconds.</div>
+      <div class="shopCardPrice">&#x1FA99; 100 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyShield">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardGhost">
+      <div class="shopCardIcon">&#x1F47B;</div>
+      <div class="shopCardName">Ghost Mode</div>
+      <div class="shopCardDesc">While boosting, your head phases through enemy bodies harmlessly!</div>
+      <div class="shopCardPrice">&#x1FA99; 150 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyGhost">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardDecoy">
+      <div class="shopCardIcon">&#x1F4A7;</div>
+      <div class="shopCardName">Decoy Tail</div>
+      <div class="shopCardDesc">Enemies that crash into your tail get deflected instead of killing you!</div>
+      <div class="shopCardPrice">&#x1FA99; 150 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyDecoy">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardNitro">
+      <div class="shopCardIcon">&#x26FD;</div>
+      <div class="shopCardName">Nitro</div>
+      <div class="shopCardDesc">Boosting never shrinks you! No length drain while boosted at all.</div>
+      <div class="shopCardPrice">&#x1FA99; 100 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyNitro">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardTeleport">
+      <div class="shopCardIcon">&#x26A1;&#xFE0F;</div>
+      <div class="shopCardName">Teleport Dash</div>
+      <div class="shopCardDesc">Double-tap boost (within 0.35s) to blink forward 200px!</div>
+      <div class="shopCardPrice">&#x1FA99; 200 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyTeleport">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardGravity">
+      <div class="shopCardIcon">&#x1FA90;</div>
+      <div class="shopCardName">Gravity Pull</div>
+      <div class="shopCardDesc">Food dots are pulled toward you with 1.9&times; magnet eat radius!</div>
+      <div class="shopCardPrice">&#x1FA99; 150 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyGravity">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardGolden">
+      <div class="shopCardIcon">&#x1F947;</div>
+      <div class="shopCardName">Golden Skin</div>
+      <div class="shopCardDesc">You glow gold! All food you eat is worth 2&times; length.</div>
+      <div class="shopCardPrice">&#x1FA99; 200 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyGolden">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardFlame">
+      <div class="shopCardIcon">&#x1F525;</div>
+      <div class="shopCardName">Flame Trail</div>
+      <div class="shopCardDesc">Your body burns with fire! Enemies touching any part of you are instantly killed.</div>
+      <div class="shopCardPrice">&#x1FA99; 150 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyFlame">Buy</button>
+    </div>
+    <div class="shopCard" id="shopCardIce">
+      <div class="shopCardIcon">&#x2744;&#xFE0F;</div>
+      <div class="shopCardName">Ice Aura</div>
+      <div class="shopCardDesc">Enemies within 130 units of your head are slowed to half speed!</div>
+      <div class="shopCardPrice">&#x1FA99; 150 coins</div>
+      <button class="shopCardBtn poor" id="shopBuyIce">Buy</button>
     </div>
   </div>
   <button id="shopCloseBtn">&#x2713; Done</button>
@@ -538,6 +628,9 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
   <input class="voiceTypeInput" id="voiceTypeInput2" type="text" placeholder="[M] Type command & Enter..." maxlength="60" autocomplete="off">
 </div>
 
+<!-- CTF HUD -->
+<div id="ctfHud"></div>
+
 <!-- DEATH SCREEN -->
 <div id="deathScreen">
   <h2>&#x1F480; YOU DIED</h2>
@@ -615,7 +708,7 @@ const SKINS = [
 //  CONSTANTS
 // =====================================================
 let   worldSize        = 7000;
-const DOT_COUNT        = 1000;
+const DOT_COUNT        = 400;
 const FOOD_VALUE       = 0.5;
 const SECRET_WORLD_SIZE = 1800;
 const SECRET_DOT_COUNT  = 2000;
@@ -628,8 +721,8 @@ const MAX_DEATH_DOTS   = 12000;
 const DEATH_DOT_RADIUS_MIN = 16;
 const DEATH_DOT_RADIUS_MAX = 26;
 const GROWTH_RATE      = 6;   // length units drained from pendingGrowth per second (3x faster)
-const NPC_COUNT        = 300;
-const MAX_NPC_COUNT    = 300;
+const NPC_COUNT        = 80;
+const MAX_NPC_COUNT    = 80;
 const BOOST_POOP_LENGTH_LOSS = 1;
 const BOOST_POOP_INTERVAL = 1;
 const BOOST_SPEED_MULT = 3;
@@ -656,7 +749,12 @@ const POWERUP_SPAWN_INTERVAL = 3.5;
 const POWERUP_RADIUS   = 18;
 const BODYGUARD_COUNT  = 3;    // permanent bodyguards per player
 const BODYGUARD_DEFENDERS = 3; // how many are purely defensive (stay near player)
-const CIRCLER_COUNT    = 25;   // invincible ring-worms that circle around the player
+const CIRCLER_COUNT    = 0;   // disabled — too expensive
+const CTF_MODE_DURATION = 120;  // 2-minute match
+const CTF_TEAM_COUNT    = 100;  // bots per team
+const CTF_GUARD_COUNT   = 5;    // flag guards per team
+const CTF_BASE_RADIUS   = 340;  // capture radius around base
+const CTF_START_LENGTH  = 20;   // respawn length
 
 // =====================================================
 //  STATE
@@ -668,6 +766,12 @@ let twoPlayerMode = false;
 let teamP2Config = 'vs'; // 'vs' | 'both-red' | 'both-blue'
 let teamP1Config = 'red'; // 1P team mode choice: 'red' | 'blue'
 let teamMode = false;
+let ctfMode = false;
+let ctfScoreRed  = 0;
+let ctfScoreBlue = 0;
+let ctfTimeLeft  = CTF_MODE_DURATION;
+let ctfFlagRed   = null;  // {x,y,homeX,homeY,team,carrier}
+let ctfFlagBlue  = null;
 let dailySeedMode = false;
 let skinPickerFor = 1;  // which player is currently picking a skin
 let playerName  = 'Player 1';
@@ -732,6 +836,32 @@ let dailyChallengeData = JSON.parse(localStorage.getItem('snakeArenaDaily') || '
 let playerCoins = Math.max(0, parseInt(localStorage.getItem('snakeArenaCoins') || '0'));
 let ownsTurboJets = localStorage.getItem('snakeArenaItemTurboJets') === '1';
 let ownsSaw = localStorage.getItem('snakeArenaItemSaw') === '1';
+// ── Shop items (12 new) ──
+let ownsMine      = localStorage.getItem('snakeArenaItemMine')      === '1';
+let ownsShockwave = localStorage.getItem('snakeArenaItemShock')     === '1';
+let ownsVenom     = localStorage.getItem('snakeArenaItemVenom')     === '1';
+let ownsShield    = localStorage.getItem('snakeArenaItemShield')    === '1';
+let ownsGhost     = localStorage.getItem('snakeArenaItemGhost')     === '1';
+let ownsDecoy     = localStorage.getItem('snakeArenaItemDecoy')     === '1';
+let ownsNitro     = localStorage.getItem('snakeArenaItemNitro')     === '1';
+let ownsTeleport  = localStorage.getItem('snakeArenaItemTeleport')  === '1';
+let ownsGravity   = localStorage.getItem('snakeArenaItemGravity')   === '1';
+let ownsGolden    = localStorage.getItem('snakeArenaItemGolden')    === '1';
+let ownsFlame     = localStorage.getItem('snakeArenaItemFlame')     === '1';
+let ownsIce       = localStorage.getItem('snakeArenaItemIce')       === '1';
+// Runtime shop state
+let shieldActive = ownsShield, shieldRecharge = 0;
+const SHIELD_RECHARGE = 15;
+let mines = [], mineTimer = 0;
+const MINE_SPAWN_INT = 0.6, MINE_LIFE = 8, MINE_R = 26;
+const venomMap = new Map();
+const VENOM_DUR = 2.5;
+let flamePoints = [], flameTimer = 0;
+const FLAME_INT = 0.12, FLAME_LIFE = 1.1, FLAME_R = 20;
+let decoyDots = [], decoyTimer = 0;
+const DECOY_INT = 2.2, DECOY_LIFE = 5;
+let prevBoostState = false, teleportLastTap = -999;
+const ICE_AURA_R = 130;
 const SAW_ORBIT_R = 52;
 const SAW_KILL_R  = 18;
 const FIRE_KILL_R = 24;
@@ -1889,6 +2019,39 @@ function findSafeSpawnPosExcluding(excludeSnake, minDist){
 }
 
 // =====================================================
+//  CTF HELPERS
+// =====================================================
+function ctfBasePos(team){
+  const half   = worldSize / 2;
+  const margin = worldSize * 0.12;
+  return team === 'red' ? {x: margin, y: half} : {x: worldSize - margin, y: half};
+}
+function ctfMakeFlag(team){
+  const p = ctfBasePos(team);
+  return {x: p.x, y: p.y, homeX: p.x, homeY: p.y, team, carrier: null};
+}
+function ctfReturnFlag(flag){
+  if(flag.carrier) flag.carrier.ctfCarrying = null;
+  flag.x = flag.homeX; flag.y = flag.homeY; flag.carrier = null;
+}
+function ctfEnemyFlagFor(team){ return team === 'red' ? ctfFlagBlue : ctfFlagRed; }
+function ctfOwnFlagFor(team)  { return team === 'red' ? ctfFlagRed  : ctfFlagBlue; }
+function ctfRespawnSnake(snake){
+  if(!snake) return;
+  const base  = ctfBasePos(snake.team);
+  snake.length = CTF_START_LENGTH;
+  snake.pendingGrowth = 0;
+  snake.dead   = false;
+  snake.effects = {speed10:0,noPoop10:0,zoneShield:0,magnet:0,boostPlus:0,turnPlus:0,regenPlus:0,poopSaver:0};
+  const angle  = Math.random() * Math.PI * 2;
+  rebuildSnakeInMap(snake,
+    base.x + (Math.random() - 0.5) * 220,
+    base.y + (Math.random() - 0.5) * 220,
+    angle, worldSize);
+  if(snake.isPlayer) snake.angle = angle;
+}
+
+// =====================================================
 //  INIT
 // =====================================================
 function initGame(){
@@ -1911,32 +2074,33 @@ function initGame(){
   gameTime     = 0;
   enemyCommander = null; enemyCmdTimer = 12;
   allyCommander = null; allyCmdTimer = 14; allyCommanderEnabled = false;
-  worldSize    = teamMode ? TEAM_MAP_SIZE : 7000;
+  worldSize    = (teamMode||ctfMode) ? TEAM_MAP_SIZE : 7000;
   maxPlayerLen = BASE_LENGTH;
-  zoom1 = teamMode ? 1.8 : 1.0; zoom2 = teamMode ? 1.8 : 1.0;
+  zoom1 = (teamMode||ctfMode) ? 1.8 : 1.0; zoom2 = (teamMode||ctfMode) ? 1.8 : 1.0;
   zoneRadius   = worldSize * 0.75;
   zoneDamageT1 = 0; zoneDamageT2 = 0;
   zoneWarnT1   = 0; zoneWarnT2   = 0;
 
   if(teamMode) setupTeamGrid();
+  if(ctfMode){ ctfFlagRed = ctfMakeFlag('red'); ctfFlagBlue = ctfMakeFlag('blue'); ctfScoreRed = 0; ctfScoreBlue = 0; ctfTimeLeft = CTF_MODE_DURATION; }
 
   // P1 spawns on their team's half
   const _p1TeamMode = twoPlayerMode ? (teamP2Config === 'both-blue' ? 'blue' : 'red') : teamP1Config;
-  const p1SpawnX = teamMode ? (_p1TeamMode === 'blue' ? worldSize*0.75 : worldSize*0.25) : worldSize/2 - 300;
+  const p1SpawnX = (teamMode||ctfMode) ? (_p1TeamMode === 'blue' ? worldSize*0.75 : worldSize*0.25) : worldSize/2 - 300;
   player = makeSnake(playerName, p1SpawnX, worldSize/2, selectedSkin, true);
   // In team mode: 2P uses teamP2Config for P1's side; 1P uses teamP1Config
-  player.team = teamMode ? _p1TeamMode : 'blue';
-  if(teamMode){ player.length = TEAM_START_LENGTH; player.bulk = 900;
+  player.team = (teamMode||ctfMode) ? _p1TeamMode : 'blue';
+  if(teamMode||ctfMode){ player.length = TEAM_START_LENGTH; player.bulk = 900;
     player.skin = player.team === 'red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE; }
   camX = snakeHead(player).x; camY = snakeHead(player).y;
 
   if(twoPlayerMode){
     // P2 spawns on their team's half
-    const p2SpawnX = teamMode ? (teamP2Config === 'both-red' ? worldSize*0.25 : worldSize*0.75) : worldSize/2 + 300;
+    const p2SpawnX = (teamMode||ctfMode) ? (teamP2Config === 'both-red' ? worldSize*0.25 : worldSize*0.75) : worldSize/2 + 300;
     player2 = makeSnake(playerName2, p2SpawnX, worldSize/2 + 200, selectedSkin2, true);
     player2.angle = Math.PI;
-    player2.team = teamMode ? (teamP2Config === 'both-red' ? 'red' : 'blue') : 'blue';
-    if(teamMode){ player2.length = TEAM_START_LENGTH; player2.bulk = 900;
+    player2.team = (teamMode||ctfMode) ? (teamP2Config === 'both-red' ? 'red' : 'blue') : 'blue';
+    if(teamMode||ctfMode){ player2.length = TEAM_START_LENGTH; player2.bulk = 900;
       player2.skin = player2.team === 'red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE; }
     camX2 = snakeHead(player2).x; camY2 = snakeHead(player2).y;
     p1Keys.up=p1Keys.down=p1Keys.left=p1Keys.right=false;
@@ -1947,11 +2111,38 @@ function initGame(){
   }
 
   npcs=[];
-  if(teamMode){
+  if(ctfMode){
+    // CTF: 100 NPCs per team — 5 guards + 95 attackers each
+    const ctfRedSkins  = [1, 15, 29, 30, 36];
+    const ctfBlueSkins = [2, 16, 22, 27, 35];
+    for(const ctfTeam of ['red','blue']){
+      const skins = ctfTeam === 'red' ? ctfRedSkins : ctfBlueSkins;
+      const teamSkin = ctfTeam === 'red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE;
+      const base = ctfBasePos(ctfTeam);
+      // Guards: patrol near base
+      for(let i=0; i<CTF_GUARD_COUNT; i++){
+        const pos = {x: base.x + (Math.random()-0.5)*180, y: base.y + (Math.random()-0.5)*180};
+        const npc = makeSnake('\uD83D\uDEE1\uFE0F Guard', pos.x, pos.y, skins[i % skins.length], false);
+        npc.team = ctfTeam; npc.skin = teamSkin;
+        npc.length = CTF_START_LENGTH * 2; npc.bulk = CTF_START_LENGTH;
+        npc.npcMode = 'ctfGuard'; npc.npcModeTimer = 999;
+        npcs.push(npc);
+      }
+      // Attackers
+      for(let i=0; i<CTF_TEAM_COUNT-CTF_GUARD_COUNT; i++){
+        const pos = findTeamSpawnPos(ctfTeam, 100);
+        const npc = makeSnake(randNpcName(), pos.x, pos.y, skins[i % skins.length], false);
+        npc.team = ctfTeam; npc.skin = teamSkin;
+        npc.length = CTF_START_LENGTH; npc.bulk = CTF_START_LENGTH * 0.7;
+        npc.npcMode = 'ctfAttack'; npc.npcModeTimer = 999;
+        npcs.push(npc);
+      }
+    }
+  } else if(teamMode){
     // Both teams get 150 worms
     const playerTeamForSpawn = player ? player.team : 'red';
-    const redBots  = 150;
-    const blueBots = 150;
+    const redBots  = 40;
+    const blueBots = 40;
     // Red skins: indices 1(Red Slug),15(Scarlet),34(Deep Red),29(Crimson),30(Cherry)
     const redSkins  = [1, 15, 34, 29, 30];
     // Blue skins: indices 2(Sky Blue),16(Royal Blue),28(Cobalt),22(Ocean Blue),23(Ice Blue)
@@ -2007,12 +2198,13 @@ function initGame(){
   powerUpSpawnTimer = POWERUP_SPAWN_INTERVAL;
   // deathDots intentionally NOT reset between rounds
 
-  // Spawn permanent bodyguards and circlers only in team mode
-  if(teamMode){
+  // Spawn permanent bodyguards for each human player
+  if(!ctfMode){
     for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player, i));
     if(twoPlayerMode && player2){
       for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player2, i));
     }
+    // Spawn invincible circlers that ring the player
     for(let i=0; i<CIRCLER_COUNT; i++) npcs.push(spawnCirclerFor(player, i));
     if(twoPlayerMode && player2){
       for(let i=0; i<CIRCLER_COUNT; i++) npcs.push(spawnCirclerFor(player2, i));
@@ -2045,6 +2237,8 @@ function initGame(){
   document.getElementById('p2DeadPanel').style.display  ='none';
   document.getElementById('minimap').style.display       = 'block';
   document.getElementById('minimap2').style.display      = twoPlayerMode ? 'block' : 'none';
+  const ctfHudEl = document.getElementById('ctfHud');
+  if(ctfHudEl) ctfHudEl.style.display = ctfMode ? 'flex' : 'none';
 
   // Voice mic buttons (team mode only)
   p1VoiceCmd = null; p1VoiceCmdTimer = 0;
@@ -2242,7 +2436,7 @@ function update(dt){
   if(!p1alive && (!twoPlayerMode || !p2alive)) return;
 
   gameTime+=dt;
-  if(teamMode && gameTime >= TEAM_MODE_DURATION){
+  if(teamMode && !ctfMode && gameTime >= TEAM_MODE_DURATION){
     gameRunning=false;
     hideGameUI();
     refreshTeamScores();
@@ -2270,10 +2464,82 @@ function update(dt){
     document.getElementById('deathScreen').style.display='flex';
     return;
   }
+  // ── CTF mode: timer, flags, scoring ──
+  if(ctfMode){
+    ctfTimeLeft -= dt;
+    if(ctfTimeLeft <= 0){
+      ctfTimeLeft = 0;
+      gameRunning = false;
+      hideGameUI();
+      const ctfHudEndEl = document.getElementById('ctfHud');
+      if(ctfHudEndEl) ctfHudEndEl.style.display = 'none';
+      const winner = ctfScoreRed === ctfScoreBlue ? 'DRAW!' : (ctfScoreRed > ctfScoreBlue ? '\uD83D\uDD34 RED TEAM WINS!' : '\uD83D\uDD35 BLUE TEAM WINS!');
+      let coinMsg = '';
+      if(ctfScoreRed !== ctfScoreBlue){
+        const winTeam = ctfScoreRed > ctfScoreBlue ? 'red' : 'blue';
+        if(player && player.team === winTeam){
+          playerCoins += 20;
+          localStorage.setItem('snakeArenaCoins', String(playerCoins));
+          coinMsg = '<br><span style="color:#ffd700">\uD83C\uDFC6 +20 coins! Total: '+playerCoins+'</span>';
+        }
+      }
+      document.getElementById('deathMsg').innerHTML = '\uD83D\uDEA9 CTF OVER! '+winner
+        +'<br>\uD83D\uDD34 Red: <strong style="color:#ff6677">'+ctfScoreRed+'</strong>'
+        +' &nbsp;|&nbsp; \uD83D\uDD35 Blue: <strong style="color:#66aaff">'+ctfScoreBlue+'</strong>'
+        +coinMsg;
+      document.getElementById('deathScreen').style.display='flex';
+      return;
+    }
+    // Update tracked flag positions when carried
+    if(ctfFlagRed  && ctfFlagRed.carrier  && !ctfFlagRed.carrier.dead){
+      const ch = snakeHead(ctfFlagRed.carrier); ctfFlagRed.x  = ch.x; ctfFlagRed.y  = ch.y;
+    }
+    if(ctfFlagBlue && ctfFlagBlue.carrier && !ctfFlagBlue.carrier.dead){
+      const ch = snakeHead(ctfFlagBlue.carrier); ctfFlagBlue.x = ch.x; ctfFlagBlue.y = ch.y;
+    }
+    // Flag pickup/scoring for all human players
+    for(const _pl of [player, player2]){
+      if(!_pl || _pl.dead) continue;
+      const eFlag = ctfEnemyFlagFor(_pl.team);
+      // Pick up enemy flag when head touches it
+      if(eFlag && !eFlag.carrier && !_pl.ctfCarrying){
+        const _ph = snakeHead(_pl);
+        if(Math.hypot(_ph.x - eFlag.x, _ph.y - eFlag.y) < snakeRadius(_pl.length) + 52){
+          eFlag.carrier = _pl; _pl.ctfCarrying = eFlag;
+          spawnFloatingText(_ph.x, _ph.y - 36, '\uD83D\uDEA9 FLAG GRABBED!', '#ffaa00');
+          triggerShake(7);
+        }
+      }
+      // Score: carrying enemy flag + touching own base
+      if(_pl.ctfCarrying){
+        const base = ctfBasePos(_pl.team);
+        const _ph  = snakeHead(_pl);
+        if(Math.hypot(_ph.x - base.x, _ph.y - base.y) < CTF_BASE_RADIUS){
+          if(_pl.team === 'red') ctfScoreRed++; else ctfScoreBlue++;
+          ctfReturnFlag(_pl.ctfCarrying);
+          _pl.ctfCarrying = null;
+          spawnFloatingText(_ph.x, _ph.y - 48, '\uD83C\uDFC6 CAPTURED! +1', '#ffdd00');
+          triggerShake(14);
+        }
+      }
+    }
+    // CTF HUD
+    const _ctfHud = document.getElementById('ctfHud');
+    if(_ctfHud){
+      const _mins = Math.floor(ctfTimeLeft / 60);
+      const _secs = Math.floor(ctfTimeLeft % 60);
+      const _rf = ctfFlagRed  && ctfFlagRed.carrier  ? ' \uD83D\uDEA9(away)' : ' \uD83D\uDEA9';
+      const _bf = ctfFlagBlue && ctfFlagBlue.carrier ? ' \uD83D\uDEA9(away)' : ' \uD83D\uDEA9';
+      _ctfHud.innerHTML =
+        '<span style="color:#ff4444;font-weight:900">\uD83D\uDD34 ' + ctfScoreRed  + _rf + '</span>'
+        +'&nbsp;<span style="color:#ffcc44;font-size:1.05rem">\u23F1 ' + _mins + ':' + String(_secs).padStart(2,'0') + '</span>&nbsp;'
+        +'<span style="color:#4488ff;font-weight:900">\uD83D\uDD35 ' + ctfScoreBlue + _bf + '</span>';
+    }
+  }
   if(comboTimer>0) comboTimer-=dt;
   else comboMult = Math.max(1, comboMult - dt*0.9);
   zoneRadius=currentZoneRadius();
-  const zoneActive = gameTime > ZONE_FULL_TIME;
+  const zoneActive = !ctfMode && !teamMode && gameTime > ZONE_FULL_TIME;
 
   // ── Player 1 ──
   if(p1alive){
@@ -2330,7 +2596,8 @@ function update(dt){
       }
     } else { boostDrainTimer=0; }
 
-    const spd=(boosting ? snakeBoostSpeed(player.length, player) : snakeBaseSpeed(player.length)) * speedMultFor(player, boosting);
+    const ctfFlagPenalty = (ctfMode && player.ctfCarrying) ? 0.5 : 1;
+    const spd=((boosting ? snakeBoostSpeed(player.length, player) : snakeBaseSpeed(player.length)) * speedMultFor(player, boosting)) * ctfFlagPenalty;
     if(spd > bestSpeed) bestSpeed = spd;
     moveSnakeFixed(player, player.angle, spd);
     closeLoopBody(player, dt);
@@ -2377,7 +2644,7 @@ function update(dt){
       : ('Next objective in '+Math.max(0,Math.ceil(nextObjectiveTime-gameTime))+'s');
     document.getElementById('hudObjective').textContent='Objective: '+objText;
     document.getElementById('hudEvent').textContent='Event: '+activeEventSummary();
-    if(teamMode){
+    if(teamMode && !ctfMode){
       teamScoreTick += dt;
       if(teamScoreTick >= 0.5){ teamScoreTick = 0; refreshTeamScores(); }
       const total=Math.max(1, teamScoreRed + teamScoreBlue);
@@ -2386,6 +2653,9 @@ function update(dt){
       const rem=Math.max(0,Math.ceil(TEAM_MODE_DURATION-gameTime));
       document.getElementById('hudObjective').textContent='Land Red '+redPct+'% | Blue '+bluePct+'%';
       document.getElementById('hudZone').textContent='\u23F1\uFE0F Team mode '+rem+'s';
+    } else if(ctfMode){
+      document.getElementById('hudObjective').textContent='\uD83D\uDEA9 Red: '+ctfScoreRed+' | Blue: '+ctfScoreBlue;
+      document.getElementById('hudZone').textContent=(player && player.ctfCarrying) ? '\uD83C\uDFC3 Carry to your base!' : '\uD83D\uDEA9 Steal the enemy flag!';
     } else {
       const zt=Math.max(0,Math.ceil(ZONE_FULL_TIME-gameTime));
       document.getElementById('hudZone').textContent=gameTime<ZONE_FULL_TIME?'\u2B55 Zone in '+zt+'s':'\u26A0\uFE0F Zone closing!';
@@ -2493,7 +2763,7 @@ function update(dt){
     }
   }
 
-  if(teamMode){
+  if(teamMode && !ctfMode){
     if(p1alive) paintFromSnake(player);
     if(p2alive) paintFromSnake(player2);
     for(const npc of npcs) if(!npc.dead) paintFromSnake(npc);
@@ -3121,7 +3391,7 @@ function applyVoiceCommand(team, transcript){
   const wantBoost = /\b(boost|turbo|speed up|go fast|sprint|full speed)\b/.test(t);
 
   // ── Follow me ──
-  if(/\b(follow me|follow|come here|come to me|come back|stay with me|stay close|stick with me)\b/.test(t))
+  if(/\b(follow me|follow|come here|come to me|stay with me|stay close|stick with me)\b/.test(t))
     action = 'follow';
   // ── Charge Attack (line up side by side + hunt together) ──
   else if(/\b(charge attack|charge atk|line up side by side|side by side (and )?charge|formation charge|squad charge|group charge|team charge)\b/.test(t))
@@ -3325,18 +3595,6 @@ function applyVoiceCommand(team, transcript){
       if(!hp || hp.dead || hp.team === team) continue;
       const d = Math.hypot(snakeHead(hp).x - ref.x, snakeHead(hp).y - ref.y);
       if(d < bestD){ bestD = d; huntTgt = snakeHead(hp); }
-    }
-  }
-
-  // ── Ring worm (circler) flee/return commands ──
-  const isStopCmd    = /\bstop\b/.test(t);
-  const isComeBack   = /\bcome back\b/.test(t);
-  if(isStopCmd || isComeBack){
-    for(const npc of npcs){
-      if(!npc.isCircler || npc.dead) continue;
-      // In team mode only affect circlers owned by this team's player
-      if(teamMode && npc.circlerFor && npc.circlerFor.team !== team) continue;
-      npc.circlerFleeing = isStopCmd;
     }
   }
 
@@ -3629,10 +3887,6 @@ function updateNpc(npc, dt){
   if(npc.isCircler){
     if(!npc.circlerFor || npc.circlerFor.dead){
       npc.npcMode = 'wander';
-    } else if(npc.circlerFleeing){
-      npc.npcMode = 'circler_flee';
-      npc.npcModeTimer = 999;
-      npc.voiceCmdLocked = false;
     } else {
       npc.npcMode = 'circler';
       npc.npcModeTimer = 999;
@@ -3651,6 +3905,11 @@ function updateNpc(npc, dt){
       npc.voiceCmdLocked = false;
     }
   }
+  // CTF NPCs stay locked in their assigned mode
+  if(npc.npcMode === 'ctfGuard' || npc.npcMode === 'ctfAttack'){
+    npc.npcModeTimer = 999;
+    npc.voiceCmdLocked = false;
+  }
   // Clear cyclone intercept state if the worm has been reassigned to a different mode
   if(npc.cycloneIntercepting && npc.npcMode !== 'cyclone'){
     npc.cycloneIntercepting = false;
@@ -3660,7 +3919,7 @@ function updateNpc(npc, dt){
   // While under a persistent voice command, keep modeTimer positive so steering stays active
   if(npc.voiceCmdLocked){ npc.npcModeTimer = 999; } else { npc.npcModeTimer-=dt; }
   const h=snakeHead(npc);
-  const isBlue = teamMode && npc.team === 'blue'; // blue bots use enhanced AI
+  const isBlue = (teamMode||ctfMode) && npc.team === 'blue'; // blue bots use enhanced AI
   const isCommander = !!(npc.isCommander && npc === enemyCommander) || !!npc.isAllyCommander; // AI generals never flee & have wide hunt range
 
   const humans=[];
@@ -3669,7 +3928,7 @@ function updateNpc(npc, dt){
 
   let enemies = [];
   let biggerThreats = [];
-  if(teamMode){
+  if(teamMode || ctfMode){
     for(const hp of humans){
       if(!sameTeam(npc, hp)) enemies.push(hp);
       // Blue bots only flee from threats 1.8× their size; red bots flee at 0.9×
@@ -3707,7 +3966,7 @@ function updateNpc(npc, dt){
     let huntTarget=null, bestDist = isCommander ? 2200 : (isBlue ? 950 : 600);
 
     // Territorial defense: always prioritize enemies standing on own land
-    if(teamMode){
+    if(teamMode && !ctfMode && !ctfMode){
       const ownCell = npc.team === 'red' ? 1 : 2;
       let defDist = Infinity, defTarget = null;
       for(const target of enemies){
@@ -4481,17 +4740,6 @@ function updateNpc(npc, dt){
       npc._circlerMatchSpd = null;
       npc.npcBoost = false;
     }
-  } else if(npc.npcMode==='circler_flee'){
-    // Ring worm obeying "stop" command — zoom directly away from their orbit target
-    const fleeTgt = (npc.circlerFor && !npc.circlerFor.dead) ? npc.circlerFor : null;
-    if(fleeTgt){
-      const ph = snakeHead(fleeTgt);
-      desiredAngle = Math.atan2(h.y - ph.y, h.x - ph.x);
-      npc._circlerMatchSpd = 44; // fast hard-coded flee speed (no boost-poop drain)
-    } else {
-      npc._circlerMatchSpd = 44;
-    }
-    npc.npcBoost = false; // avoid length drain since circlers are short
   } else if(npc.npcMode==='raid'&&npc.npcTarget){
     desiredAngle=Math.atan2(npc.npcTarget.y-h.y, npc.npcTarget.x-h.x) + (Math.random()-0.5)*0.18;
     // Always boost during voice-commanded raid/invade; otherwise occasional boost
@@ -4511,6 +4759,58 @@ function updateNpc(npc, dt){
   } else if(npc.npcMode==='zone'){
     desiredAngle=Math.atan2(zcny-h.y, zcnx-h.x)+(Math.random()-.5)*.4;
     npc.npcBoost=false;
+  } else if(npc.npcMode === 'ctfGuard'){
+    // Guard: patrol near own flag; attack any enemy within 500px of it
+    const _ownFlag = ctfOwnFlagFor(npc.team);
+    const _flagX = _ownFlag ? _ownFlag.x : ctfBasePos(npc.team).x;
+    const _flagY = _ownFlag ? _ownFlag.y : ctfBasePos(npc.team).y;
+    let _guardTarget = null, _guardBestD = 520;
+    for(const _s of [...npcs, player, player2]){
+      if(!_s || _s.dead || sameTeam(_s, npc)) continue;
+      const _sh = snakeHead(_s);
+      const _d = Math.hypot(_sh.x - _flagX, _sh.y - _flagY);
+      if(_d < _guardBestD){ _guardBestD = _d; _guardTarget = _s; }
+    }
+    if(_guardTarget){
+      const _gh = snakeHead(_guardTarget);
+      desiredAngle = Math.atan2(_gh.y - h.y, _gh.x - h.x);
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+    } else {
+      // Drift around flag
+      const _tx = _flagX + (Math.random()-0.5)*200;
+      const _ty = _flagY + (Math.random()-0.5)*200;
+      if(npc.npcTurnTimer <= 0){ desiredAngle = Math.atan2(_ty - h.y, _tx - h.x); npc.npcTurnTimer = 1.2; }
+      npc.npcBoost = false;
+    }
+  } else if(npc.npcMode === 'ctfAttack'){
+    // If any human enemy is carrying own flag: hunt them; else move toward enemy flag or attack
+    let _attackTarget = null;
+    // Priority 1: player carrying own flag
+    for(const _pl of [player, player2]){
+      if(!_pl || _pl.dead || sameTeam(_pl, npc)) continue;
+      if(_pl.ctfCarrying && _pl.ctfCarrying.team === npc.team){ _attackTarget = _pl; break; }
+    }
+    // Priority 2: nearest human enemy
+    if(!_attackTarget){
+      let _bd = 900;
+      for(const _pl of [player, player2]){
+        if(!_pl || _pl.dead || sameTeam(_pl, npc)) continue;
+        const _d = Math.hypot(snakeHead(_pl).x - h.x, snakeHead(_pl).y - h.y);
+        if(_d < _bd){ _bd = _d; _attackTarget = _pl; }
+      }
+    }
+    if(_attackTarget){
+      const _th = snakeHead(_attackTarget);
+      desiredAngle = Math.atan2(_th.y - h.y, _th.x - h.x);
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+    } else {
+      // Head toward enemy flag to contest it
+      const _eFlag = ctfEnemyFlagFor(npc.team);
+      if(_eFlag && !_eFlag.carrier){
+        desiredAngle = Math.atan2(_eFlag.y - h.y, _eFlag.x - h.x);
+      }
+      npc.npcBoost = false;
+    }
   } else {
     npc.npcBoost=false;
     let bestDist2=300, bestDot=null;
@@ -4529,7 +4829,7 @@ function updateNpc(npc, dt){
       const p=powerUps[i], dx=p.x-h.x, dy=p.y-h.y, dist2=dx*dx+dy*dy;
       if(dist2<bestDist2*bestDist2){ bestDist2=Math.sqrt(dist2); bestDot=p; }
     }
-    if(teamMode){
+    if(teamMode && !ctfMode){
       const landTarget = nearestEnemyLandTarget(h.x, h.y, npc.team || 'red', isBlue ? 40 : 16);
       const raidProb = isBlue ? 0.92 : 0.6;
       if(landTarget && (!bestDot || Math.random()<raidProb)){
@@ -4605,7 +4905,7 @@ function updateNpc(npc, dt){
 
   const spd = (npc.npcMode === 'bodyguard' && npc._guardMatchSpd != null)
     ? npc._guardMatchSpd
-    : ((npc.npcMode === 'circler' || npc.npcMode === 'circler_flee') && npc._circlerMatchSpd != null)
+    : (npc.npcMode === 'circler' && npc._circlerMatchSpd != null)
     ? npc._circlerMatchSpd
     : (npc.npcBoost ? snakeBoostSpeed(npc.length, npc) : snakeBaseSpeed(npc.length)) * speedMultFor(npc, npc.npcBoost);
   moveSnakeFixed(npc, npc.npcAngle, spd);
@@ -4628,9 +4928,7 @@ function checkCollisions(){
     const ph=snakeHead(player);
     for(const npc of npcs){
       if(npc.dead) continue;
-      if(teamMode && sameTeam(player, npc)) continue;
-      // Player's own circlers and bodyguards never kill them
-      if((npc.isCircler && npc.circlerFor === player) || (npc.isBodyguard && npc.bodyguardFor === player)) continue;
+      if((teamMode||ctfMode) && sameTeam(player, npc)) continue;
       const nr=snakeRadius(npc.length);
       // Enemy player hitting a circle_me shield worm dies
       if(npc.npcMode === 'circle_me'){
@@ -4656,22 +4954,24 @@ function checkCollisions(){
     const ph2=snakeHead(player2);
     for(const npc of npcs){
       if(npc.dead) continue;
-      if(teamMode && sameTeam(player2, npc)) continue;
-      // Player's own circlers and bodyguards never kill them
-      if((npc.isCircler && npc.circlerFor === player2) || (npc.isBodyguard && npc.bodyguardFor === player2)) continue;
-      const nr=snakeRadius(npc.length);
+      if((teamMode||ctfMode) && sameTeam(player2, npc)) continue;
+      const nr2=snakeRadius(npc.length);
       // Enemy player2 hitting a circle_me shield worm dies
       if(npc.npcMode === 'circle_me'){
         const nh2=snakeHead(npc);
         const cd=Math.hypot(ph2.x-nh2.x, ph2.y-nh2.y);
-        if(cd < nr+p2r){ killPlayer2('npc'); return; }
+        if(cd < nr2+p2r){ killPlayer2('npc'); return; }
         continue;
       }
       for(let i=3; i<npc.segs.length; i++){
         const s=npc.segs[i], dx=ph2.x-s.x, dy=ph2.y-s.y;
-        if(dx*dx+dy*dy<nr*nr){ killPlayer2('npc'); return; }
+        if(dx*dx+dy*dy<nr2*nr2){ killPlayer2('npc'); return; }
       }
       const nh=snakeHead(npc);
+      for(let i=3; i<player2.segs.length; i++){
+        const s=player2.segs[i], dx=nh.x-s.x, dy=nh.y-s.y;
+        if(dx*dx+dy*dy<(p2r+nr2)*(p2r+nr2)){ killNpc(npc,player2); break; }
+      }
       for(let i=3; i<player2.segs.length; i++){
         const s=player2.segs[i], dx=nh.x-s.x, dy=nh.y-s.y;
         if(dx*dx+dy*dy<(p2r+nr)*(p2r+nr)){ killNpc(npc,player2); break; }
@@ -4680,7 +4980,7 @@ function checkCollisions(){
   }
 
   // P1 vs P2 (mutual)
-  if(p1a&&p2a && !p1Secret && !p2Secret && !(teamMode && sameTeam(player, player2))){
+  if(p1a&&p2a && !p1Secret && !p2Secret && !((teamMode||ctfMode) && sameTeam(player, player2))){
     const ph =snakeHead(player);
     const ph2=snakeHead(player2);
     // P1 head into P2 body
@@ -4706,7 +5006,7 @@ function checkCollisions(){
     for(let b=a+1; b<npcs.length; b++){
       const nb = npcs[b];
       if(!nb || nb.dead) continue;
-      if(teamMode && sameTeam(na, nb)) continue;
+      if((teamMode||ctfMode) && sameTeam(na, nb)) continue;
       const bh = snakeHead(nb), br = snakeRadius(nb.length);
 
       const hx = ah.x - bh.x, hy = ah.y - bh.y;
@@ -4762,14 +5062,14 @@ function checkCollisions(){
     const fireR = snakeRadius(player.length) + FIRE_KILL_R;
     for(let i = npcs.length-1; i >= 0; i--){
       const npc = npcs[i];
-      if(npc.dead || (teamMode && sameTeam(player, npc))) continue;
+      if(npc.dead || ((teamMode||ctfMode) && sameTeam(player, npc))) continue;
       const nh = snakeHead(npc);
       for(const seg of fireSegs){
         const dx=nh.x-seg.x, dy=nh.y-seg.y;
         if(dx*dx+dy*dy < fireR*fireR){ killNpc(npc, player); break; }
       }
     }
-    if(player2&&!player2.dead&&!(teamMode&&sameTeam(player,player2))){
+    if(player2&&!player2.dead&&!((teamMode||ctfMode)&&sameTeam(player,player2))){
       const ph2=snakeHead(player2);
       for(const seg of fireSegs){
         const dx=ph2.x-seg.x, dy=ph2.y-seg.y;
@@ -4787,15 +5087,13 @@ function checkCollisions(){
       const sy = ph.y + Math.sin(sawAng) * SAW_ORBIT_R;
       for(let i = npcs.length-1; i >= 0; i--){
         const npc = npcs[i];
-        if(npc.dead || (teamMode && sameTeam(player, npc))) continue;
+        if(npc.dead || ((teamMode||ctfMode) && sameTeam(player, npc))) continue;
         const nh = snakeHead(npc);
         const dx=nh.x-sx, dy=nh.y-sy;
         const killR = SAW_KILL_R + snakeRadius(npc.length);
         if(dx*dx+dy*dy < killR*killR){ killNpc(npc, player); }
       }
-      if(player2&&!player2.dead&&!(teamMode&&sameTeam(player,player2))){
-        const ph2=snakeHead(player2);
-        const dx=ph2.x-sx, dy=ph2.y-sy;
+      if(player2&&!player2.dead&&!((teamMode||ctfMode)&&sameTeam(player,player2))){
         const killR = SAW_KILL_R + snakeRadius(player2.length);
         if(dx*dx+dy*dy < killR*killR){ killPlayer2('saw'); }
       }
@@ -4815,6 +5113,16 @@ function isOnOwnLand(snake){
 function killPlayer(cause){
   if(!player||player.dead) return;
   if(isOnOwnLand(player)) return;
+  // CTF: respawn at base instead of game over
+  if(ctfMode){
+    if(player.ctfCarrying){ ctfReturnFlag(player.ctfCarrying); player.ctfCarrying = null; }
+    spawnDeathDots(player);
+    boostKey = false; boostClick = false; boostDrainTimer = 0;
+    triggerShake(8);
+    spawnFloatingText(snakeHead(player).x, snakeHead(player).y - 32, '\uD83D\uDC80 Respawning...', '#ff4466');
+    ctfRespawnSnake(player);
+    return;
+  }
   player.dead=true; spawnDeathDots(player); boostClick=false;
   const entry={name:player.name, score:Math.floor(player.length), kills, date:new Date().toLocaleDateString()};
   leaderboard.push(entry); leaderboard.sort((a,b)=>b.score-a.score);
@@ -4830,8 +5138,6 @@ function killPlayer(cause){
     const causeMsg = cause==='zone'?'You got caught outside the zone!'
                    : cause==='p2'  ?'Player 2 ran you over!'
                    : 'Your head hit a snake!';
-    playerCoins += 20;
-    localStorage.setItem('snakeArenaCoins', String(playerCoins));
     document.getElementById('deathMsg').innerHTML=causeMsg
       +'<br>Length: <strong style="color:#ffcc44">'+Math.floor(player.length)+'</strong>'
       +' &nbsp;|&nbsp; Kills: <strong style="color:#ff4466">'+kills+'</strong>'
@@ -4840,8 +5146,7 @@ function killPlayer(cause){
       +' &nbsp;|&nbsp; Top Speed: <strong style="color:#88ddff">'+bestSpeed.toFixed(1)+'</strong>'
       +' &nbsp;|&nbsp; Longest Boost: <strong style="color:#ffaa66">'+longestBoostChain.toFixed(1)+'s</strong>'
       +(dailySeedMode?'<br><span style="color:#88ddff">Daily Seed: '+seedLabel+'</span>':'')
-      +'<br><span style="color:#99ffaa">Daily: '+(dailyChallengeData.challenge?dailyChallengeData.challenge.text:'-')+' ['+(dailyChallengeData.done?'DONE':'OPEN')+']</span>'
-      +'<br><span style="color:#ffd700;font-size:.95em">&#x1F4B0; +20 coins! Total: '+playerCoins+'</span>';
+      +'<br><span style="color:#99ffaa">Daily: '+(dailyChallengeData.challenge?dailyChallengeData.challenge.text:'-')+' ['+(dailyChallengeData.done?'DONE':'OPEN')+']</span>';
     document.getElementById('deathScreen').style.display='flex';
   }
   triggerShake(14);
@@ -4876,6 +5181,8 @@ function hideGameUI(){
   document.getElementById('zoneBannerP2').style.display='none';
   document.getElementById('p2DeadPanel').style.display='none';
   document.getElementById('splitDivider').style.display='none';
+  const ctfHudH = document.getElementById('ctfHud');
+  if(ctfHudH) ctfHudH.style.display='none';
   const mic1=document.getElementById('voiceMic1');
   const mic2=document.getElementById('voiceMic2');
   const vt=document.getElementById('voiceToast');
@@ -4912,7 +5219,10 @@ function killNpc(npc, killer){
     return;
   }
   if(isOnOwnLand(npc)) return;
+  // CTF: no friendly fire
+  if(ctfMode && killer && sameTeam(npc, killer)) return;
   const deadTeam = npc.team || null;
+  const deadNpcMode = npc.npcMode || 'wander';
   const deadIsBodyguard  = !!npc.isBodyguard;
   const deadBodyguardFor = npc.bodyguardFor  || null;
   const deadBodyguardRank= npc.bodyguardRank != null ? npc.bodyguardRank : 0;
@@ -4928,15 +5238,15 @@ function killNpc(npc, killer){
       // Respawn as a new bodyguard for the same player
       fresh = spawnBodyguardFor(deadBodyguardFor, deadBodyguardRank);
     } else {
-      const pos = (teamMode && deadTeam) ? findTeamSpawnPos(deadTeam, 120) : findSafeSpawnPos(400);
+      const pos = ((teamMode||ctfMode) && deadTeam) ? findTeamSpawnPos(deadTeam, 120) : findSafeSpawnPos(400);
       let freshSkinIdx = Math.floor(rng()*SKINS.length);
-      fresh = makeSnake(randNpcName(), pos.x, pos.y, freshSkinIdx, false);
-      if(teamMode && deadTeam){
+      fresh = makeSnake(ctfMode && deadNpcMode==='ctfGuard' ? '\uD83D\uDEE1\uFE0F Guard' : randNpcName(), pos.x, pos.y, freshSkinIdx, false);
+      if((teamMode||ctfMode) && deadTeam){
         fresh.team = deadTeam;
         fresh.skin = deadTeam === 'red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE;
-        fresh.length = TEAM_START_LENGTH;
-        // Blue bots respawn with more bulk so they can reclaim territory faster
-        fresh.bulk = deadTeam === 'blue' ? TEAM_START_LENGTH * 4 : TEAM_START_LENGTH * 0.7;
+        fresh.length = ctfMode ? CTF_START_LENGTH : TEAM_START_LENGTH;
+        if(ctfMode){ fresh.npcMode = deadNpcMode; fresh.npcModeTimer = 999; }
+        else { fresh.bulk = deadTeam === 'blue' ? TEAM_START_LENGTH * 4 : TEAM_START_LENGTH * 0.7; }
       } else {
         fresh.length = Math.min(9000, randomNpcSpawnLength());
       }
@@ -5080,7 +5390,7 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
   ctx.lineWidth=6/zoom;
   ctx.strokeRect(0,0,mapSize,mapSize);
   // Zone
-  if(!inSecret) drawZone();
+  if(!inSecret && !ctfMode) drawZone();
   // Team territory tiles
   if(teamMode && !inSecret && teamGrid){
     for(let tcy=0; tcy<teamRows; tcy++){
@@ -5091,6 +5401,52 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
         ctx.fillRect(tcx*TEAM_CELL_SIZE, tcy*TEAM_CELL_SIZE, TEAM_CELL_SIZE, TEAM_CELL_SIZE);
       }
     }
+  }
+  // CTF bases and flags
+  if(ctfMode && !inSecret){
+    const _drawBase = (team) => {
+      const bp = ctfBasePos(team);
+      const col = team==='red' ? 'rgba(255,40,40,0.20)' : 'rgba(40,100,255,0.20)';
+      const strokeCol = team==='red' ? '#ff4444' : '#4488ff';
+      ctx.beginPath(); ctx.arc(bp.x, bp.y, CTF_BASE_RADIUS, 0, Math.PI*2);
+      ctx.fillStyle = col; ctx.fill();
+      ctx.strokeStyle = strokeCol; ctx.lineWidth = 5/zoom; ctx.stroke();
+      ctx.font = 'bold '+(30/zoom)+'px Segoe UI,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = strokeCol;
+      ctx.fillText(team==='red' ? '\uD83D\uDD34 CAPTURE ZONE' : '\uD83D\uDD35 CAPTURE ZONE', bp.x, bp.y);
+    };
+    _drawBase('red'); _drawBase('blue');
+    // Draw flags at their current positions
+    const _drawFlag = (flag) => {
+      if(!flag) return;
+      ctx.save();
+      const col = flag.team==='red' ? '#ff3333' : '#3366ff';
+      const glow = flag.carrier ? '#ffcc00' : col;
+      ctx.shadowColor = glow; ctx.shadowBlur = 22/zoom;
+      // Pole
+      ctx.strokeStyle = '#aaaaaa'; ctx.lineWidth = 3/zoom;
+      ctx.beginPath(); ctx.moveTo(flag.x, flag.y); ctx.lineTo(flag.x, flag.y - 70/zoom); ctx.stroke();
+      // Banner
+      ctx.beginPath();
+      ctx.moveTo(flag.x, flag.y - 70/zoom);
+      ctx.lineTo(flag.x + 44/zoom, flag.y - 55/zoom);
+      ctx.lineTo(flag.x, flag.y - 40/zoom);
+      ctx.fillStyle = col; ctx.fill();
+      ctx.restore();
+      // Carrier indicator
+      if(flag.carrier && !flag.carrier.dead){
+        const _ch = snakeHead(flag.carrier);
+        ctx.save();
+        ctx.font = 'bold '+(24/zoom)+'px Segoe UI,sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillStyle = '#ffcc00';
+        ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 12/zoom;
+        ctx.fillText('\uD83D\uDEA9', _ch.x, _ch.y - snakeRadius(flag.carrier.length)*2 - 10/zoom);
+        ctx.restore();
+      }
+    };
+    _drawFlag(ctfFlagRed); _drawFlag(ctfFlagBlue);
   }
   // Dots (viewport culled accounting for zoom)
   const pad=100/zoom;
@@ -5131,6 +5487,62 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
     }
     if(player2&&!player2.dead&&!player2.inSecretMap) drawSnake(player2);
     if(player &&!player.dead &&!player.inSecretMap)  drawSnake(player);
+    // ── Shop item world overlays ──
+    if(player && !player.dead && !player.inSecretMap){
+      // Mines
+      if(ownsMine) for(const m of mines){
+        if(m.x<vx1||m.x>vx2||m.y<vy1||m.y>vy2) continue;
+        const g=ctx.createRadialGradient(m.x,m.y,2,m.x,m.y,MINE_R*.9);
+        g.addColorStop(0,'#ff3300'); g.addColorStop(1,'#660000');
+        ctx.beginPath(); ctx.arc(m.x,m.y,MINE_R*.55,0,Math.PI*2);
+        ctx.fillStyle=g; ctx.fill();
+        ctx.beginPath(); ctx.arc(m.x,m.y,MINE_R*.55,0,Math.PI*2);
+        ctx.strokeStyle='#ff8800'; ctx.lineWidth=2; ctx.stroke();
+        // spike lines
+        for(let k=0;k<6;k++){
+          const a=k*(Math.PI/3); const len=MINE_R*.8;
+          ctx.beginPath();
+          ctx.moveTo(m.x+Math.cos(a)*MINE_R*.45, m.y+Math.sin(a)*MINE_R*.45);
+          ctx.lineTo(m.x+Math.cos(a)*len, m.y+Math.sin(a)*len);
+          ctx.strokeStyle='#ff6600'; ctx.lineWidth=2; ctx.stroke();
+        }
+      }
+      // Flame trail
+      if(ownsFlame) for(const f of flamePoints){
+        if(f.x<vx1||f.x>vx2||f.y<vy1||f.y>vy2) continue;
+        const t=f.life/FLAME_LIFE;
+        ctx.globalAlpha=Math.max(0,t*.85);
+        const gr=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,FLAME_R);
+        gr.addColorStop(0,'#ffffaa'); gr.addColorStop(0.4,'#ff7700'); gr.addColorStop(1,'rgba(200,0,0,0)');
+        ctx.beginPath(); ctx.arc(f.x,f.y,FLAME_R,0,Math.PI*2);
+        ctx.fillStyle=gr; ctx.fill(); ctx.globalAlpha=1;
+      }
+      // Decoy bait
+      if(ownsDecoy) for(const d of decoyDots){
+        if(d.x<vx1||d.x>vx2||d.y<vy1||d.y>vy2) continue;
+        const t=d.life/DECOY_LIFE;
+        ctx.globalAlpha=Math.min(1,t*2);
+        ctx.beginPath(); ctx.arc(d.x,d.y,8,0,Math.PI*2);
+        ctx.fillStyle='#aaffee'; ctx.fill();
+        ctx.strokeStyle='#00ffcc'; ctx.lineWidth=2; ctx.stroke();
+        ctx.globalAlpha=1;
+      }
+      // Ice aura ring
+      if(ownsIce){
+        const _ph=snakeHead(player);
+        ctx.beginPath(); ctx.arc(_ph.x,_ph.y,ICE_AURA_R,0,Math.PI*2);
+        ctx.strokeStyle='rgba(180,240,255,0.28)'; ctx.lineWidth=3; ctx.stroke();
+      }
+      // Shield bubble
+      if(ownsShield && shieldActive){
+        const _ph=snakeHead(player);
+        const sr=snakeRadius(player.length)+26;
+        ctx.beginPath(); ctx.arc(_ph.x,_ph.y,sr,0,Math.PI*2);
+        ctx.strokeStyle='rgba(100,220,255,0.7)'; ctx.lineWidth=4; ctx.stroke();
+        ctx.globalAlpha=0.08; ctx.fillStyle='#88ccff';
+        ctx.fill(); ctx.globalAlpha=1;
+      }
+    }
   }
   if(!teamMode && eventActive('fog')){
     ctx.fillStyle='rgba(0,0,0,0.52)';
@@ -5280,38 +5692,37 @@ function drawTurboJetsFire(snake){
   const tail  = segs[segs.length - 1];
   const tail2 = segs[Math.max(0, segs.length - 5)];
   const rocketAngle = Math.atan2(tail.y - tail2.y, tail.x - tail2.x);
-  const rr = r * 2.2; // rocket scale multiplier — bigger rockets
   for(const side of [-1, 1]){
     const offAng = rocketAngle + side * Math.PI / 2.6;
-    const rx = tail.x + Math.cos(offAng) * r * 1.2;
-    const ry = tail.y + Math.sin(offAng) * r * 1.2;
+    const rx = tail.x + Math.cos(offAng) * r * 0.65;
+    const ry = tail.y + Math.sin(offAng) * r * 0.65;
     ctx.save();
     ctx.translate(rx, ry);
     ctx.rotate(rocketAngle);
     // Rocket nozzle body
     ctx.beginPath();
-    ctx.ellipse(0, 0, rr * 0.3, rr * 0.52, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, r * 0.3, r * 0.52, 0, 0, Math.PI * 2);
     ctx.fillStyle = '#999999';
     ctx.fill();
-    ctx.strokeStyle = '#555'; ctx.lineWidth = rr * 0.08; ctx.stroke();
+    ctx.strokeStyle = '#555'; ctx.lineWidth = r * 0.08; ctx.stroke();
     // Nose tip
     ctx.beginPath();
-    ctx.moveTo(-rr*0.3, 0); ctx.lineTo(0, -rr*0.65); ctx.lineTo(rr*0.3, 0);
+    ctx.moveTo(-r*0.3, 0); ctx.lineTo(0, -r*0.65); ctx.lineTo(r*0.3, 0);
     ctx.fillStyle = '#cc3300'; ctx.fill();
     // Fire flame when boosting
     if(isBoosting){
       const flameT = gameTime * 18;
-      const fl = rr * (1.6 + Math.sin(flameT + side) * 0.5);
+      const fl = r * (1.6 + Math.sin(flameT + side) * 0.5);
       ctx.beginPath();
-      ctx.moveTo(-rr*0.26, 0);
-      ctx.quadraticCurveTo(-rr*0.35, fl*0.5, 0, fl);
-      ctx.quadraticCurveTo(rr*0.35, fl*0.5, rr*0.26, 0);
+      ctx.moveTo(-r*0.26, 0);
+      ctx.quadraticCurveTo(-r*0.35, fl*0.5, 0, fl);
+      ctx.quadraticCurveTo(r*0.35, fl*0.5, r*0.26, 0);
       ctx.fillStyle = '#ff6600'; ctx.fill();
       const fl2 = fl * 0.6;
       ctx.beginPath();
-      ctx.moveTo(-rr*0.14, 0);
-      ctx.quadraticCurveTo(-rr*0.18, fl2*0.5, 0, fl2);
-      ctx.quadraticCurveTo(rr*0.18, fl2*0.5, rr*0.14, 0);
+      ctx.moveTo(-r*0.14, 0);
+      ctx.quadraticCurveTo(-r*0.18, fl2*0.5, 0, fl2);
+      ctx.quadraticCurveTo(r*0.18, fl2*0.5, r*0.14, 0);
       ctx.fillStyle = '#ffee00'; ctx.fill();
     }
     ctx.restore();
@@ -5414,6 +5825,16 @@ function drawSnake(snake){
   if(snake.isPlayer){
     drawTurboJetsFire(snake);
     drawSaws(snake);
+    // Golden Skin shimmer
+    if(ownsGolden){
+      drawSmoothPath(segs);
+      ctx.strokeStyle='rgba(255,200,0,0.22)'; ctx.lineWidth=r*2+8; ctx.globalAlpha=0.5; ctx.stroke(); ctx.globalAlpha=1;
+      ctx.beginPath(); ctx.arc(head.x,head.y,r*1.35,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,215,0,0.3)'; ctx.fill();
+    }
+    // Venom effect: tint nearby tagged enemies
+    if(ownsVenom){ ctx.shadowColor='#88ff00'; ctx.shadowBlur=10; }
+    ctx.shadowBlur=0;
   }
 
   ctx.restore();
@@ -5775,6 +6196,78 @@ function updateShopUI(){
   } else {
     sawBtn.textContent = 'Need \u1FA99 200'; sawBtn.className = 'shopCardBtn poor';
   }
+  // Mine Layer
+  const mineCard=document.getElementById('shopCardMine'), mineBtn=document.getElementById('shopBuyMine');
+  mineCard.classList.toggle('owned',ownsMine);
+  if(ownsMine){mineBtn.textContent='\u2713 Owned';mineBtn.className='shopCardBtn have';}
+  else if(playerCoins>=150){mineBtn.textContent='Buy';mineBtn.className='shopCardBtn can';}
+  else{mineBtn.textContent='Need \u1FA99 150';mineBtn.className='shopCardBtn poor';}
+  // Shockwave
+  const shockCard=document.getElementById('shopCardShockwave'), shockBtn=document.getElementById('shopBuyShockwave');
+  shockCard.classList.toggle('owned',ownsShockwave);
+  if(ownsShockwave){shockBtn.textContent='\u2713 Owned';shockBtn.className='shopCardBtn have';}
+  else if(playerCoins>=150){shockBtn.textContent='Buy';shockBtn.className='shopCardBtn can';}
+  else{shockBtn.textContent='Need \u1FA99 150';shockBtn.className='shopCardBtn poor';}
+  // Venom Bite
+  const venomCard=document.getElementById('shopCardVenom'), venomBtn=document.getElementById('shopBuyVenom');
+  venomCard.classList.toggle('owned',ownsVenom);
+  if(ownsVenom){venomBtn.textContent='\u2713 Owned';venomBtn.className='shopCardBtn have';}
+  else if(playerCoins>=150){venomBtn.textContent='Buy';venomBtn.className='shopCardBtn can';}
+  else{venomBtn.textContent='Need \u1FA99 150';venomBtn.className='shopCardBtn poor';}
+  // Shield Bubble
+  const shieldCard=document.getElementById('shopCardShield'), shieldBtn=document.getElementById('shopBuyShield');
+  shieldCard.classList.toggle('owned',ownsShield);
+  if(ownsShield){shieldBtn.textContent='\u2713 Owned';shieldBtn.className='shopCardBtn have';}
+  else if(playerCoins>=100){shieldBtn.textContent='Buy';shieldBtn.className='shopCardBtn can';}
+  else{shieldBtn.textContent='Need \u1FA99 100';shieldBtn.className='shopCardBtn poor';}
+  // Ghost Mode
+  const ghostCard=document.getElementById('shopCardGhost'), ghostBtn=document.getElementById('shopBuyGhost');
+  ghostCard.classList.toggle('owned',ownsGhost);
+  if(ownsGhost){ghostBtn.textContent='\u2713 Owned';ghostBtn.className='shopCardBtn have';}
+  else if(playerCoins>=150){ghostBtn.textContent='Buy';ghostBtn.className='shopCardBtn can';}
+  else{ghostBtn.textContent='Need \u1FA99 150';ghostBtn.className='shopCardBtn poor';}
+  // Decoy Tail
+  const decoyCard=document.getElementById('shopCardDecoy'), decoyBtn=document.getElementById('shopBuyDecoy');
+  decoyCard.classList.toggle('owned',ownsDecoy);
+  if(ownsDecoy){decoyBtn.textContent='\u2713 Owned';decoyBtn.className='shopCardBtn have';}
+  else if(playerCoins>=150){decoyBtn.textContent='Buy';decoyBtn.className='shopCardBtn can';}
+  else{decoyBtn.textContent='Need \u1FA99 150';decoyBtn.className='shopCardBtn poor';}
+  // Nitro
+  const nitroCard=document.getElementById('shopCardNitro'), nitroBtn=document.getElementById('shopBuyNitro');
+  nitroCard.classList.toggle('owned',ownsNitro);
+  if(ownsNitro){nitroBtn.textContent='\u2713 Owned';nitroBtn.className='shopCardBtn have';}
+  else if(playerCoins>=100){nitroBtn.textContent='Buy';nitroBtn.className='shopCardBtn can';}
+  else{nitroBtn.textContent='Need \u1FA99 100';nitroBtn.className='shopCardBtn poor';}
+  // Teleport Dash
+  const teleCard=document.getElementById('shopCardTeleport'), teleBtn=document.getElementById('shopBuyTeleport');
+  teleCard.classList.toggle('owned',ownsTeleport);
+  if(ownsTeleport){teleBtn.textContent='\u2713 Owned';teleBtn.className='shopCardBtn have';}
+  else if(playerCoins>=200){teleBtn.textContent='Buy';teleBtn.className='shopCardBtn can';}
+  else{teleBtn.textContent='Need \u1FA99 200';teleBtn.className='shopCardBtn poor';}
+  // Gravity Pull
+  const gravCard=document.getElementById('shopCardGravity'), gravBtn=document.getElementById('shopBuyGravity');
+  gravCard.classList.toggle('owned',ownsGravity);
+  if(ownsGravity){gravBtn.textContent='\u2713 Owned';gravBtn.className='shopCardBtn have';}
+  else if(playerCoins>=150){gravBtn.textContent='Buy';gravBtn.className='shopCardBtn can';}
+  else{gravBtn.textContent='Need \u1FA99 150';gravBtn.className='shopCardBtn poor';}
+  // Golden Skin
+  const goldCard=document.getElementById('shopCardGolden'), goldBtn=document.getElementById('shopBuyGolden');
+  goldCard.classList.toggle('owned',ownsGolden);
+  if(ownsGolden){goldBtn.textContent='\u2713 Owned';goldBtn.className='shopCardBtn have';}
+  else if(playerCoins>=200){goldBtn.textContent='Buy';goldBtn.className='shopCardBtn can';}
+  else{goldBtn.textContent='Need \u1FA99 200';goldBtn.className='shopCardBtn poor';}
+  // Flame Trail
+  const flameCard=document.getElementById('shopCardFlame'), flameBtn=document.getElementById('shopBuyFlame');
+  flameCard.classList.toggle('owned',ownsFlame);
+  if(ownsFlame){flameBtn.textContent='\u2713 Owned';flameBtn.className='shopCardBtn have';}
+  else if(playerCoins>=150){flameBtn.textContent='Buy';flameBtn.className='shopCardBtn can';}
+  else{flameBtn.textContent='Need \u1FA99 150';flameBtn.className='shopCardBtn poor';}
+  // Ice Aura
+  const iceCard=document.getElementById('shopCardIce'), iceBtn=document.getElementById('shopBuyIce');
+  iceCard.classList.toggle('owned',ownsIce);
+  if(ownsIce){iceBtn.textContent='\u2713 Owned';iceBtn.className='shopCardBtn have';}
+  else if(playerCoins>=150){iceBtn.textContent='Buy';iceBtn.className='shopCardBtn can';}
+  else{iceBtn.textContent='Need \u1FA99 150';iceBtn.className='shopCardBtn poor';}
 }
 function openShop(){
   updateShopUI();
@@ -5873,8 +6366,8 @@ function closeSkinPicker(){ document.getElementById('skinPicker').style.display=
 //  BUTTON HANDLERS
 // =====================================================
 function updateTeamConfigRow(){
-  const show2P = teamMode && twoPlayerMode;
-  const show1P = teamMode && !twoPlayerMode;
+  const show2P = (teamMode||ctfMode) && twoPlayerMode;
+  const show1P = (teamMode||ctfMode) && !twoPlayerMode;
   document.getElementById('teamConfigRow').style.display = show2P ? 'flex' : 'none';
   document.getElementById('teamP1ConfigRow').style.display = show1P ? 'flex' : 'none';
 }
@@ -5899,6 +6392,13 @@ document.getElementById('btnDaily').addEventListener('click',()=>{
 document.getElementById('btnTeam').addEventListener('click',()=>{
   teamMode = !teamMode;
   document.getElementById('btnTeam').classList.toggle('active', teamMode);
+  if(teamMode){ ctfMode = false; document.getElementById('btnCTF').classList.remove('active'); }
+  updateTeamConfigRow();
+});
+document.getElementById('btnCTF').addEventListener('click',()=>{
+  ctfMode = !ctfMode;
+  document.getElementById('btnCTF').classList.toggle('active', ctfMode);
+  if(ctfMode){ teamMode = false; document.getElementById('btnTeam').classList.remove('active'); }
   updateTeamConfigRow();
 });
 function setTeamP2Config(val){
@@ -5955,6 +6455,32 @@ document.getElementById('shopBuySaw').addEventListener('click',()=>{
   localStorage.setItem('snakeArenaCoins', String(playerCoins));
   localStorage.setItem('snakeArenaItemSaw', '1');
   updateShopUI();
+});
+[
+  {id:'shopBuyMine',      flag:'ownsMine',      key:'snakeArenaItemMine',     price:150, set:(v)=>{ownsMine=v;}},
+  {id:'shopBuyShockwave', flag:'ownsShockwave', key:'snakeArenaItemShock',    price:150, set:(v)=>{ownsShockwave=v;}},
+  {id:'shopBuyVenom',     flag:'ownsVenom',     key:'snakeArenaItemVenom',    price:150, set:(v)=>{ownsVenom=v;}},
+  {id:'shopBuyShield',    flag:'ownsShield',    key:'snakeArenaItemShield',   price:100, set:(v)=>{ownsShield=v; if(v) shieldActive=true;}},
+  {id:'shopBuyGhost',     flag:'ownsGhost',     key:'snakeArenaItemGhost',    price:150, set:(v)=>{ownsGhost=v;}},
+  {id:'shopBuyDecoy',     flag:'ownsDecoy',     key:'snakeArenaItemDecoy',    price:150, set:(v)=>{ownsDecoy=v;}},
+  {id:'shopBuyNitro',     flag:'ownsNitro',     key:'snakeArenaItemNitro',    price:100, set:(v)=>{ownsNitro=v;}},
+  {id:'shopBuyTeleport',  flag:'ownsTeleport',  key:'snakeArenaItemTeleport', price:200, set:(v)=>{ownsTeleport=v;}},
+  {id:'shopBuyGravity',   flag:'ownsGravity',   key:'snakeArenaItemGravity',  price:150, set:(v)=>{ownsGravity=v;}},
+  {id:'shopBuyGolden',    flag:'ownsGolden',    key:'snakeArenaItemGolden',   price:200, set:(v)=>{ownsGolden=v;}},
+  {id:'shopBuyFlame',     flag:'ownsFlame',     key:'snakeArenaItemFlame',    price:150, set:(v)=>{ownsFlame=v;}},
+  {id:'shopBuyIce',       flag:'ownsIce',       key:'snakeArenaItemIce',      price:150, set:(v)=>{ownsIce=v;}},
+].forEach(item => {
+  document.getElementById(item.id).addEventListener('click', () => {
+    // Check if already owned via the flag variable name
+    const owns = {ownsMine,ownsShockwave,ownsVenom,ownsShield,ownsGhost,ownsDecoy,ownsNitro,ownsTeleport,ownsGravity,ownsGolden,ownsFlame,ownsIce};
+    if(owns[item.flag]) return;
+    if(playerCoins < item.price) return;
+    playerCoins -= item.price;
+    item.set(true);
+    localStorage.setItem('snakeArenaCoins', String(playerCoins));
+    localStorage.setItem(item.key, '1');
+    updateShopUI();
+  });
 });
 
 window.addEventListener('beforeunload', disconnectMultiplayer);
