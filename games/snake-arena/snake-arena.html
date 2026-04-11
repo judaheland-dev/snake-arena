@@ -517,6 +517,13 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
 </div>
 <div class="voiceCmdList" id="voiceCmdList1">
   <b>🎙 COMMANDS (voice or type)</b>
+  <span style="color:#ffaa00;font-size:.78rem;font-weight:700">— CTF commands —</span><br>
+  <span>🚩 steal the flag / get the flag</span><br>
+  <span>🛡️ protect our flag / defend our flag</span><br>
+  <span>⭕ circle around our base</span><br>
+  <span>⭕ circle around their base</span><br>
+  <span>🫡 protect me / escort me</span><br>
+  <span style="color:#aaaaaa;font-size:.78rem;font-weight:700">— general commands —</span><br>
   <span>🚀 boost / sprint / turbo</span><br>
   <span>💨 run</span><br>
   <span>⬆️ up / go up</span><br>
@@ -563,7 +570,7 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
   <span>🚂 snake train / single file / conga line</span><br>
   <span>💣 kamikaze one / send one / sacrifice one</span><br>
   <span>🫡 bodyguard / stick beside me / escort me</span><br>
-  <span style="opacity:.65;font-size:.78em">💡 Worms boost on every command! Commands last until a new one is given.</span>
+  <span style="opacity:.65;font-size:.78em">💡 Flag guards cannot be commanded. Worms boost on every command!</span>
 </div>
 <div class="voiceCmdList" id="voiceCmdList2">
   <b>🎙 COMMANDS (voice or type)</b>
@@ -1532,10 +1539,10 @@ function snakeBaseSpeed(len){ return Math.max(BASE_SPEED - len*0.003, 1.6); }
 function snakeBoostSpeed(len, snake){
   const turboMult = (snake && snake.isPlayer && ownsTurboJets) ? 2 : 1;
   if(teamMode && snake){
-    // In team mode: normal boost speed doubled, scales gently with length
-    return Math.min(56 * turboMult, (BASE_SPEED*BOOST_SPEED_MULT*2 + len*0.024) * turboMult);
+    // In team mode: normal boost speed doubled, no length scaling
+    return Math.min(56 * turboMult, (BASE_SPEED*BOOST_SPEED_MULT*2) * turboMult);
   }
-  return Math.min(28 * turboMult, (BASE_SPEED*BOOST_SPEED_MULT + len*0.012) * turboMult);
+  return Math.min(28 * turboMult, (BASE_SPEED*BOOST_SPEED_MULT) * turboMult);
 }
 function snakeHead(s)       { return s.segs[0]; }
 function hasEffect(snake, effectKey){ return !!(snake && snake.effects && snake.effects[effectKey] > gameTime); }
@@ -2024,7 +2031,7 @@ function findSafeSpawnPosExcluding(excludeSnake, minDist){
 // =====================================================
 function ctfBasePos(team){
   const half   = worldSize / 2;
-  const margin = worldSize * 0.12;
+  const margin = CTF_BASE_RADIUS + 80; // hug the left/right edge of the map
   return team === 'red' ? {x: margin, y: half} : {x: worldSize - margin, y: half};
 }
 function ctfMakeFlag(team){
@@ -2248,9 +2255,9 @@ function initGame(){
   const mic1 = document.getElementById('voiceMic1');
   const mic2 = document.getElementById('voiceMic2');
   const voiceToast = document.getElementById('voiceToast');
-  if(mic1){ mic1.style.display = teamMode ? 'block' : 'none'; }
-  if(mic2){ mic2.style.display = (teamMode && twoPlayerMode) ? 'block' : 'none'; }
-  document.body.classList.toggle('one-player-team', !!(teamMode && !twoPlayerMode));
+  if(mic1){ mic1.style.display = (teamMode||ctfMode) ? 'block' : 'none'; }
+  if(mic2){ mic2.style.display = ((teamMode||ctfMode) && twoPlayerMode) ? 'block' : 'none'; }
+  document.body.classList.toggle('one-player-team', !!((teamMode||ctfMode) && !twoPlayerMode));
   if(voiceToast) voiceToast.style.display = 'none';
   const vp1=document.getElementById('voicePending1');
   const vp2=document.getElementById('voicePending2');
@@ -2261,7 +2268,7 @@ function initGame(){
   // Always hidden by default — C key (P1) or M key (P2) will show them on demand
   if(vtr1) vtr1.style.display = 'none';
   if(vtr2) vtr2.style.display = 'none';
-  if(teamMode){
+  if(teamMode||ctfMode){
     // P1 mic controls red team (or their own team)
     const p1Team = player && player.team ? player.team : 'red';
     const p2Team = player2 && player2.team ? player2.team : 'blue';
@@ -2324,8 +2331,8 @@ document.addEventListener('mousemove', e=>{ mouseX=e.clientX; mouseY=e.clientY; 
 document.addEventListener('keydown', e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
   if(!gameRunning) return;
-  // C key: open P1 command input in team mode
-  if(e.code==='KeyC' && teamMode){
+  // C key: open P1 command input in team mode or CTF mode
+  if(e.code==='KeyC' && (teamMode||ctfMode)){
     e.preventDefault();
     const row = document.getElementById('voiceTypeRow1');
     const inp = document.getElementById('voiceTypeInput1');
@@ -2367,7 +2374,7 @@ document.addEventListener('keydown', e=>{
   // Enter key: open P1 command input in team mode, otherwise P2 boost
   if(e.code==='Enter'){
     e.preventDefault();
-    if(teamMode){
+    if(teamMode||ctfMode){
       const row = document.getElementById('voiceTypeRow1');
       const inp = document.getElementById('voiceTypeInput1');
       if(row && inp){
@@ -2597,7 +2604,7 @@ function update(dt){
       }
     } else { boostDrainTimer=0; }
 
-    const ctfFlagPenalty = (ctfMode && player.ctfCarrying) ? 0.5 : 1;
+    const ctfFlagPenalty = (ctfMode && player.ctfCarrying) ? 0.1 : 1;
     const spd=((boosting ? snakeBoostSpeed(player.length, player) : snakeBaseSpeed(player.length)) * speedMultFor(player, boosting)) * ctfFlagPenalty;
     if(spd > bestSpeed) bestSpeed = spd;
     moveSnakeFixed(player, player.angle, spd);
@@ -2716,7 +2723,8 @@ function update(dt){
       }
     } else { p2BoostDt=0; }
 
-    const spd2=(boost2 ? snakeBoostSpeed(player2.length, player2) : snakeBaseSpeed(player2.length)) * speedMultFor(player2, boost2);
+    const ctfFlagPenalty2 = (ctfMode && player2.ctfCarrying) ? 0.1 : 1;
+    const spd2=((boost2 ? snakeBoostSpeed(player2.length, player2) : snakeBaseSpeed(player2.length)) * speedMultFor(player2, boost2)) * ctfFlagPenalty2;
     moveSnakeFixed(player2, player2.angle, spd2);
     closeLoopBody(player2, dt);
     clampPlayer(player2);
@@ -2913,7 +2921,7 @@ function update(dt){
   if(!currentObjective && gameTime >= nextObjectiveTime) pickObjective();
   if(currentObjective && currentObjective.id==='survive') advanceObjective('survive', dt);
 
-  if(gameTime >= nextEventTime){
+  if(!ctfMode && gameTime >= nextEventTime){
     startBiomeEvent();
     nextEventTime += EVENT_INTERVAL;
   }
@@ -3365,7 +3373,8 @@ const ACTION_EMOJI = {
   line_fwd:'➡️', line_left:'⬅️', line_right:'➡️', line_back:'⬅️', line_up:'⬆️', line_down:'⬇️',
   charge_atk:'⚡',
   diamond:'💎', wedge:'🔺', wall:'🧱', split:'✂️', pincer:'🦀', bait:'🎣', decoy:'🎭', hold_line:'🛑',
-  eat_all:'🍽️', grow:'📈', push_map:'🗺️', defend_home:'🏠', flood:'🌊', tornado:'🌀', snake_train:'🚂', kamikaze_one:'💣', bodyguard:'🫡', cyclone:'🌪️', attack_commander:'🎯'
+  eat_all:'🍽️', grow:'📈', push_map:'🗺️', defend_home:'🏠', flood:'🌊', tornado:'🌀', snake_train:'🚂', kamikaze_one:'💣', bodyguard:'🫡', cyclone:'🌪️', attack_commander:'🎯',
+  ctf_steal:'🚩', ctf_defend:'🛡️', ctf_circle_own_base:'⭕', ctf_circle_enemy_base:'⭕'
 };
 const BOT_REPLIES = [
   'Yes general!', 'Yes commander!', 'Yes sir!', 'Right away sir!',
@@ -3390,6 +3399,22 @@ function applyVoiceCommand(team, transcript){
   const t = transcript.toLowerCase();
   let action = null;
   const wantBoost = /\b(boost|turbo|speed up|go fast|sprint|full speed)\b/.test(t);
+
+  // ── CTF-specific commands (checked first so they don't fall through to generic) ──
+  if(ctfMode){
+    if(/\b(steal (the )?flag|get (the )?flag|grab (their |the enemy |the other team'?s? )?flag|take (the )?flag|capture (the )?flag|go get (the )?flag|attack (the )?flag|rush (the )?flag)\b/.test(t))
+      action = 'ctf_steal';
+    else if(/\b(protect (our |the )?flag|defend (our |the )?flag|guard (our |the )?flag|keep (our |the )?flag safe|stop (them|enemy) (from )?taking (the )?flag)\b/.test(t))
+      action = 'ctf_defend';
+    else if(/\b(circle (around )?(our|my|our own|own) base|surround (our|my|our own) base|ring (around )?(our|my) base|orbit (our|my) base|protect (our|my) base)\b/.test(t))
+      action = 'ctf_circle_own_base';
+    else if(/\b(circle (around )?(their|the enemy|enemy|other team'?s?) base|surround (their|the enemy|enemy) base|ring (around )?(their|the enemy) base|orbit (their|the enemy) base)\b/.test(t))
+      action = 'ctf_circle_enemy_base';
+    else if(/\b(protect me|guard me|escort me|bodyguard|cover me|defend me|help me|stick beside( me)?|stay (right )?beside( me)?)\b/.test(t))
+      action = 'guard_cmd';
+  }
+
+  if(!action){
 
   // ── Follow me ──
   if(/\b(follow me|follow|come here|come to me|stay with me|stay close|stick with me)\b/.test(t))
@@ -3524,6 +3549,8 @@ function applyVoiceCommand(team, transcript){
   else if(wantBoost)
     action = 'boost';
 
+  } // end if(!action) for CTF-first check
+
   if(!action){
     // Loose fallback: map ANY text to the closest matching action so bots always obey
     const loosePairs = [
@@ -3579,6 +3606,13 @@ function applyVoiceCommand(team, transcript){
       if(pat.test(t)){ action = act; break; }
     }
     if(!action) action = 'hunt'; // absolute last resort: bots always listen
+    // CTF loose fallbacks for the attacker pool
+    if(ctfMode && !action){
+      if(/steal|get.?flag|grab.?flag|take.?flag|rush.?flag|attack.?flag/i.test(t)) action = 'ctf_steal';
+      else if(/protect.?flag|defend.?flag|guard.?flag|keep.?flag/i.test(t)) action = 'ctf_defend';
+      else if(/circle.?(our|my|own).?base|surround.?(our|my|own).?base/i.test(t)) action = 'ctf_circle_own_base';
+      else if(/circle.?(their|enemy).?base|surround.?(their|enemy).?base/i.test(t)) action = 'ctf_circle_enemy_base';
+    }
   }
 
   // Find nearest enemy as hunt target
@@ -3610,6 +3644,7 @@ function applyVoiceCommand(team, transcript){
     if(npc.dead || npc.team !== team) continue;
     if(npc.isBodyguard) continue; // bodyguards are permanently assigned
     if(npc.isCircler) continue;   // circlers are permanently orbiting
+    if(npc.npcMode === 'ctfGuard') continue; // flag guards ignore all player commands
     botCount++;
     npc.voiceBoostForced = true; // always boost on any voice command
     npc.voiceCmdLocked = true;
@@ -3657,6 +3692,9 @@ function applyVoiceCommand(team, transcript){
       if(action === 'fallback') npc.fallbackRank = rank++;
       if(action === 'circle_me') npc.circleRank = rank++;
       if(action === 'circle_enemy') npc.circleEnemyRank = rank++;
+      if(action === 'ctf_defend') npc.circleRank = rank++;
+      if(action === 'ctf_circle_own_base') npc.circleRank = rank++;
+      if(action === 'ctf_circle_enemy_base') npc.circleRank = rank++;
       if(action === 'line') npc.lineRank = rank++;
       if(action === 'meteor'){ const mr = rank++; npc.meteorRank = mr; npc.meteorAngle = mr * 2.399; } // golden-angle spread
       if(/^line_(fwd|left|right|back|up|down)$/.test(action)) npc.lineAttackRank = rank++;
@@ -3702,7 +3740,9 @@ function showVoiceToast(team, action, transcript){
       pincer:'PINCER ATTACK!', bait:'BAIT AND SWITCH!', decoy:'SEND A DECOY!', hold_line:'HOLD THE LINE!',
       eat_all:'EAT EVERYTHING!', grow:'GROW GROW GROW!', push_map_left:'PUSH LEFT!', push_map_right:'PUSH RIGHT!',
       defend_home:'DEFEND HOME!', flood:'FLOOD THE MAP!', tornado:'TORNADO SPIRAL!', snake_train:'SNAKE TRAIN!',
-      kamikaze_one:'KAMIKAZE ONE!', bodyguard:'BODYGUARD ME!', cyclone:'CYCLONE FORMATION!', attack_commander:'ATTACK THE COMMANDER!'};
+      kamikaze_one:'KAMIKAZE ONE!', bodyguard:'BODYGUARD ME!', cyclone:'CYCLONE FORMATION!', attack_commander:'ATTACK THE COMMANDER!',
+      ctf_steal:'🚩 STEAL THE FLAG!', ctf_defend:'🛡️ PROTECT OUR FLAG!',
+      ctf_circle_own_base:'⭕ CIRCLE OUR BASE!', ctf_circle_enemy_base:'⭕ CIRCLE THEIR BASE!'};};
     toast.innerHTML = `${emoji} <b style="color:${color}">${team.toUpperCase()}</b>: <i>"${transcript}"</i><br><span style="font-size:.8rem;opacity:.9">→ ${labels[action]||action.toUpperCase()}</span>`;
   }
   toast.style.display = 'block';
@@ -3906,10 +3946,14 @@ function updateNpc(npc, dt){
       npc.voiceCmdLocked = false;
     }
   }
-  // CTF NPCs stay locked in their assigned mode
-  if(npc.npcMode === 'ctfGuard' || npc.npcMode === 'ctfAttack'){
+  // CTF guards are permanently immune to player commands — they stay on flag duty
+  if(npc.npcMode === 'ctfGuard'){
     npc.npcModeTimer = 999;
     npc.voiceCmdLocked = false;
+  }
+  // CTF attackers stay in their default attack mode unless player commands them
+  if(npc.npcMode === 'ctfAttack' && !npc.voiceCmdLocked){
+    npc.npcModeTimer = 999;
   }
   // Clear cyclone intercept state if the worm has been reassigned to a different mode
   if(npc.cycloneIntercepting && npc.npcMode !== 'cyclone'){
@@ -4760,6 +4804,71 @@ function updateNpc(npc, dt){
   } else if(npc.npcMode==='zone'){
     desiredAngle=Math.atan2(zcny-h.y, zcnx-h.x)+(Math.random()-.5)*.4;
     npc.npcBoost=false;
+  } else if(npc.npcMode === 'ctf_steal'){
+    // Rush toward enemy flag; if carrying it, sprint back to own base
+    if(npc.ctfCarrying){
+      const _base = ctfBasePos(npc.team);
+      desiredAngle = Math.atan2(_base.y - h.y, _base.x - h.x);
+    } else {
+      const _eFlag = ctfEnemyFlagFor(npc.team);
+      if(_eFlag) desiredAngle = Math.atan2(_eFlag.y - h.y, _eFlag.x - h.x);
+    }
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+  } else if(npc.npcMode === 'ctf_defend'){
+    // Guard own flag: attack nearest enemy near own flag, otherwise hover near it
+    const _ownFlag = ctfOwnFlagFor(npc.team);
+    const _fx = _ownFlag ? _ownFlag.x : ctfBasePos(npc.team).x;
+    const _fy = _ownFlag ? _ownFlag.y : ctfBasePos(npc.team).y;
+    let _defTgt = null, _defBestD = 700;
+    for(const _s of [...npcs, player, player2]){
+      if(!_s || _s.dead || sameTeam(_s, npc)) continue;
+      const _sh = snakeHead(_s);
+      const _d = Math.hypot(_sh.x - _fx, _sh.y - _fy);
+      if(_d < _defBestD){ _defBestD = _d; _defTgt = _s; }
+    }
+    if(_defTgt){
+      const _dh = snakeHead(_defTgt);
+      desiredAngle = Math.atan2(_dh.y - h.y, _dh.x - h.x);
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+    } else {
+      const _orbitRadius = 180 + (npc.circleRank || rank % 8) * 28;
+      const _orbitSpeed = 0.9;
+      const _orbitAngle = (performance.now() / 1000) * _orbitSpeed + (npc.circleRank || 0) * 0.75;
+      const _tx = _fx + Math.cos(_orbitAngle) * _orbitRadius;
+      const _ty = _fy + Math.sin(_orbitAngle) * _orbitRadius;
+      desiredAngle = Math.atan2(_ty - h.y, _tx - h.x);
+      npc.npcBoost = false;
+    }
+  } else if(npc.npcMode === 'ctf_circle_own_base'){
+    // Orbit own base in a circle
+    const _base = ctfBasePos(npc.team);
+    const _r = 220 + (npc.circleRank || 0) * 30;
+    const _ang = (performance.now() / 1000) * 0.85 + (npc.circleRank || 0) * 0.65;
+    const _tx = _base.x + Math.cos(_ang) * _r;
+    const _ty = _base.y + Math.sin(_ang) * _r;
+    desiredAngle = Math.atan2(_ty - h.y, _tx - h.x);
+    npc.npcBoost = false;
+  } else if(npc.npcMode === 'ctf_circle_enemy_base'){
+    // Orbit enemy base — also attack anyone who comes close
+    const _eBase = ctfBasePos(npc.team === 'red' ? 'blue' : 'red');
+    let _eTgt = null, _eTgtD = 350;
+    for(const _s of [...npcs, player, player2]){
+      if(!_s || _s.dead || sameTeam(_s, npc)) continue;
+      const _d = Math.hypot(snakeHead(_s).x - h.x, snakeHead(_s).y - h.y);
+      if(_d < _eTgtD){ _eTgtD = _d; _eTgt = _s; }
+    }
+    if(_eTgt){
+      const _eh = snakeHead(_eTgt);
+      desiredAngle = Math.atan2(_eh.y - h.y, _eh.x - h.x);
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+    } else {
+      const _r = 250 + (npc.circleRank || 0) * 30;
+      const _ang = (performance.now() / 1000) * -0.75 + (npc.circleRank || 0) * 0.65;
+      const _tx = _eBase.x + Math.cos(_ang) * _r;
+      const _ty = _eBase.y + Math.sin(_ang) * _r;
+      desiredAngle = Math.atan2(_ty - h.y, _tx - h.x);
+      npc.npcBoost = false;
+    }
   } else if(npc.npcMode === 'ctfGuard'){
     // Guard: patrol near own flag; attack any enemy within 500px of it
     const _ownFlag = ctfOwnFlagFor(npc.team);
@@ -6158,18 +6267,22 @@ function _drawMinimapOnto(mc, W, H, focusPlayer){
   if(ctfMode){
     for(const _mmTeam of ['red','blue']){
       const bp = ctfBasePos(_mmTeam);
-      const mmCol = _mmTeam==='red' ? '#ff4444' : '#4488ff';
-      const mmR = Math.max(3, CTF_BASE_RADIUS * sx);
+      const mmCol = _mmTeam==='red' ? '#ff2222' : '#2266ff';
+      // Big filled base dot
       mc.save();
-      mc.shadowColor = mmCol; mc.shadowBlur = 6;
-      mc.strokeStyle = mmCol; mc.lineWidth = 2;
-      mc.beginPath(); mc.arc(bp.x*sx, bp.y*sy, mmR, 0, Math.PI*2); mc.stroke();
+      mc.shadowColor = mmCol; mc.shadowBlur = 10;
+      mc.beginPath(); mc.arc(bp.x*sx, bp.y*sy, 8, 0, Math.PI*2);
+      mc.fillStyle = mmCol; mc.fill();
+      mc.strokeStyle = '#ffffff'; mc.lineWidth = 1.5; mc.stroke();
       mc.restore();
-      // Flag dot (yellow if away, team color if home)
+      // Flag dot (yellow if carried, team color if at home)
       const _mmFlag = _mmTeam==='red' ? ctfFlagRed : ctfFlagBlue;
       if(_mmFlag){
-        mc.beginPath(); mc.arc(_mmFlag.x*sx, _mmFlag.y*sy, 3, 0, Math.PI*2);
+        mc.save();
+        mc.shadowColor = _mmFlag.carrier ? '#ffcc00' : mmCol; mc.shadowBlur = 6;
+        mc.beginPath(); mc.arc(_mmFlag.x*sx, _mmFlag.y*sy, 5, 0, Math.PI*2);
         mc.fillStyle = _mmFlag.carrier ? '#ffcc00' : mmCol; mc.fill();
+        mc.restore();
       }
     }
   }
