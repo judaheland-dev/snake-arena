@@ -2544,6 +2544,7 @@ function update(dt){
           eFlag.carrier = _pl; _pl.ctfCarrying = eFlag;
           spawnFloatingText(_ph.x, _ph.y - 36, '\uD83D\uDEA9 FLAG GRABBED!', '#ffaa00');
           triggerShake(7);
+          if(enemyCommander && !enemyCommander.dead) enemyCmdTimer = 0;
         }
       }
       // Score: carrying enemy flag + touching own base
@@ -2556,6 +2557,7 @@ function update(dt){
           _pl.ctfCarrying = null;
           spawnFloatingText(_ph.x, _ph.y - 48, '\uD83C\uDFC6 CAPTURED! +1', '#ffdd00');
           triggerShake(14);
+          if(enemyCommander && !enemyCommander.dead) enemyCmdTimer = 0;
         }
       }
     }
@@ -2577,6 +2579,7 @@ function update(dt){
           const _nh = snakeHead(_npc);
           if(Math.hypot(_nh.x - _npcEFlag.x, _nh.y - _npcEFlag.y) < snakeRadius(_npc.length) + 150){
             _npcEFlag.carrier = _npc; _npc.ctfCarrying = _npcEFlag;
+            if(enemyCommander && !enemyCommander.dead) enemyCmdTimer = 0;
           }
         }
         // Score: NPC carrying enemy flag + at own base
@@ -2588,6 +2591,7 @@ function update(dt){
             ctfReturnFlag(_npc.ctfCarrying);
             _npc.ctfCarrying = null;
             spawnFloatingText(_nh.x, _nh.y - 48, '\uD83D\uDEA9 NPC SCORED!', '#ffaa00');
+            if(enemyCommander && !enemyCommander.dead) enemyCmdTimer = 0;
           }
         }
       }
@@ -2880,7 +2884,7 @@ function update(dt){
       enemyCmdTimer -= dt;
       if(enemyCmdTimer <= 0){
         issueAICommanderOrder();
-        enemyCmdTimer = 12 + Math.random() * 10; // next order in 12–22s
+        enemyCmdTimer = ctfMode ? (4 + Math.random() * 4) : (12 + Math.random() * 10);
       }
     }
   }
@@ -3321,60 +3325,157 @@ function issueCTFCommanderOrder(){
   const cmdTeam  = enemyCommander.team;
   const ownScore = cmdTeam === 'red' ? ctfScoreRed  : ctfScoreBlue;
   const foeScore = cmdTeam === 'red' ? ctfScoreBlue : ctfScoreRed;
-  const ownFlag  = ctfOwnFlagFor(cmdTeam);    // our flag — if stolen, enemy has it
-  const eFlag    = ctfEnemyFlagFor(cmdTeam);  // enemy flag — our bots want this
-
-  const ownFlagBeingStolen = ownFlag && ownFlag.carrier;  // enemy carrying our flag
-  const weHaveEnemyFlag    = eFlag && eFlag.carrier && eFlag.carrier.team === cmdTeam; // our NPC has it
-
-  let action;
-  const timeLeft  = ctfTimeLeft || 0;
+  const ownFlag  = ctfOwnFlagFor(cmdTeam);
+  const eFlag    = ctfEnemyFlagFor(cmdTeam);
+  const timeLeft = ctfTimeLeft || 0;
   const scoreDiff = ownScore - foeScore;
 
-  if(ownFlagBeingStolen){
-    // Enemy is running away with our flag — hunt them down
-    action = 'hunt';
-  } else if(weHaveEnemyFlag){
-    // We're carrying the flag back to base — protect the carrier
-    action = 'ctf_defend';
-  } else if(timeLeft < 30 && scoreDiff > 0){
-    // Winning with under 30s left — turtlemode
-    action = 'ctf_defend';
-  } else if(scoreDiff < 0){
-    // We're losing — aggressive steal
-    action = 'ctf_steal';
-  } else {
-    // Neutral — mostly steal with some defence
-    action = Math.random() < 0.65 ? 'ctf_steal' : 'ctf_defend';
-  }
+  const ownFlagStolen   = !!(ownFlag && ownFlag.carrier);
+  const ownFlagCarrier  = ownFlagStolen ? ownFlag.carrier : null;
+  const weHaveEnemyFlag = !!(eFlag && eFlag.carrier && eFlag.carrier.team === cmdTeam);
+  const ourCarrier      = weHaveEnemyFlag ? eFlag.carrier : null;
 
-  let rank = 0;
-  for(const npc of npcs){
-    if(npc.dead || npc.team !== cmdTeam) continue;
-    if(npc.npcMode === 'ctfGuard') continue;
-    if(npc.playerCmdLocked) continue;
+  // Living attackers only — guards keep their permanent mode
+  const attackers = npcs.filter(n => !n.dead && n.team === cmdTeam && n.npcMode !== 'ctfGuard' && !n.playerCmdLocked);
+  const total = attackers.length;
+  if(total === 0) return;
+
+  // ── Determine squad-split counts ──
+  let stealN = 0, defendN = 0, escortN = 0, interceptN = 0;
+
+  if(ownFlagStolen && weHaveEnemyFlag){
+    // Both teams running with flags — intercept + escort
+    interceptN = Math.ceil(total * 0.45);
+    escortN    = Math.ceil(total * 0.35);
+    stealN     = Math.floor(total * 0.10);
+    defendN    = Math.max(0, total - stealN - escortN - interceptN);
+  } else if(ownFlagStolen){
+    // They stole our flag — get it back!
+    interceptN = Math.ceil(total * 0.65);
+    stealN     = Math.ceil(total * 0.22);
+    defendN    = Math.floor(total * 0.10);
+    escortN    = Math.max(0, total - stealN - defendN - interceptN);
+  } else if(weHaveEnemyFlag){
+    // We're carrying it home — protect the carrier!
+    escortN    = Math.ceil(total * 0.45);
+    defendN    = Math.ceil(total * 0.30);
+    interceptN = Math.floor(total * 0.15);
+    stealN     = Math.max(0, total - escortN - defendN - interceptN);
+  } else if(timeLeft < 25 && scoreDiff > 0){
+    // Winning, last 25s — pure lockdown
+    defendN    = Math.ceil(total * 0.70);
+    interceptN = Math.ceil(total * 0.20);
+    stealN     = Math.max(0, total - defendN - interceptN);
+    escortN    = 0;
+  } else if(timeLeft < 60 && scoreDiff < -1){
+    // Losing badly, little time — all-in steal
+    stealN     = Math.ceil(total * 0.80);
+    interceptN = Math.ceil(total * 0.15);
+    defendN    = Math.max(0, total - stealN - interceptN);
+    escortN    = 0;
+  } else if(scoreDiff < 0){
+    // Behind — aggressive steal with minimal defence
+    stealN     = Math.ceil(total * 0.62);
+    interceptN = Math.ceil(total * 0.15);
+    defendN    = Math.floor(total * 0.15);
+    escortN    = Math.max(0, total - stealN - interceptN - defendN);
+  } else if(scoreDiff > 1){
+    // Comfortably ahead — defend more, still probe
+    stealN     = Math.ceil(total * 0.35);
+    defendN    = Math.ceil(total * 0.45);
+    interceptN = Math.floor(total * 0.15);
+    escortN    = Math.max(0, total - stealN - defendN - interceptN);
+  } else {
+    // Tied or 1-goal margin — balanced
+    stealN     = Math.ceil(total * 0.55);
+    defendN    = Math.ceil(total * 0.25);
+    interceptN = Math.floor(total * 0.15);
+    escortN    = Math.max(0, total - stealN - defendN - interceptN);
+  }
+  // Clamp
+  stealN = Math.max(0, stealN); defendN = Math.max(0, defendN);
+  escortN = Math.max(0, escortN); interceptN = Math.max(0, interceptN);
+
+  // ── Sort bots spatially so roles go to the right bots ──
+  const eFlagPos   = { x: eFlag ? eFlag.x : ctfBasePos(cmdTeam === 'red' ? 'blue' : 'red').x,
+                       y: eFlag ? eFlag.y : ctfBasePos(cmdTeam === 'red' ? 'blue' : 'red').y };
+  const ownBasePos = ctfBasePos(cmdTeam);
+  const interceptPos = ownFlagCarrier ? snakeHead(ownFlagCarrier) : ownBasePos;
+  const escortPos    = ourCarrier     ? snakeHead(ourCarrier)      : ownBasePos;
+
+  // Sort by distance to enemy flag (closest first = most eligible to steal)
+  const byEFlag = [...attackers].sort((a,b) =>{
+    const ah = snakeHead(a), bh = snakeHead(b);
+    return Math.hypot(ah.x-eFlagPos.x, ah.y-eFlagPos.y) - Math.hypot(bh.x-eFlagPos.x, bh.y-eFlagPos.y);
+  });
+  // Sort by distance to intercept target (closest first = best interceptors)
+  const byIntercept = [...attackers].sort((a,b) =>{
+    const ah = snakeHead(a), bh = snakeHead(b);
+    return Math.hypot(ah.x-interceptPos.x, ah.y-interceptPos.y) - Math.hypot(bh.x-interceptPos.x, bh.y-interceptPos.y);
+  });
+  // Sort by distance to escort target
+  const byEscort = [...attackers].sort((a,b) =>{
+    const ah = snakeHead(a), bh = snakeHead(b);
+    return Math.hypot(ah.x-escortPos.x, ah.y-escortPos.y) - Math.hypot(bh.x-escortPos.x, bh.y-escortPos.y);
+  });
+  // Sort by distance to own base (closest = best defenders)
+  const byDefend = [...attackers].sort((a,b) =>{
+    const ah = snakeHead(a), bh = snakeHead(b);
+    return Math.hypot(ah.x-ownBasePos.x, ah.y-ownBasePos.y) - Math.hypot(bh.x-ownBasePos.x, bh.y-ownBasePos.y);
+  });
+
+  // ── Assign roles — most urgent first ──
+  const assigned = new Map();
+  const tryAssign = (pool, role, count) => {
+    let c = 0;
+    for(const n of pool){ if(!assigned.has(n) && c < count){ assigned.set(n, role); c++; } }
+  };
+  tryAssign(byIntercept, 'intercept', interceptN);
+  tryAssign(byEscort,    'escort',    escortN);
+  tryAssign(byEFlag,     'steal',     stealN);
+  tryAssign(byDefend,    'defend',    total); // remainder defends
+
+  // ── Apply assignments ──
+  let defRank = 0;
+  for(const [npc, role] of assigned){
+    npc._ctfCmdRole    = role;
     npc.voiceBoostForced = true;
     npc.voiceCmdLocked   = true;
     npc.voiceCmdExpiry   = Infinity;
-    npc.npcMode          = action;
     npc.npcModeTimer     = 999;
     npc.npcTarget        = null;
-    if(action === 'hunt' && ownFlagBeingStolen){
-      npc.npcTarget = snakeHead(ownFlag.carrier);
+    if(role === 'steal'){
+      npc.npcMode = 'ctf_steal';
+    } else if(role === 'defend'){
+      npc.npcMode    = 'ctf_defend';
+      npc.circleRank = defRank++;
+    } else if(role === 'escort' && ourCarrier){
+      npc.npcMode             = 'follow';
+      npc.commanderAssignment = ourCarrier;
+    } else if(role === 'intercept' && ownFlagCarrier){
+      npc.npcMode   = 'hunt';
+      npc.npcTarget = snakeHead(ownFlagCarrier);
+      npc.huntRank  = 0;
+    } else {
+      npc.npcMode = 'ctf_steal'; // fallback if target vanished
     }
-    if(action === 'ctf_defend') npc.circleRank = rank;
-    rank++;
   }
 
-  const label = {
-    ctf_steal:'🚩 STEAL THE FLAG!', ctf_defend:'🛡️ DEFEND THE BASE!',
-    hunt:'⚔️ INTERCEPT THE FLAG CARRIER!'
-  }[action] || action.toUpperCase();
+  // ── Toast ──
+  const sc = [...assigned.values()].filter(r => r === 'steal').length;
+  const dc = [...assigned.values()].filter(r => r === 'defend').length;
+  const ec = [...assigned.values()].filter(r => r === 'escort').length;
+  const ic = [...assigned.values()].filter(r => r === 'intercept').length;
+  const parts = [];
+  if(sc > 0) parts.push(`🚩×${sc}`);
+  if(ic > 0) parts.push(`⚔️×${ic}`);
+  if(ec > 0) parts.push(`🤝×${ec}`);
+  if(dc > 0) parts.push(`🛡×${dc}`);
   const teamColor = cmdTeam === 'red' ? '#ff4444' : '#4488ff';
   const toast = document.getElementById('voiceToast');
   if(toast){
     toast.style.borderColor = teamColor;
-    toast.innerHTML = `🎖️ <b style="color:${teamColor}">ENEMY GENERAL</b>: <span style="font-size:.8rem;opacity:.9">→ ${label}</span>`;
+    toast.innerHTML = `🎖️ <b style="color:${teamColor}">ENEMY GENERAL</b>: <span style="font-size:.8rem;opacity:.9">${parts.join(' | ')}</span>`;
     toast.style.display = 'block';
     clearTimeout(toast._hideTimer);
     toast._hideTimer = setTimeout(()=>{ toast.style.display='none'; }, 3500);
