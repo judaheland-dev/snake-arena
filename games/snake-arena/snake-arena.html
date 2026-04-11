@@ -5419,7 +5419,7 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
       ctx.fillStyle = grad; ctx.fill();
       // Main circle fill
       ctx.beginPath(); ctx.arc(bp.x, bp.y, CTF_BASE_RADIUS, 0, Math.PI*2);
-      ctx.fillStyle = rc+'0.22)'); ctx.fill();
+      ctx.fillStyle = rc+'0.22)'; ctx.fill();
       // Pulsing border
       const pulse = 0.55 + 0.45 * Math.sin(gameTime * 3.5);
       ctx.strokeStyle = strokeCol; ctx.lineWidth = (4 + 3*pulse)/zoom;
