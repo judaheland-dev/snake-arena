@@ -552,6 +552,7 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
   <span>🏃 fall back / retreat</span><br>
   <span>💨 run away / scatter</span><br>
   <span>☠️ sacrifice worms to escape</span><br>
+  <span>📍 stay / hold position / freeze</span><br>
   <span>🍕 stop attacking / just eat</span><br>
   <span>💎 diamond formation</span><br>
   <span>🔺 wedge formation / arrow formation / v formation</span><br>
@@ -603,6 +604,7 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
   <span>run away / scatter 💨</span><br>
   <span>sacrifice worms to escape ☠️</span><br>
   <span>stop attacking / just eat 🍕</span><br>
+  <span>📍 stay / hold position / freeze</span><br>
   <span>diamond formation 💎</span><br>
   <span>wedge formation / arrow formation / v formation 🔺</span><br>
   <span>wall / form a wall / shield wall 🧱</span><br>
@@ -2150,6 +2152,19 @@ function initGame(){
         npcs.push(npc);
       }
     }
+    // Designate an AI commander from the enemy team
+    enemyCommander = null;
+    enemyCmdTimer = 10;
+    const _ctfPlayerTeam = player ? player.team : 'red';
+    const _ctfEnemyTeam  = _ctfPlayerTeam === 'red' ? 'blue' : 'red';
+    const _ctfCmdCandidates = npcs.filter(n => n.team === _ctfEnemyTeam && n.npcMode === 'ctfAttack');
+    if(_ctfCmdCandidates.length > 0){
+      enemyCommander = _ctfCmdCandidates[0];
+      enemyCommander.isCommander = true;
+      enemyCommander.name = '⭐ General';
+      enemyCommander.length = CTF_START_LENGTH * 3;
+      enemyCommander.bulk   = enemyCommander.length * 0.7;
+    }
   } else if(teamMode){
     // Both teams get 150 worms
     const playerTeamForSpawn = player ? player.team : 'red';
@@ -2847,17 +2862,17 @@ function update(dt){
       }
     }
   }
-  if(teamMode && enemyCommander){
+  if((teamMode || ctfMode) && enemyCommander){
     if(enemyCommander.dead){
       // Pick a new commander from surviving enemy bots
-      const surviving = npcs.filter(n => !n.dead && n.team === enemyCommander.team && !n.isCommander);
+      const surviving = npcs.filter(n => !n.dead && n.team === enemyCommander.team && !n.isCommander && (!ctfMode || n.npcMode === 'ctfAttack'));
       if(surviving.length > 0){
         enemyCommander = surviving[Math.floor(Math.random() * surviving.length)];
         enemyCommander.isCommander = true;
         enemyCommander.name = '⭐ General';
+        if(ctfMode){ enemyCommander.length = Math.max(enemyCommander.length, CTF_START_LENGTH * 2.5); }
         enemyCmdTimer = 5;
-        // Spawn fresh bodyguards for the new commander
-        spawnEnemyCommanderGuards(enemyCommander);
+        if(teamMode) spawnEnemyCommanderGuards(enemyCommander);
       } else {
         enemyCommander = null;
       }
@@ -2865,7 +2880,7 @@ function update(dt){
       enemyCmdTimer -= dt;
       if(enemyCmdTimer <= 0){
         issueAICommanderOrder();
-        enemyCmdTimer = 15 + Math.random() * 14; // next order in 15–29s
+        enemyCmdTimer = 12 + Math.random() * 10; // next order in 12–22s
       }
     }
   }
@@ -3301,8 +3316,74 @@ function issueAllyAICommanderOrder(){
 }
 
 // =====================================================
+function issueCTFCommanderOrder(){
+  if(!enemyCommander || enemyCommander.dead || !ctfMode) return;
+  const cmdTeam  = enemyCommander.team;
+  const ownScore = cmdTeam === 'red' ? ctfScoreRed  : ctfScoreBlue;
+  const foeScore = cmdTeam === 'red' ? ctfScoreBlue : ctfScoreRed;
+  const ownFlag  = ctfOwnFlagFor(cmdTeam);    // our flag — if stolen, enemy has it
+  const eFlag    = ctfEnemyFlagFor(cmdTeam);  // enemy flag — our bots want this
+
+  const ownFlagBeingStolen = ownFlag && ownFlag.carrier;  // enemy carrying our flag
+  const weHaveEnemyFlag    = eFlag && eFlag.carrier && eFlag.carrier.team === cmdTeam; // our NPC has it
+
+  let action;
+  const timeLeft  = ctfTimeLeft || 0;
+  const scoreDiff = ownScore - foeScore;
+
+  if(ownFlagBeingStolen){
+    // Enemy is running away with our flag — hunt them down
+    action = 'hunt';
+  } else if(weHaveEnemyFlag){
+    // We're carrying the flag back to base — protect the carrier
+    action = 'ctf_defend';
+  } else if(timeLeft < 30 && scoreDiff > 0){
+    // Winning with under 30s left — turtlemode
+    action = 'ctf_defend';
+  } else if(scoreDiff < 0){
+    // We're losing — aggressive steal
+    action = 'ctf_steal';
+  } else {
+    // Neutral — mostly steal with some defence
+    action = Math.random() < 0.65 ? 'ctf_steal' : 'ctf_defend';
+  }
+
+  let rank = 0;
+  for(const npc of npcs){
+    if(npc.dead || npc.team !== cmdTeam) continue;
+    if(npc.npcMode === 'ctfGuard') continue;
+    if(npc.playerCmdLocked) continue;
+    npc.voiceBoostForced = true;
+    npc.voiceCmdLocked   = true;
+    npc.voiceCmdExpiry   = Infinity;
+    npc.npcMode          = action;
+    npc.npcModeTimer     = 999;
+    npc.npcTarget        = null;
+    if(action === 'hunt' && ownFlagBeingStolen){
+      npc.npcTarget = snakeHead(ownFlag.carrier);
+    }
+    if(action === 'ctf_defend') npc.circleRank = rank;
+    rank++;
+  }
+
+  const label = {
+    ctf_steal:'🚩 STEAL THE FLAG!', ctf_defend:'🛡️ DEFEND THE BASE!',
+    hunt:'⚔️ INTERCEPT THE FLAG CARRIER!'
+  }[action] || action.toUpperCase();
+  const teamColor = cmdTeam === 'red' ? '#ff4444' : '#4488ff';
+  const toast = document.getElementById('voiceToast');
+  if(toast){
+    toast.style.borderColor = teamColor;
+    toast.innerHTML = `🎖️ <b style="color:${teamColor}">ENEMY GENERAL</b>: <span style="font-size:.8rem;opacity:.9">→ ${label}</span>`;
+    toast.style.display = 'block';
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(()=>{ toast.style.display='none'; }, 3500);
+  }
+}
+
 function issueAICommanderOrder(){
   if(!enemyCommander || enemyCommander.dead) return;
+  if(ctfMode){ issueCTFCommanderOrder(); return; }
   const cmdTeam = enemyCommander.team;
   const enemies = npcs.filter(n => !n.dead && n.team !== cmdTeam)
     .concat([player, player2].filter(p => p && !p.dead && p.team !== cmdTeam));
@@ -3418,7 +3499,7 @@ const ACTION_EMOJI = {
   circle_me:'⭕', circle_enemy:'🔄', line:'📏', meteor:'☄️', run:'💨',
   line_fwd:'➡️', line_left:'⬅️', line_right:'➡️', line_back:'⬅️', line_up:'⬆️', line_down:'⬇️',
   charge_atk:'⚡',
-  diamond:'💎', wedge:'🔺', wall:'🧱', split:'✂️', pincer:'🦀', bait:'🎣', decoy:'🎭', hold_line:'🛑',
+  diamond:'💎', wedge:'🔺', wall:'🧱', split:'✂️', pincer:'🦀', bait:'🎣', decoy:'🎭', hold_line:'🛑', stay:'📍',
   eat_all:'🍽️', grow:'📈', push_map:'🗺️', defend_home:'🏠', flood:'🌊', tornado:'🌀', snake_train:'🚂', kamikaze_one:'💣', bodyguard:'🫡', cyclone:'🌪️', attack_commander:'🎯',
   ctf_steal:'🚩', ctf_defend:'🛡️', ctf_circle_own_base:'⭕', ctf_circle_enemy_base:'⭕', ctf_pass_flag:'🤲', ctf_back_to_base:'🏠'
 };
@@ -3491,6 +3572,9 @@ function applyVoiceCommand(team, transcript){
   // ── Decoy ──
   else if(/\b(decoy|distract|fake attack|dummy run|draw their attention)\b/.test(t))
     action = 'decoy';
+  // ── Stay ──
+  else if(/\b(stay|stay put|hold position|don'?t move from (your |the )?(spot|position|formation)?|hold (your |the )?(spot|position|formation)|stay in formation|hold formation|stay there|freeze|nobody move|hold still|keep position)\b/.test(t))
+    action = 'stay';
   // ── Hold the line ──
   else if(/\b(hold( the)? line|stand (your )?ground|stationary (wall|barrier)|don'?t move|stop moving)\b/.test(t))
     action = 'hold_line';
@@ -3613,6 +3697,7 @@ function applyVoiceCommand(team, transcript){
       [/pincer|flank|two.?sides|left.?and.?right/i, 'pincer'],
       [/bait|lure|ambush/i, 'bait'],
       [/decoy|distract|fake/i, 'decoy'],
+      [/stay|stay.?put|hold.?position|hold.?formation|stay.?in.?formation|freeze|hold.?still|keep.?position/i, 'stay'],
       [/hold.?line|stand.?ground|stationary|don.?t.?move/i, 'hold_line'],
       [/eat.?everything|eat.?all|vacuum|grab.?everything/i, 'eat_all'],
       [/grow|get.?big|bulk.?up|feed.?yourself/i, 'grow'],
@@ -3748,6 +3833,14 @@ function applyVoiceCommand(team, transcript){
       if(action === 'meteor'){ const mr = rank++; npc.meteorRank = mr; npc.meteorAngle = mr * 2.399; } // golden-angle spread
       if(/^line_(fwd|left|right|back|up|down)$/.test(action)) npc.lineAttackRank = rank++;
       if(action === 'charge_atk') npc.chargeAtkRank = rank++;
+      if(action === 'stay'){
+        // Snapshot each NPC's current head position as their anchor
+        const _sh = snakeHead(npc);
+        npc.stayAnchorX = _sh.x;
+        npc.stayAnchorY = _sh.y;
+        npc.stayOrbitAngle = Math.random() * Math.PI * 2;
+        npc.formRank = rank++;
+      }
       if(/^(diamond|wedge|wall|split|pincer|hold_line|tornado|snake_train|bodyguard|push_map_left|push_map_right|defend_home|flood|bait|decoy|eat_all|grow|cyclone)$/.test(action)) npc.formRank = rank++;
       if(action === 'bodyguard') npc.bodyguardRank = rank;
       if(action === 'kamikaze_one') npc.kamikazeOneRank = rank++;
@@ -3804,7 +3897,7 @@ function showVoiceToast(team, action, transcript){
       charge_atk:'LINE UP & CHARGE ATTACK!',
       dir_up:'GO UP!',dir_down:'GO DOWN!',dir_left:'GO LEFT!',dir_right:'GO RIGHT!',
       diamond:'DIAMOND FORMATION!', wedge:'WEDGE / ARROW FORMATION!', wall:'HOLD THE WALL!', split:'SPLIT INTO TWO GROUPS!',
-      pincer:'PINCER ATTACK!', bait:'BAIT AND SWITCH!', decoy:'SEND A DECOY!', hold_line:'HOLD THE LINE!',
+      pincer:'PINCER ATTACK!', bait:'BAIT AND SWITCH!', decoy:'SEND A DECOY!', hold_line:'HOLD THE LINE!', stay:'STAY IN FORMATION!',
       eat_all:'EAT EVERYTHING!', grow:'GROW GROW GROW!', push_map_left:'PUSH LEFT!', push_map_right:'PUSH RIGHT!',
       defend_home:'DEFEND HOME!', flood:'FLOOD THE MAP!', tornado:'TORNADO SPIRAL!', snake_train:'SNAKE TRAIN!',
       kamikaze_one:'KAMIKAZE ONE!', bodyguard:'BODYGUARD ME!', cyclone:'CYCLONE FORMATION!', attack_commander:'ATTACK THE COMMANDER!',
@@ -4545,6 +4638,15 @@ function updateNpc(npc, dt){
       else desiredAngle = Math.atan2(closestE.y-h.y, closestE.x-h.x) + Math.PI + (rank % 2 === 0 ? 0.5 : -0.5) * (rank * 0.2); // rest sneak around
     }
     npc.npcBoost = rank === 0 ? (npc.length >= BOOST_MIN_LEN) : false;
+  } else if(npc.npcMode==='stay'){
+    // Stay: each bot orbits tightly around the position it was at when the command was issued
+    if(npc.stayAnchorX === undefined){ const _sh = snakeHead(npc); npc.stayAnchorX = _sh.x; npc.stayAnchorY = _sh.y; npc.stayOrbitAngle = Math.random()*Math.PI*2; }
+    npc.stayOrbitAngle = (npc.stayOrbitAngle || 0) + dt * 1.1; // slow orbit speed
+    const _orbitR = snakeRadius(npc.length) * 3.5 + 28; // tight radius around anchor
+    const _tx = npc.stayAnchorX + Math.cos(npc.stayOrbitAngle) * _orbitR;
+    const _ty = npc.stayAnchorY + Math.sin(npc.stayOrbitAngle) * _orbitR;
+    desiredAngle = Math.atan2(_ty - h.y, _tx - h.x);
+    npc.npcBoost = false;
   } else if(npc.npcMode==='hold_line'){
     // Hold the line: bots form a stationary perpendicular wall facing the enemy and stay put
     const commander = (npc.commanderAssignment && !npc.commanderAssignment.dead) ? npc.commanderAssignment : [player, player2].find(p => p && !p.dead && sameTeam(p, npc));
@@ -4986,34 +5088,52 @@ function updateNpc(npc, dt){
       desiredAngle = Math.atan2(_homeBase.y - h.y, _homeBase.x - h.x);
       npc.npcBoost = npc.length >= BOOST_MIN_LEN;
     } else {
-    // If any human enemy is carrying own flag: hunt them; else move toward enemy flag or attack
-    let _attackTarget = null;
-    // Priority 1: player carrying own flag
-    for(const _pl of [player, player2]){
-      if(!_pl || _pl.dead || sameTeam(_pl, npc)) continue;
-      if(_pl.ctfCarrying && _pl.ctfCarrying.team === npc.team){ _attackTarget = _pl; break; }
-    }
-    // Priority 2: nearest human enemy
-    if(!_attackTarget){
-      let _bd = 900;
-      for(const _pl of [player, player2]){
-        if(!_pl || _pl.dead || sameTeam(_pl, npc)) continue;
-        const _d = Math.hypot(snakeHead(_pl).x - h.x, snakeHead(_pl).y - h.y);
-        if(_d < _bd){ _bd = _d; _attackTarget = _pl; }
+      const _eFlag    = ctfEnemyFlagFor(npc.team); // enemy flag we want to steal
+      const _ownFlag  = ctfOwnFlagFor(npc.team);   // our flag
+
+      // Priority 1: intercept anyone (NPC or human) carrying OUR flag
+      let _interceptTarget = null;
+      for(const _s of [...npcs, player, player2]){
+        if(!_s || _s.dead || sameTeam(_s, npc)) continue;
+        if(_s.ctfCarrying && _s.ctfCarrying.team === npc.team){ _interceptTarget = _s; break; }
       }
-    }
-    if(_attackTarget){
-      const _th = snakeHead(_attackTarget);
-      desiredAngle = Math.atan2(_th.y - h.y, _th.x - h.x);
-      npc.npcBoost = npc.length >= BOOST_MIN_LEN;
-    } else {
-      // Head toward enemy flag to contest it
-      const _eFlag = ctfEnemyFlagFor(npc.team);
-      if(_eFlag && !_eFlag.carrier){
-        desiredAngle = Math.atan2(_eFlag.y - h.y, _eFlag.x - h.x);
+
+      // Assign a stable escort/steal role so bots don't jitter
+      if(!npc._ctfRole) npc._ctfRole = Math.random() < 0.25 ? 'escort' : 'steal';
+
+      // Priority 2: escort a teammate who is carrying the enemy flag back to base
+      let _escortTarget = null;
+      if(npc._ctfRole === 'escort'){
+        for(const _s of npcs){
+          if(_s.dead || !sameTeam(_s, npc) || _s === npc) continue;
+          if(_s.ctfCarrying){ _escortTarget = _s; break; }
+        }
       }
-      npc.npcBoost = npc.length >= BOOST_MIN_LEN; // always boost in CTF
-    }
+
+      if(_interceptTarget){
+        const _ih = snakeHead(_interceptTarget);
+        desiredAngle = Math.atan2(_ih.y - h.y, _ih.x - h.x);
+        npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+      } else if(_escortTarget){
+        const _eh = snakeHead(_escortTarget);
+        desiredAngle = Math.atan2(_eh.y - h.y, _eh.x - h.x);
+        npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+      } else if(_eFlag){
+        if(_eFlag.carrier && _eFlag.carrier.team !== npc.team){
+          // An enemy NPC grabbed our flag — chase them
+          const _ch = snakeHead(_eFlag.carrier);
+          desiredAngle = Math.atan2(_ch.y - h.y, _ch.x - h.x);
+        } else {
+          // Flag is on the ground (or carried by one of ours) — go pick it up
+          desiredAngle = Math.atan2(_eFlag.y - h.y, _eFlag.x - h.x);
+        }
+        npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+      } else {
+        // Default: advance toward enemy base
+        const _eBase = ctfBasePos(npc.team === 'red' ? 'blue' : 'red');
+        desiredAngle = Math.atan2(_eBase.y - h.y, _eBase.x - h.x);
+        npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+      }
     } // end else (not carrying flag)
   } else {
     npc.npcBoost=false;
@@ -5351,7 +5471,13 @@ function killPlayer(cause){
       +' &nbsp;|&nbsp; Top Speed: <strong style="color:#88ddff">'+bestSpeed.toFixed(1)+'</strong>'
       +' &nbsp;|&nbsp; Longest Boost: <strong style="color:#ffaa66">'+longestBoostChain.toFixed(1)+'s</strong>'
       +(dailySeedMode?'<br><span style="color:#88ddff">Daily Seed: '+seedLabel+'</span>':'')
-      +'<br><span style="color:#99ffaa">Daily: '+(dailyChallengeData.challenge?dailyChallengeData.challenge.text:'-')+' ['+(dailyChallengeData.done?'DONE':'OPEN')+']</span>';
+      +'<br><span style="color:#99ffaa">Daily: '+(dailyChallengeData.challenge?dailyChallengeData.challenge.text:'-')+' ['+(dailyChallengeData.done?'DONE':'OPEN')+']</span>'
+      +(!teamMode && !ctfMode ? '<br><span style="color:#ffdd00">+20 🪙 coins earned! ('+( playerCoins + 20)+' total)</span>' : '');
+    // Award 20 coins for completing a normal mode run
+    if(!teamMode && !ctfMode){
+      playerCoins += 20;
+      localStorage.setItem('snakeArenaCoins', String(playerCoins));
+    }
     document.getElementById('deathScreen').style.display='flex';
   }
   triggerShake(14);
