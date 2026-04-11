@@ -711,13 +711,13 @@ let   worldSize        = 7000;
 const DOT_COUNT        = 400;
 const FOOD_VALUE       = 0.5;
 const SECRET_WORLD_SIZE = 1800;
-const SECRET_DOT_COUNT  = 2000;
+const SECRET_DOT_COUNT  = 200;
 const SECRET_DOT_VALUE  = 1000000000;
 const FATNESS_LEN_CAP   = 900;
 const EVENT_INTERVAL    = 30;
 const EVENT_DURATION    = 300;
 const DEATH_DOT_VALUE  = 50;
-const MAX_DEATH_DOTS   = 12000;
+const MAX_DEATH_DOTS   = 500;
 const DEATH_DOT_RADIUS_MIN = 16;
 const DEATH_DOT_RADIUS_MAX = 26;
 const GROWTH_RATE      = 6;   // length units drained from pendingGrowth per second (3x faster)
@@ -735,6 +735,7 @@ const TEAM_SKIN_BLUE = {name:'Team Blue', body:'#2266ff', dark:'#002299', eye:'n
 const TEAM_TOTAL_PER_SIDE = 100;
 const TEAM_MODE_DURATION = 300;
 const TEAM_MAP_SIZE = SECRET_WORLD_SIZE * 5;
+const CTF_MAP_SIZE  = 3500;
 const TEAM_CELL_SIZE = 45;
 const MAX_TURN_RATE    = 9.0;
 const ZONE_FULL_TIME   = 120;
@@ -2074,7 +2075,7 @@ function initGame(){
   gameTime     = 0;
   enemyCommander = null; enemyCmdTimer = 12;
   allyCommander = null; allyCmdTimer = 14; allyCommanderEnabled = false;
-  worldSize    = (teamMode||ctfMode) ? TEAM_MAP_SIZE : 7000;
+  worldSize    = ctfMode ? CTF_MAP_SIZE : teamMode ? TEAM_MAP_SIZE : 7000;
   maxPlayerLen = BASE_LENGTH;
   zoom1 = (teamMode||ctfMode) ? 1.8 : 1.0; zoom2 = (teamMode||ctfMode) ? 1.8 : 1.0;
   zoneRadius   = worldSize * 0.75;
@@ -2501,8 +2502,8 @@ function update(dt){
     for(const _pl of [player, player2]){
       if(!_pl || _pl.dead) continue;
       const eFlag = ctfEnemyFlagFor(_pl.team);
-      // Pick up enemy flag when head touches it
-      if(eFlag && !eFlag.carrier && !_pl.ctfCarrying){
+      // Pick up enemy flag when head touches it (cannot pick up own team's flag)
+      if(eFlag && eFlag.team !== _pl.team && !eFlag.carrier && !_pl.ctfCarrying){
         const _ph = snakeHead(_pl);
         if(Math.hypot(_ph.x - eFlag.x, _ph.y - eFlag.y) < snakeRadius(_pl.length) + 52){
           eFlag.carrier = _pl; _pl.ctfCarrying = eFlag;
@@ -4780,7 +4781,7 @@ function updateNpc(npc, dt){
       const _tx = _flagX + (Math.random()-0.5)*200;
       const _ty = _flagY + (Math.random()-0.5)*200;
       if(npc.npcTurnTimer <= 0){ desiredAngle = Math.atan2(_ty - h.y, _tx - h.x); npc.npcTurnTimer = 1.2; }
-      npc.npcBoost = false;
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN; // guards always boost
     }
   } else if(npc.npcMode === 'ctfAttack'){
     // If any human enemy is carrying own flag: hunt them; else move toward enemy flag or attack
@@ -4809,7 +4810,7 @@ function updateNpc(npc, dt){
       if(_eFlag && !_eFlag.carrier){
         desiredAngle = Math.atan2(_eFlag.y - h.y, _eFlag.x - h.x);
       }
-      npc.npcBoost = false;
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN; // always boost in CTF
     }
   } else {
     npc.npcBoost=false;
@@ -5406,42 +5407,60 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
   if(ctfMode && !inSecret){
     const _drawBase = (team) => {
       const bp = ctfBasePos(team);
-      const col = team==='red' ? 'rgba(255,40,40,0.20)' : 'rgba(40,100,255,0.20)';
+      const rc = team==='red' ? 'rgba(255,40,40,' : 'rgba(40,100,255,';
       const strokeCol = team==='red' ? '#ff4444' : '#4488ff';
+      const glowCol   = team==='red' ? 'rgba(255,0,0,0)'   : 'rgba(0,80,255,0)';
+      // Outer glow rings
+      const grad = ctx.createRadialGradient(bp.x, bp.y, CTF_BASE_RADIUS*0.3, bp.x, bp.y, CTF_BASE_RADIUS*1.6);
+      grad.addColorStop(0, rc+'0.35)');
+      grad.addColorStop(0.5, rc+'0.18)');
+      grad.addColorStop(1, glowCol);
+      ctx.beginPath(); ctx.arc(bp.x, bp.y, CTF_BASE_RADIUS*1.6, 0, Math.PI*2);
+      ctx.fillStyle = grad; ctx.fill();
+      // Main circle fill
       ctx.beginPath(); ctx.arc(bp.x, bp.y, CTF_BASE_RADIUS, 0, Math.PI*2);
-      ctx.fillStyle = col; ctx.fill();
-      ctx.strokeStyle = strokeCol; ctx.lineWidth = 5/zoom; ctx.stroke();
-      ctx.font = 'bold '+(30/zoom)+'px Segoe UI,sans-serif';
+      ctx.fillStyle = rc+'0.22)'); ctx.fill();
+      // Pulsing border
+      const pulse = 0.55 + 0.45 * Math.sin(gameTime * 3.5);
+      ctx.strokeStyle = strokeCol; ctx.lineWidth = (4 + 3*pulse)/zoom;
+      ctx.shadowColor = strokeCol; ctx.shadowBlur = 18/zoom;
+      ctx.stroke(); ctx.shadowBlur = 0;
+      // Label
+      ctx.font = 'bold '+(26/zoom)+'px Segoe UI,sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = strokeCol;
-      ctx.fillText(team==='red' ? '\uD83D\uDD34 CAPTURE ZONE' : '\uD83D\uDD35 CAPTURE ZONE', bp.x, bp.y);
+      ctx.fillText(team==='red' ? '\uD83D\uDD34 CAPTURE ZONE' : '\uD83D\uDD35 CAPTURE ZONE', bp.x, bp.y + CTF_BASE_RADIUS*0.62);
     };
     _drawBase('red'); _drawBase('blue');
-    // Draw flags at their current positions
+    // Draw flags at their current positions (home flags drawn large & centered at base)
     const _drawFlag = (flag) => {
       if(!flag) return;
       ctx.save();
       const col = flag.team==='red' ? '#ff3333' : '#3366ff';
       const glow = flag.carrier ? '#ffcc00' : col;
-      ctx.shadowColor = glow; ctx.shadowBlur = 22/zoom;
+      const isHome = !flag.carrier;
+      const poleH = isHome ? 110/zoom : 70/zoom;
+      const bannerW = isHome ? 60/zoom : 44/zoom;
+      ctx.shadowColor = glow; ctx.shadowBlur = (isHome ? 32 : 18)/zoom;
       // Pole
-      ctx.strokeStyle = '#aaaaaa'; ctx.lineWidth = 3/zoom;
-      ctx.beginPath(); ctx.moveTo(flag.x, flag.y); ctx.lineTo(flag.x, flag.y - 70/zoom); ctx.stroke();
+      ctx.strokeStyle = '#cccccc'; ctx.lineWidth = (isHome ? 4 : 3)/zoom;
+      ctx.beginPath(); ctx.moveTo(flag.x, flag.y); ctx.lineTo(flag.x, flag.y - poleH); ctx.stroke();
       // Banner
       ctx.beginPath();
-      ctx.moveTo(flag.x, flag.y - 70/zoom);
-      ctx.lineTo(flag.x + 44/zoom, flag.y - 55/zoom);
-      ctx.lineTo(flag.x, flag.y - 40/zoom);
+      ctx.moveTo(flag.x, flag.y - poleH);
+      ctx.lineTo(flag.x + bannerW, flag.y - poleH*0.77);
+      ctx.lineTo(flag.x, flag.y - poleH*0.55);
+      ctx.closePath();
       ctx.fillStyle = col; ctx.fill();
       ctx.restore();
       // Carrier indicator
       if(flag.carrier && !flag.carrier.dead){
         const _ch = snakeHead(flag.carrier);
         ctx.save();
-        ctx.font = 'bold '+(24/zoom)+'px Segoe UI,sans-serif';
+        ctx.font = 'bold '+(26/zoom)+'px Segoe UI,sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
         ctx.fillStyle = '#ffcc00';
-        ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 12/zoom;
+        ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 14/zoom;
         ctx.fillText('\uD83D\uDEA9', _ch.x, _ch.y - snakeRadius(flag.carrier.length)*2 - 10/zoom);
         ctx.restore();
       }
@@ -6132,6 +6151,25 @@ function _drawMinimapOnto(mc, W, H, focusPlayer){
         mc.fillStyle = cell===1 ? 'rgba(255,80,80,0.55)' : 'rgba(80,140,255,0.55)';
         mc.fillRect(tcx*TEAM_CELL_SIZE*sx, tcy*TEAM_CELL_SIZE*sy,
                     TEAM_CELL_SIZE*sx+1, TEAM_CELL_SIZE*sy+1);
+      }
+    }
+  }
+  // CTF bases on minimap
+  if(ctfMode){
+    for(const _mmTeam of ['red','blue']){
+      const bp = ctfBasePos(_mmTeam);
+      const mmCol = _mmTeam==='red' ? '#ff4444' : '#4488ff';
+      const mmR = Math.max(3, CTF_BASE_RADIUS * sx);
+      mc.save();
+      mc.shadowColor = mmCol; mc.shadowBlur = 6;
+      mc.strokeStyle = mmCol; mc.lineWidth = 2;
+      mc.beginPath(); mc.arc(bp.x*sx, bp.y*sy, mmR, 0, Math.PI*2); mc.stroke();
+      mc.restore();
+      // Flag dot (yellow if away, team color if home)
+      const _mmFlag = _mmTeam==='red' ? ctfFlagRed : ctfFlagBlue;
+      if(_mmFlag){
+        mc.beginPath(); mc.arc(_mmFlag.x*sx, _mmFlag.y*sy, 3, 0, Math.PI*2);
+        mc.fillStyle = _mmFlag.carrier ? '#ffcc00' : mmCol; mc.fill();
       }
     }
   }
