@@ -520,9 +520,11 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
   <span style="color:#ffaa00;font-size:.78rem;font-weight:700">— CTF commands —</span><br>
   <span>🚩 steal the flag / get the flag</span><br>
   <span>🛡️ protect our flag / defend our flag</span><br>
+  <span>🤲 give me the flag / pass me the flag</span><br>
   <span>⭕ circle around our base</span><br>
   <span>⭕ circle around their base</span><br>
   <span>🫡 protect me / escort me</span><br>
+  <span>🏠 back to base / return to base</span><br>
   <span style="color:#aaaaaa;font-size:.78rem;font-weight:700">— general commands —</span><br>
   <span>🚀 boost / sprint / turbo</span><br>
   <span>💨 run</span><br>
@@ -742,7 +744,7 @@ const TEAM_SKIN_BLUE = {name:'Team Blue', body:'#2266ff', dark:'#002299', eye:'n
 const TEAM_TOTAL_PER_SIDE = 100;
 const TEAM_MODE_DURATION = 300;
 const TEAM_MAP_SIZE = SECRET_WORLD_SIZE * 5;
-const CTF_MAP_SIZE  = 3500;
+const CTF_MAP_SIZE  = 3000;
 const TEAM_CELL_SIZE = 45;
 const MAX_TURN_RATE    = 9.0;
 const ZONE_FULL_TIME   = 120;
@@ -2036,7 +2038,9 @@ function ctfBasePos(team){
 }
 function ctfMakeFlag(team){
   const p = ctfBasePos(team);
-  return {x: p.x, y: p.y, homeX: p.x, homeY: p.y, team, carrier: null};
+  // Plant flag in the lower-center of the capture zone so it's clearly visible inside it
+  const hy = p.y + CTF_BASE_RADIUS * 0.28;
+  return {x: p.x, y: hy, homeX: p.x, homeY: hy, team, carrier: null};
 }
 function ctfReturnFlag(flag){
   if(flag.carrier) flag.carrier.ctfCarrying = null;
@@ -2509,10 +2513,19 @@ function update(dt){
     for(const _pl of [player, player2]){
       if(!_pl || _pl.dead) continue;
       const eFlag = ctfEnemyFlagFor(_pl.team);
-      // Pick up enemy flag when head touches it (cannot pick up own team's flag)
-      if(eFlag && eFlag.team !== _pl.team && !eFlag.carrier && !_pl.ctfCarrying){
+      const oFlag = ctfOwnFlagFor(_pl.team);
+      // Return own flag if touching it and it's been dropped away from home
+      if(oFlag && !oFlag.carrier && (oFlag.x !== oFlag.homeX || oFlag.y !== oFlag.homeY)){
         const _ph = snakeHead(_pl);
-        if(Math.hypot(_ph.x - eFlag.x, _ph.y - eFlag.y) < snakeRadius(_pl.length) + 52){
+        if(Math.hypot(_ph.x - oFlag.x, _ph.y - oFlag.y) < snakeRadius(_pl.length) + 150){
+          oFlag.x = oFlag.homeX; oFlag.y = oFlag.homeY;
+          spawnFloatingText(_ph.x, _ph.y - 36, '\uD83D\uDEA9 FLAG RETURNED!', '#44ffaa');
+        }
+      }
+      // Pick up enemy flag when head touches it (cannot pick up own team's flag)
+      if(eFlag && !eFlag.carrier && !_pl.ctfCarrying){
+        const _ph = snakeHead(_pl);
+        if(Math.hypot(_ph.x - eFlag.x, _ph.y - eFlag.y) < snakeRadius(_pl.length) + 150){
           eFlag.carrier = _pl; _pl.ctfCarrying = eFlag;
           spawnFloatingText(_ph.x, _ph.y - 36, '\uD83D\uDEA9 FLAG GRABBED!', '#ffaa00');
           triggerShake(7);
@@ -2528,6 +2541,39 @@ function update(dt){
           _pl.ctfCarrying = null;
           spawnFloatingText(_ph.x, _ph.y - 48, '\uD83C\uDFC6 CAPTURED! +1', '#ffdd00');
           triggerShake(14);
+        }
+      }
+    }
+    // Flag pickup/scoring for NPCs
+    if(ctfMode){
+      for(const _npc of npcs){
+        if(_npc.dead) continue;
+        const _npcEFlag = ctfEnemyFlagFor(_npc.team);
+        const _npcOFlag = ctfOwnFlagFor(_npc.team);
+        // Return own flag if nearby
+        if(_npcOFlag && !_npcOFlag.carrier && (_npcOFlag.x !== _npcOFlag.homeX || _npcOFlag.y !== _npcOFlag.homeY)){
+          const _nh = snakeHead(_npc);
+          if(Math.hypot(_nh.x - _npcOFlag.x, _nh.y - _npcOFlag.y) < snakeRadius(_npc.length) + 150){
+            _npcOFlag.x = _npcOFlag.homeX; _npcOFlag.y = _npcOFlag.homeY;
+          }
+        }
+        // Pick up enemy flag
+        if(_npcEFlag && !_npcEFlag.carrier && !_npc.ctfCarrying){
+          const _nh = snakeHead(_npc);
+          if(Math.hypot(_nh.x - _npcEFlag.x, _nh.y - _npcEFlag.y) < snakeRadius(_npc.length) + 150){
+            _npcEFlag.carrier = _npc; _npc.ctfCarrying = _npcEFlag;
+          }
+        }
+        // Score: NPC carrying enemy flag + at own base
+        if(_npc.ctfCarrying){
+          const _npcBase = ctfBasePos(_npc.team);
+          const _nh = snakeHead(_npc);
+          if(Math.hypot(_nh.x - _npcBase.x, _nh.y - _npcBase.y) < CTF_BASE_RADIUS){
+            if(_npc.team === 'red') ctfScoreRed++; else ctfScoreBlue++;
+            ctfReturnFlag(_npc.ctfCarrying);
+            _npc.ctfCarrying = null;
+            spawnFloatingText(_nh.x, _nh.y - 48, '\uD83D\uDEA9 NPC SCORED!', '#ffaa00');
+          }
         }
       }
     }
@@ -2604,7 +2650,7 @@ function update(dt){
       }
     } else { boostDrainTimer=0; }
 
-    const ctfFlagPenalty = (ctfMode && player.ctfCarrying) ? 0.1 : 1;
+    const ctfFlagPenalty = (ctfMode && player.ctfCarrying) ? 0.5 : 1;
     const spd=((boosting ? snakeBoostSpeed(player.length, player) : snakeBaseSpeed(player.length)) * speedMultFor(player, boosting)) * ctfFlagPenalty;
     if(spd > bestSpeed) bestSpeed = spd;
     moveSnakeFixed(player, player.angle, spd);
@@ -2723,7 +2769,7 @@ function update(dt){
       }
     } else { p2BoostDt=0; }
 
-    const ctfFlagPenalty2 = (ctfMode && player2.ctfCarrying) ? 0.1 : 1;
+    const ctfFlagPenalty2 = (ctfMode && player2.ctfCarrying) ? 0.5 : 1;
     const spd2=((boost2 ? snakeBoostSpeed(player2.length, player2) : snakeBaseSpeed(player2.length)) * speedMultFor(player2, boost2)) * ctfFlagPenalty2;
     moveSnakeFixed(player2, player2.angle, spd2);
     closeLoopBody(player2, dt);
@@ -2861,7 +2907,7 @@ function update(dt){
     if(biggestLen > maxPlayerLen) maxPlayerLen = biggestLen;
     const grow = Math.max(0, maxPlayerLen - BASE_LENGTH);
     const targetWorld = worldSizeForLength(maxPlayerLen);
-    if(targetWorld > worldSize){
+    if(!ctfMode && targetWorld > worldSize){
       worldSize += (targetWorld - worldSize) * Math.min(dt * 1.2, 1);
       zoneRadius = Math.max(zoneRadius, worldSize * 0.75);
     }
@@ -3374,7 +3420,7 @@ const ACTION_EMOJI = {
   charge_atk:'⚡',
   diamond:'💎', wedge:'🔺', wall:'🧱', split:'✂️', pincer:'🦀', bait:'🎣', decoy:'🎭', hold_line:'🛑',
   eat_all:'🍽️', grow:'📈', push_map:'🗺️', defend_home:'🏠', flood:'🌊', tornado:'🌀', snake_train:'🚂', kamikaze_one:'💣', bodyguard:'🫡', cyclone:'🌪️', attack_commander:'🎯',
-  ctf_steal:'🚩', ctf_defend:'🛡️', ctf_circle_own_base:'⭕', ctf_circle_enemy_base:'⭕'
+  ctf_steal:'🚩', ctf_defend:'🛡️', ctf_circle_own_base:'⭕', ctf_circle_enemy_base:'⭕', ctf_pass_flag:'🤲', ctf_back_to_base:'🏠'
 };
 const BOT_REPLIES = [
   'Yes general!', 'Yes commander!', 'Yes sir!', 'Right away sir!',
@@ -3412,6 +3458,8 @@ function applyVoiceCommand(team, transcript){
       action = 'ctf_circle_enemy_base';
     else if(/\b(protect me|guard me|escort me|bodyguard|cover me|defend me|help me|stick beside( me)?|stay (right )?beside( me)?)\b/.test(t))
       action = 'guard_cmd';
+    else if(/\b(back to base|return to base|go back to base|head back to base|retreat to base|go home|back home|return home|head home)\b/.test(t))
+      action = 'ctf_back_to_base';
   }
 
   if(!action){
@@ -3612,6 +3660,7 @@ function applyVoiceCommand(team, transcript){
       else if(/protect.?flag|defend.?flag|guard.?flag|keep.?flag/i.test(t)) action = 'ctf_defend';
       else if(/circle.?(our|my|own).?base|surround.?(our|my|own).?base/i.test(t)) action = 'ctf_circle_own_base';
       else if(/circle.?(their|enemy).?base|surround.?(their|enemy).?base/i.test(t)) action = 'ctf_circle_enemy_base';
+      else if(/back.?to.?base|return.?to.?base|go.?home|return.?home/i.test(t)) action = 'ctf_back_to_base';
     }
   }
 
@@ -3708,6 +3757,24 @@ function applyVoiceCommand(team, transcript){
   // Bot talks back (only if there are bots to command)
   if(botCount > 0) speakBotReply();
 
+  // CTF: pass flag instantly transfers the carried enemy flag to the commanding player
+  if(action === 'ctf_pass_flag' && ctfMode){
+    const _cmdr = team === 'red' ? player : player2;
+    if(_cmdr && !_cmdr.dead && !_cmdr.ctfCarrying){
+      for(const _npc of npcs){
+        if(_npc.dead || _npc.team !== team || !_npc.ctfCarrying) continue;
+        const _flag = _npc.ctfCarrying;
+        _flag.carrier = _cmdr;
+        _cmdr.ctfCarrying = _flag;
+        _npc.ctfCarrying = null;
+        const _ph = snakeHead(_cmdr);
+        spawnFloatingText(_ph.x, _ph.y - 48, '🤲 FLAG PASSED!', '#ffdd00');
+        triggerShake(8);
+        break; // pass from first carrier found
+      }
+    }
+  }
+
   if(team === 'red'){
     p1VoiceCmd = action; p1VoiceCmdTimer = VOICE_CMD_DURATION;
     blinkMicButton('voiceMic1', action);
@@ -3742,7 +3809,9 @@ function showVoiceToast(team, action, transcript){
       defend_home:'DEFEND HOME!', flood:'FLOOD THE MAP!', tornado:'TORNADO SPIRAL!', snake_train:'SNAKE TRAIN!',
       kamikaze_one:'KAMIKAZE ONE!', bodyguard:'BODYGUARD ME!', cyclone:'CYCLONE FORMATION!', attack_commander:'ATTACK THE COMMANDER!',
       ctf_steal:'🚩 STEAL THE FLAG!', ctf_defend:'🛡️ PROTECT OUR FLAG!',
-      ctf_circle_own_base:'⭕ CIRCLE OUR BASE!', ctf_circle_enemy_base:'⭕ CIRCLE THEIR BASE!'};};
+      ctf_pass_flag:'🤲 PASS ME THE FLAG!',
+      ctf_circle_own_base:'⭕ CIRCLE OUR BASE!', ctf_circle_enemy_base:'⭕ CIRCLE THEIR BASE!',
+      ctf_back_to_base:'🏠 BACK TO BASE!'};
     toast.innerHTML = `${emoji} <b style="color:${color}">${team.toUpperCase()}</b>: <i>"${transcript}"</i><br><span style="font-size:.8rem;opacity:.9">→ ${labels[action]||action.toUpperCase()}</span>`;
   }
   toast.style.display = 'block';
@@ -3954,6 +4023,19 @@ function updateNpc(npc, dt){
   // CTF attackers stay in their default attack mode unless player commands them
   if(npc.npcMode === 'ctfAttack' && !npc.voiceCmdLocked){
     npc.npcModeTimer = 999;
+  }
+  // Any NPC carrying the flag overrides everything — rush to own base
+  if(ctfMode && npc.ctfCarrying && npc.npcMode !== 'ctfGuard'){
+    const _fb = ctfBasePos(npc.team);
+    const _fh = snakeHead(npc);
+    npc.npcAngle = Math.atan2(_fb.y - _fh.y, _fb.x - _fh.x);
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+    // Still run movement — skip rest of AI decision
+    if(npc.voiceCmdLocked){ npc.npcModeTimer = 999; } else { npc.npcModeTimer -= dt; }
+    const spd = ((npc.npcBoost ? snakeBoostSpeed(npc.length, npc) : snakeBaseSpeed(npc.length)) * speedMultFor(npc, npc.npcBoost)) * 0.2;
+    moveSnakeFixed(npc, npc.npcAngle, spd);
+    closeLoopBody(npc, dt);
+    return;
   }
   // Clear cyclone intercept state if the worm has been reassigned to a different mode
   if(npc.cycloneIntercepting && npc.npcMode !== 'cyclone'){
@@ -4831,7 +4913,7 @@ function updateNpc(npc, dt){
       desiredAngle = Math.atan2(_dh.y - h.y, _dh.x - h.x);
       npc.npcBoost = npc.length >= BOOST_MIN_LEN;
     } else {
-      const _orbitRadius = 180 + (npc.circleRank || rank % 8) * 28;
+      const _orbitRadius = 180 + (npc.circleRank || 0) * 28;
       const _orbitSpeed = 0.9;
       const _orbitAngle = (performance.now() / 1000) * _orbitSpeed + (npc.circleRank || 0) * 0.75;
       const _tx = _fx + Math.cos(_orbitAngle) * _orbitRadius;
@@ -4869,6 +4951,11 @@ function updateNpc(npc, dt){
       desiredAngle = Math.atan2(_ty - h.y, _tx - h.x);
       npc.npcBoost = false;
     }
+  } else if(npc.npcMode === 'ctf_back_to_base'){
+    // Sprint straight back to own base
+    const _base = ctfBasePos(npc.team);
+    desiredAngle = Math.atan2(_base.y - h.y, _base.x - h.x);
+    npc.npcBoost = npc.length >= BOOST_MIN_LEN;
   } else if(npc.npcMode === 'ctfGuard'){
     // Guard: patrol near own flag; attack any enemy within 500px of it
     const _ownFlag = ctfOwnFlagFor(npc.team);
@@ -4893,6 +4980,12 @@ function updateNpc(npc, dt){
       npc.npcBoost = npc.length >= BOOST_MIN_LEN; // guards always boost
     }
   } else if(npc.npcMode === 'ctfAttack'){
+    // If carrying the enemy flag, sprint back to own base immediately
+    if(npc.ctfCarrying){
+      const _homeBase = ctfBasePos(npc.team);
+      desiredAngle = Math.atan2(_homeBase.y - h.y, _homeBase.x - h.x);
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN;
+    } else {
     // If any human enemy is carrying own flag: hunt them; else move toward enemy flag or attack
     let _attackTarget = null;
     // Priority 1: player carrying own flag
@@ -4921,6 +5014,7 @@ function updateNpc(npc, dt){
       }
       npc.npcBoost = npc.length >= BOOST_MIN_LEN; // always boost in CTF
     }
+    } // end else (not carrying flag)
   } else {
     npc.npcBoost=false;
     let bestDist2=300, bestDot=null;
@@ -5013,11 +5107,12 @@ function updateNpc(npc, dt){
     }
   } else { npc.npcBoostDrain=0; npc.npcBoost=false; }
 
-  const spd = (npc.npcMode === 'bodyguard' && npc._guardMatchSpd != null)
+  const _ctfCarryPenalty = (ctfMode && npc.ctfCarrying) ? 0.5 : 1;
+  const spd = ((npc.npcMode === 'bodyguard' && npc._guardMatchSpd != null)
     ? npc._guardMatchSpd
     : (npc.npcMode === 'circler' && npc._circlerMatchSpd != null)
     ? npc._circlerMatchSpd
-    : (npc.npcBoost ? snakeBoostSpeed(npc.length, npc) : snakeBaseSpeed(npc.length)) * speedMultFor(npc, npc.npcBoost);
+    : (npc.npcBoost ? snakeBoostSpeed(npc.length, npc) : snakeBaseSpeed(npc.length)) * speedMultFor(npc, npc.npcBoost)) * _ctfCarryPenalty;
   moveSnakeFixed(npc, npc.npcAngle, spd);
   closeLoopBody(npc, dt);
 }
@@ -5336,6 +5431,8 @@ function killNpc(npc, killer){
   const deadIsBodyguard  = !!npc.isBodyguard;
   const deadBodyguardFor = npc.bodyguardFor  || null;
   const deadBodyguardRank= npc.bodyguardRank != null ? npc.bodyguardRank : 0;
+  // CTF: return flag to base on death (instead of dropping on ground)
+  if(ctfMode && npc.ctfCarrying){ ctfReturnFlag(npc.ctfCarrying); npc.ctfCarrying = null; }
   npc.dead=true; spawnDeathDots(npc);
   if(killer===player)  kills++;
   if(killer===player2) kills2++;
@@ -5528,7 +5625,7 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
       ctx.fillStyle = grad; ctx.fill();
       // Main circle fill
       ctx.beginPath(); ctx.arc(bp.x, bp.y, CTF_BASE_RADIUS, 0, Math.PI*2);
-      ctx.fillStyle = rc+'0.22)'; ctx.fill();
+      ctx.fillStyle = rc+'0.35)'; ctx.fill();
       // Pulsing border
       const pulse = 0.55 + 0.45 * Math.sin(gameTime * 3.5);
       ctx.strokeStyle = strokeCol; ctx.lineWidth = (4 + 3*pulse)/zoom;
@@ -5538,7 +5635,7 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
       ctx.font = 'bold '+(26/zoom)+'px Segoe UI,sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = strokeCol;
-      ctx.fillText(team==='red' ? '\uD83D\uDD34 CAPTURE ZONE' : '\uD83D\uDD35 CAPTURE ZONE', bp.x, bp.y + CTF_BASE_RADIUS*0.62);
+      ctx.fillText(team==='red' ? '\uD83D\uDD34 CAPTURE ZONE' : '\uD83D\uDD35 CAPTURE ZONE', bp.x, bp.y + CTF_BASE_RADIUS*0.78);
     };
     _drawBase('red'); _drawBase('blue');
     // Draw flags at their current positions (home flags drawn large & centered at base)
@@ -5548,8 +5645,8 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
       const col = flag.team==='red' ? '#ff3333' : '#3366ff';
       const glow = flag.carrier ? '#ffcc00' : col;
       const isHome = !flag.carrier;
-      const poleH = isHome ? 110/zoom : 70/zoom;
-      const bannerW = isHome ? 60/zoom : 44/zoom;
+      const poleH = isHome ? 170/zoom : 70/zoom;
+      const bannerW = isHome ? 90/zoom : 44/zoom;
       ctx.shadowColor = glow; ctx.shadowBlur = (isHome ? 32 : 18)/zoom;
       // Pole
       ctx.strokeStyle = '#cccccc'; ctx.lineWidth = (isHome ? 4 : 3)/zoom;
@@ -5686,6 +5783,20 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
       ctx.beginPath();
       ctx.arc(fx,fy,fr,0,Math.PI*2);
       ctx.fill();
+    }
+  }
+  // CTF: re-draw zone borders on top of all snakes/dots so they never get buried
+  if(ctfMode && !inSecret){
+    for(const _team of ['red','blue']){
+      ctx.save();
+      const _bp = ctfBasePos(_team);
+      const _sc = _team==='red' ? '#ff4444' : '#4488ff';
+      const _pulse = 0.55 + 0.45 * Math.sin(gameTime * 3.5);
+      ctx.beginPath(); ctx.arc(_bp.x, _bp.y, CTF_BASE_RADIUS, 0, Math.PI*2);
+      ctx.strokeStyle = _sc; ctx.lineWidth = (5 + 4*_pulse)/zoom;
+      ctx.shadowColor = _sc; ctx.shadowBlur = 22/zoom;
+      ctx.stroke();
+      ctx.restore();
     }
   }
   for(const f of floatingTexts){
@@ -6268,20 +6379,41 @@ function _drawMinimapOnto(mc, W, H, focusPlayer){
     for(const _mmTeam of ['red','blue']){
       const bp = ctfBasePos(_mmTeam);
       const mmCol = _mmTeam==='red' ? '#ff2222' : '#2266ff';
-      // Big filled base dot
+      // Base circle
       mc.save();
       mc.shadowColor = mmCol; mc.shadowBlur = 10;
       mc.beginPath(); mc.arc(bp.x*sx, bp.y*sy, 8, 0, Math.PI*2);
-      mc.fillStyle = mmCol; mc.fill();
-      mc.strokeStyle = '#ffffff'; mc.lineWidth = 1.5; mc.stroke();
+      mc.fillStyle = mmCol+'55'; mc.fill();
+      mc.strokeStyle = mmCol; mc.lineWidth = 2; mc.stroke();
       mc.restore();
-      // Flag dot (yellow if carried, team color if at home)
+      // Flag icon (pole + pennant), yellow glow if carried
       const _mmFlag = _mmTeam==='red' ? ctfFlagRed : ctfFlagBlue;
       if(_mmFlag){
+        const fx = _mmFlag.x*sx, fy = _mmFlag.y*sy;
+        const carried = !!(_mmFlag.carrier && !_mmFlag.carrier.dead);
+        const flagCol = carried ? '#ffdd00' : mmCol;
+        const glowSize = carried ? (12 + 4*Math.sin(performance.now()/180)) : 7;
         mc.save();
-        mc.shadowColor = _mmFlag.carrier ? '#ffcc00' : mmCol; mc.shadowBlur = 6;
-        mc.beginPath(); mc.arc(_mmFlag.x*sx, _mmFlag.y*sy, 5, 0, Math.PI*2);
-        mc.fillStyle = _mmFlag.carrier ? '#ffcc00' : mmCol; mc.fill();
+        mc.shadowColor = flagCol; mc.shadowBlur = glowSize;
+        // Pole
+        mc.strokeStyle = '#dddddd'; mc.lineWidth = 2;
+        mc.beginPath(); mc.moveTo(fx, fy+9); mc.lineTo(fx, fy-9); mc.stroke();
+        // Pennant
+        mc.beginPath();
+        mc.moveTo(fx, fy-9);
+        mc.lineTo(fx+10, fy-4);
+        mc.lineTo(fx, fy+1);
+        mc.closePath();
+        mc.fillStyle = flagCol; mc.fill();
+        mc.strokeStyle = carried ? '#ffffff' : flagCol; mc.lineWidth = 1; mc.stroke();
+        // "CARRIED" pulse ring when flag is away
+        if(carried){
+          const pulse = 0.5 + 0.5*Math.sin(performance.now()/200);
+          mc.globalAlpha = 0.55 + 0.45*pulse;
+          mc.beginPath(); mc.arc(fx, fy, 9 + 4*pulse, 0, Math.PI*2);
+          mc.strokeStyle = '#ffdd00'; mc.lineWidth = 2; mc.stroke();
+          mc.globalAlpha = 1;
+        }
         mc.restore();
       }
     }
