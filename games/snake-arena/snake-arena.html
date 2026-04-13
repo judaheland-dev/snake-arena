@@ -27,6 +27,69 @@ canvas{display:block;}
 #btnTeam.active{border-color:#ff5566;background:#330910;color:#ff8899;}
 #btnCTF.active{border-color:#ffaa44;background:#2a1500;color:#ffcc66;}
 #btnMultiTeam.active{border-color:#cc88ff;background:#1a0030;color:#dd99ff;}
+#btnKoth.active{border-color:#ffd700;background:#2a2000;color:#ffd700;}
+#btnInfection.active{border-color:#44ff44;background:#002200;color:#44ff44;}
+#btnElimination.active{border-color:#ff4444;background:#220000;color:#ff4444;}
+
+/* ── KILL STREAK BANNER ── */
+#killStreakBanner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+  font-size:clamp(1.6rem,4vw,2.8rem);font-weight:900;color:#fff;text-align:center;
+  text-shadow:0 0 30px currentColor;pointer-events:none;z-index:60;transition:transform .12s;}
+#killStreakBanner.show{transform:translate(-50%,-50%) scale(1);}
+
+/* ── XP / LEVEL HUD ── */
+#xpBar{position:fixed;bottom:0;left:0;right:0;height:5px;background:#111;z-index:25;pointer-events:none;}
+#xpBarFill{height:100%;background:linear-gradient(90deg,#00ff66,#88ffcc);width:0%;transition:width .4s;}
+#levelBadge{position:fixed;bottom:8px;left:8px;font-size:.72rem;font-weight:900;
+  background:rgba(0,0,0,.7);border:1px solid #00ff6666;border-radius:6px;
+  padding:3px 9px;color:#00ff66;z-index:25;pointer-events:none;}
+
+/* ── ACHIEVEMENTS TOAST ── */
+#achieveToast{position:fixed;top:54px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.92);border:2px solid #ffd700;border-radius:12px;
+  padding:8px 22px;font-size:.88rem;font-weight:800;color:#ffd700;
+  z-index:70;display:none;text-align:center;pointer-events:none;}
+
+/* ── ACHIEVEMENT PANEL (title screen) ── */
+#achievePanel{background:#001a06cc;border:1px solid #ffd70066;border-radius:14px;
+  padding:12px 14px;min-width:190px;flex:1;max-width:260px;}
+#achievePanel h3{font-size:.88rem;font-weight:900;color:#ffd700;margin-bottom:6px;text-align:center;}
+#achieveList{list-style:none;max-height:160px;overflow-y:auto;}
+#achieveList li{font-size:.75rem;padding:2px 0;border-bottom:1px solid #33330022;color:#888;}
+#achieveList li.done{color:#ffd700;}
+
+/* ── DIFFICULTY ROW ── */
+#diffRow{display:flex;gap:7px;margin-bottom:8px;flex-wrap:wrap;justify-content:center;}
+.diffBtn{padding:6px 16px;font-size:.82rem;font-weight:800;border-radius:8px;cursor:pointer;
+  border:2px solid #333;background:#111;color:#666;transition:all .12s;}
+.diffBtn.active{border-color:#00ff66;background:#003308;color:#00ff66;}
+
+/* ── FOG OF WAR ── */
+#btnFog.active{border-color:#8888ff;background:#0a0a22;color:#aaaaff;}
+
+/* ── MOBILE JOYSTICK ── */
+#joystickArea{position:fixed;bottom:20px;left:20px;width:110px;height:110px;
+  display:none;z-index:30;pointer-events:none;}
+#joystickBase{position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,.08);
+  border:2px solid rgba(255,255,255,.18);}
+#joystickKnob{position:absolute;width:42px;height:42px;border-radius:50%;
+  background:rgba(255,255,255,.32);border:2px solid rgba(255,255,255,.6);
+  top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+#boostBtn{position:fixed;bottom:24px;right:24px;width:72px;height:72px;border-radius:50%;
+  background:rgba(0,255,102,.18);border:3px solid #00ff66;font-size:1.5rem;
+  display:none;z-index:30;color:#fff;font-weight:900;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;}
+
+/* ── INFECTION OVERLAY ── */
+#infectionOverlay{position:fixed;inset:0;pointer-events:none;z-index:20;
+  background:radial-gradient(ellipse at center,transparent 40%,rgba(0,255,0,.08) 100%);
+  display:none;}
+
+/* ── KOTH HUD ── */
+#kothHud{position:fixed;top:0;left:50%;transform:translateX(-50%);padding:5px 18px;
+  display:none;background:rgba(0,0,0,.86);border-radius:0 0 14px 14px;
+  font-weight:900;z-index:26;pointer-events:none;font-size:.93rem;
+  color:#ffd700;text-align:center;}
 #ctfHud{position:fixed;top:0;left:50%;transform:translateX(-50%);padding:5px 18px;
   display:none;background:rgba(0,0,0,.86);border-radius:0 0 14px 14px;
   font-weight:900;z-index:26;pointer-events:none;font-size:.93rem;white-space:nowrap;
@@ -286,6 +349,16 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
     <button class="modeBtn"        id="btnCTF">&#x1F6A9; Capture the Flag</button>
     <button class="modeBtn"        id="btnDaily">&#x1F4C5; Daily Seed</button>
     <button class="modeBtn"        id="btnMultiTeam">&#x1F308; Multi-Team</button>
+    <button class="modeBtn"        id="btnKoth">&#x1F451; King of the Hill</button>
+    <button class="modeBtn"        id="btnInfection">&#x1F9DF; Infection</button>
+    <button class="modeBtn"        id="btnElimination">&#x1F480; Elimination</button>
+    <button class="modeBtn"        id="btnFog">&#x1F32B;&#xFE0F; Fog of War</button>
+  </div>
+  <div id="diffRow">
+    <span style="font-size:.78rem;color:#888;font-weight:700;align-self:center;">Difficulty:</span>
+    <button class="diffBtn active" id="diffEasy">&#x1F7E2; Easy</button>
+    <button class="diffBtn" id="diffNormal">&#x1F7E1; Normal</button>
+    <button class="diffBtn" id="diffHard">&#x1F534; Hard</button>
   </div>
   <div id="teamConfigRow" style="display:none;flex-direction:column;align-items:center;gap:6px;margin-bottom:8px;">
     <div style="font-size:.74rem;color:#ff8899;font-weight:800;letter-spacing:.5px;">2P TEAM ASSIGNMENT</div>
@@ -313,6 +386,10 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
     <div id="leaderboard">
       <h3>&#x1F3C6; Top 10</h3>
       <ul id="lbList"><li style="color:#555;font-size:.8rem;text-align:center;padding:4px 0">No games yet</li></ul>
+    </div>
+    <div id="achievePanel">
+      <h3>&#x1F3C5; Achievements</h3>
+      <ul id="achieveList"></ul>
     </div>
     <!-- P1 setup -->
     <div class="playerSetup p1Setup" id="p1Setup">
@@ -646,6 +723,20 @@ body.one-player-team #voicePending1{left:auto;right:12px;}
 
 <!-- CTF HUD -->
 <div id="ctfHud"></div>
+<!-- KOTH HUD -->
+<div id="kothHud"></div>
+<!-- XP BAR + LEVEL -->
+<div id="xpBar"><div id="xpBarFill"></div></div>
+<div id="levelBadge">Lv 1</div>
+<!-- KILL STREAK BANNER -->
+<div id="killStreakBanner"></div>
+<!-- ACHIEVEMENT TOAST -->
+<div id="achieveToast"></div>
+<!-- INFECTION OVERLAY -->
+<div id="infectionOverlay"></div>
+<!-- MOBILE JOYSTICK -->
+<div id="joystickArea"><div id="joystickBase"></div><div id="joystickKnob"></div></div>
+<button id="boostBtn">BOOST</button>
 
 <!-- DEATH SCREEN -->
 <div id="deathScreen">
@@ -784,6 +875,19 @@ const CTF_GUARD_COUNT   = 5;    // flag guards per team
 const CTF_BASE_RADIUS   = 400;  // capture radius around base
 const CTF_START_LENGTH  = 20;   // respawn length
 
+// ── New mode constants ──
+const KOTH_RADIUS       = 320;   // King of the Hill zone radius
+const KOTH_SCORE_RATE   = 1;     // points per second while holding hill
+const KOTH_WIN_SCORE    = 100;   // score needed to win
+const KOTH_MOVE_INTERVAL = 45;   // seconds before hill moves
+const INFECTION_ZOMBIE_SPEED = 1.35; // zombie speed multiplier
+const ELIM_RESPAWN      = false; // no respawn in elimination
+const SPEED_PAD_COUNT   = 14;
+const SPEED_PAD_SIZE    = 80;
+const WORMHOLE_COUNT    = 4;     // pairs
+const WORMHOLE_RADIUS   = 55;
+const WORMHOLE_COOLDOWN = 3;    // seconds before re-entry
+
 // =====================================================
 //  STATE
 // =====================================================
@@ -847,6 +951,104 @@ let enemyCmdTimer = 0;            // countdown until next AI commander order
 let allyCommander = null;         // bot commander on the PLAYER's team (optional)
 let allyCmdTimer = 0;             // countdown until bot ally commander gives next order
 let allyCommanderEnabled = false; // whether the player has activated the bot commander
+
+// ── New mode state ──
+let kothMode       = false;
+let kothX          = 0, kothY = 0;
+let kothScores     = {};   // {teamName: points} or {'player':pts}
+let kothHolder     = null; // snake currently on hill
+let kothMoveTimer  = 0;
+let kothHudTimer   = 0;
+let infectionMode  = false;
+let infectedSnakes = new Set(); // snake refs that are zombie
+let eliminationMode = false;
+let elimAlive      = 0;       // count of living snakes at start
+let fogMode        = false;
+let difficultyLevel = 'easy'; // 'easy' | 'normal' | 'hard'
+// speed pads & wormholes
+let speedPads      = [];  // [{x,y,angle}]
+let wormholes      = [];  // [{x1,y1,x2,y2,cool1,cool2}]
+// kill streak
+let killStreakCount = 0;
+let killStreakTimer = 0;
+const KILL_STREAK_WINDOW = 5; // seconds
+// XP / level
+let playerXP = parseInt(localStorage.getItem('snakeArenaXP') || '0');
+let playerLevel = 1;
+// achievements
+const ACHIEVEMENTS = [
+  {id:'first_blood',  label:'First Blood',     desc:'Get your first kill',         check:()=>kills>=1},
+  {id:'double_kill',  label:'Double Kill',     desc:'Kill 2 in 5 seconds',         check:()=>false}, // managed separately
+  {id:'triple_kill',  label:'Triple Kill',     desc:'Kill 3 in 5 seconds',         check:()=>false},
+  {id:'rampage',      label:'Rampage',         desc:'Kill 5 in 5 seconds',         check:()=>false},
+  {id:'long_boi',     label:'Long Boi',        desc:'Reach length 500',            check:()=>player&&player.length>=500},
+  {id:'giant',        label:'Giant',           desc:'Reach length 2000',           check:()=>player&&player.length>=2000},
+  {id:'survivor',     label:'Survivor',        desc:'Survive 3 minutes',           check:()=>gameTime>=180},
+  {id:'speedster',    label:'Speedster',       desc:'Boost for 10 seconds straight',check:()=>longestBoostChain>=10},
+  {id:'combo_king',   label:'Combo King',      desc:'Reach x5 combo',             check:()=>maxCombo>=5},
+  {id:'koth_win',     label:'King of the Hill',desc:'Win a KotH match',            check:()=>false},
+  {id:'infection_win',label:'Patient Zero',    desc:'Infect everyone',             check:()=>false},
+  {id:'elim_win',     label:'Last Snake',      desc:'Win Elimination',             check:()=>false},
+  {id:'wormhole',     label:'Teleporter',      desc:'Use a wormhole',             check:()=>false},
+  {id:'speed_demon',  label:'Speed Demon',     desc:'Hit a speed pad 10 times',   check:()=>false},
+];
+let unlockedAchievements = new Set(JSON.parse(localStorage.getItem('snakeArenaAchieve') || '[]'));
+let speedPadHits = 0;
+// level thresholds
+function xpForLevel(lvl){ return lvl * lvl * 120; }
+function calcLevel(xp){ let l=1; while(xpForLevel(l+1)<=xp) l++; return l; }
+function addXP(amount){
+  playerXP += amount;
+  localStorage.setItem('snakeArenaXP', String(playerXP));
+  const newLvl = calcLevel(playerXP);
+  if(newLvl > playerLevel){
+    playerLevel = newLvl;
+    showAchieveToast('🎉 LEVEL UP! Now Level ' + playerLevel, '#00ff66');
+  }
+  updateXpBar();
+}
+function updateXpBar(){
+  playerLevel = calcLevel(playerXP);
+  const lvlXp = xpForLevel(playerLevel);
+  const nextXp = xpForLevel(playerLevel+1);
+  const pct = ((playerXP - lvlXp) / (nextXp - lvlXp) * 100).toFixed(1);
+  const fill = document.getElementById('xpBarFill');
+  const badge = document.getElementById('levelBadge');
+  if(fill) fill.style.width = pct + '%';
+  if(badge) badge.textContent = 'Lv ' + playerLevel;
+}
+function showAchieveToast(msg, col){
+  const el = document.getElementById('achieveToast');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = col || '#ffd700';
+  el.style.borderColor = col || '#ffd700';
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.style.display='none'; }, 3200);
+}
+function unlockAchievement(id){
+  if(unlockedAchievements.has(id)) return;
+  unlockedAchievements.add(id);
+  localStorage.setItem('snakeArenaAchieve', JSON.stringify([...unlockedAchievements]));
+  const def = ACHIEVEMENTS.find(a=>a.id===id);
+  if(def) showAchieveToast('🏅 ' + def.label + ': ' + def.desc, '#ffd700');
+  renderAchievementPanel();
+  addXP(50);
+}
+function checkAchievements(){
+  for(const a of ACHIEVEMENTS){
+    if(!unlockedAchievements.has(a.id) && a.check()) unlockAchievement(a.id);
+  }
+}
+function renderAchievementPanel(){
+  const ul = document.getElementById('achieveList');
+  if(!ul) return;
+  ul.innerHTML = ACHIEVEMENTS.map(a=>{
+    const done = unlockedAchievements.has(a.id);
+    return '<li class="'+(done?'done':'')+'">'+(done?'🏅 ':'🔒 ')+a.label+'</li>';
+  }).join('');
+}
 
 // ── Voice command state ──
 let p1VoiceCmd = null, p1VoiceCmdTimer = 0;
@@ -1167,6 +1369,95 @@ function spawnFloatingText(x, y, text, color){
 }
 
 function triggerShake(amount){ screenShake = Math.min(24, screenShake + amount); }
+
+// =====================================================
+//  SOUND ENGINE (Web Audio API)
+// =====================================================
+let _audioCtx = null;
+function getAudioCtx(){
+  if(!_audioCtx){ try{ _audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  if(_audioCtx && _audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+function playTone(freq, type, vol, duration, attack, decay){
+  const ac = getAudioCtx(); if(!ac) return;
+  const osc = ac.createOscillator();
+  const gain = ac.createGain();
+  osc.connect(gain); gain.connect(ac.destination);
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, ac.currentTime);
+  const v = (vol||0.15) * 0.6;
+  gain.gain.setValueAtTime(0, ac.currentTime);
+  gain.gain.linearRampToValueAtTime(v, ac.currentTime + (attack||0.01));
+  gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + (duration||0.18) + (decay||0.05));
+  osc.start(ac.currentTime);
+  osc.stop(ac.currentTime + (duration||0.18) + (decay||0.05) + 0.02);
+}
+function playNoise(vol, duration){
+  const ac = getAudioCtx(); if(!ac) return;
+  const buf = ac.createBuffer(1, ac.sampleRate * duration, ac.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i] = Math.random()*2-1;
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const gain = ac.createGain();
+  const filt = ac.createBiquadFilter(); filt.type='bandpass'; filt.frequency.value=800;
+  src.connect(filt); filt.connect(gain); gain.connect(ac.destination);
+  gain.gain.setValueAtTime(vol*0.4, ac.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+duration);
+  src.start(); src.stop(ac.currentTime+duration+0.01);
+}
+function sndEat(){ playTone(440+Math.random()*120,'sine',0.1,0.07,0.005,0.04); }
+function sndBoost(){ playTone(220,'sawtooth',0.08,0.12,0.01,0.06); }
+function sndDeath(){ playTone(180,'sawtooth',0.18,0.4,0.01,0.3); playNoise(0.12,0.22); }
+function sndKill(){
+  playTone(660,'square',0.14,0.09,0.005,0.05);
+  setTimeout(()=>playTone(880,'square',0.1,0.07,0.005,0.04),60);
+}
+function sndPowerUp(){ playTone(600,'sine',0.12,0.07,0.01,0.05); playTone(900,'sine',0.08,0.07,0.02,0.06); }
+function sndStreak(n){
+  const freqs = [0,0,523,659,784,1047,1319];
+  const f = freqs[Math.min(n, freqs.length-1)] || 1047;
+  playTone(f,'square',0.18,0.18,0.01,0.12);
+  setTimeout(()=>playTone(f*1.5,'square',0.12,0.12,0.01,0.1),120);
+}
+function sndWormhole(){ playTone(400,'sine',0.12,0.05,0.01,0.04); playTone(200,'sine',0.12,0.18,0.05,0.12); }
+function sndLevelUp(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,'sine',0.14,0.12,0.01,0.07),i*80)); }
+function sndFlag(){ playTone(523,'triangle',0.13,0.1,0.01,0.06); playTone(784,'triangle',0.11,0.1,0.01,0.06); }
+
+// =====================================================
+//  KILL STREAK
+// =====================================================
+function registerKill(killer){
+  if(killer !== player) return;
+  killStreakCount++;
+  killStreakTimer = KILL_STREAK_WINDOW;
+  sndKill();
+  // Check achievements
+  if(killStreakCount === 1) unlockAchievement('first_blood');
+  if(killStreakCount === 2){ unlockAchievement('double_kill'); }
+  if(killStreakCount === 3){ unlockAchievement('triple_kill'); }
+  if(killStreakCount >= 5){ unlockAchievement('rampage'); }
+  const labels = {2:'DOUBLE KILL!',3:'TRIPLE KILL!',4:'QUAD KILL!',5:'RAMPAGE!',6:'UNSTOPPABLE!',7:'GODLIKE!'};
+  if(killStreakCount >= 2){
+    const label = labels[killStreakCount] || (killStreakCount + 'X KILL!');
+    const colors = ['','','#ff8800','#ff4444','#ff00ff','#ff0000','#ffffff','#00ffff'];
+    const col = colors[Math.min(killStreakCount,colors.length-1)] || '#ff0000';
+    const el = document.getElementById('killStreakBanner');
+    if(el){
+      el.textContent = label;
+      el.style.color = col;
+      el.style.textShadow = '0 0 30px '+col;
+      el.classList.add('show');
+      clearTimeout(el._t);
+      el._t = setTimeout(()=>el.classList.remove('show'), 1800);
+    }
+    sndStreak(killStreakCount);
+    triggerShake(killStreakCount * 2);
+  }
+  addXP(80 + killStreakCount * 40);
+  checkAchievements();
+}
 
 function addScoreForSnake(snake, base, label){
   if(!snake || !snake.isPlayer || base<=0) return;
@@ -1575,11 +1866,11 @@ function snakeRadius(len) {
   return 5 + skinnyScale * 0.78;
 }
 function snakeViewRange(len){ return Math.min(700 + len*5, 1600); }
+function npcSpeedMult(){ return difficultyLevel==='easy'?0.72 : difficultyLevel==='hard'?1.32 : 1.0; }
 function snakeBaseSpeed(len){ return Math.max(BASE_SPEED - len*0.003, 1.6); }
 function snakeBoostSpeed(len, snake){
   const turboMult = (snake && snake.isPlayer && ownsTurboJets) ? 2 : 1;
   if(teamMode && snake){
-    // In team mode: normal boost speed doubled, no length scaling
     return Math.min(56 * turboMult, (BASE_SPEED*BOOST_SPEED_MULT*2) * turboMult);
   }
   return Math.min(28 * turboMult, (BASE_SPEED*BOOST_SPEED_MULT) * turboMult);
@@ -1608,6 +1899,7 @@ function speedMultFor(snake, boosting){
   if(hasEffect(snake, 'speed10')) mult *= 1.45;
   if(hasEffect(snake, 'score2x')) mult *= 1.22;
   if(boosting && hasEffect(snake, 'boostPlus')) mult *= 1.28;
+  if(hasEffect(snake, 'speedPad')) mult *= 2.0;
   if(eventActive('haste')) mult *= 1.2;
   if(eventActive('lowgrav')) mult *= 1.22;
   if(eventActive('heavy')) mult *= 0.8;
@@ -1665,6 +1957,11 @@ function makeSnake(name, x, y, skinIdx, isPlayer){
       turnPlus: 0,
       regenPlus: 0,
       poopSaver: 0,
+      freeze: 0,
+      cloak: 0,
+      split: 0,
+      speedPad: 0,
+      frozen: 0,
     },
   };
 }
@@ -1800,6 +2097,9 @@ const POWERUP_TYPES = [
   {type:'regenPlus', color:'#88ffdd', label:'REG', duration:10},
   {type:'poopSaver', color:'#dddddd', label:'SAVE',duration:10},
   {type:'score2x',   color:'#ff55aa', label:'X2', duration:10},
+  {type:'freeze',    color:'#aaddff', label:'❄FRZ',duration:5},
+  {type:'cloak',     color:'#bbbbbb', label:'👻CLK',duration:8},
+  {type:'split',     color:'#ffccff', label:'✂SPL',duration:6},
 ];
 
 function spawnPowerUp(nearSnake){
@@ -1884,6 +2184,41 @@ function applyPowerUpEffect(snake, power){
       if(deathDots.length > MAX_DEATH_DOTS) deathDots.splice(0, deathDots.length - MAX_DEATH_DOTS);
       break;
     }
+    case 'freeze': {
+      snake.effects.freeze = Math.max(snake.effects.freeze||0, effectEnd);
+      const h2 = snakeHead(snake);
+      spawnFloatingText(h2.x, h2.y-40, '❄ FREEZE!', '#aaddff');
+      sndPowerUp();
+      // Freeze nearest enemy snakes
+      if(snake === player){
+        const allSnakes = [player2, ...npcs].filter(s=>s&&!s.dead&&s!==snake);
+        allSnakes.sort((a,b)=>{
+          const ha=snakeHead(a), hb=snakeHead(b);
+          const dx1=ha.x-h2.x, dy1=ha.y-h2.y;
+          const dx2=hb.x-h2.x, dy2=hb.y-h2.y;
+          return (dx1*dx1+dy1*dy1)-(dx2*dx2+dy2*dy2);
+        });
+        const targets = allSnakes.slice(0,4);
+        for(const t of targets){
+          t.effects = t.effects || {};
+          t.effects.frozen = (gameTime||0) + 3.5;
+          spawnFloatingText(snakeHead(t).x, snakeHead(t).y-30, '❄', '#aaddff');
+        }
+      }
+      break;
+    }
+    case 'cloak': {
+      snake.effects.cloak = Math.max(snake.effects.cloak||0, effectEnd);
+      spawnFloatingText(snakeHead(snake).x, snakeHead(snake).y-40, '👻 CLOAKED', '#cccccc');
+      sndPowerUp();
+      break;
+    }
+    case 'split': {
+      snake.effects.split = Math.max(snake.effects.split||0, effectEnd);
+      spawnFloatingText(snakeHead(snake).x, snakeHead(snake).y-40, '✂ SPLIT DECOY', '#ffccff');
+      sndPowerUp();
+      break;
+    }
   }
 }
 
@@ -1897,6 +2232,7 @@ function collectPowerUps(snake){
     const rr=r+p.r;
     if(dx*dx+dy*dy < rr*rr){
       applyPowerUpEffect(snake, p);
+      if(snake===player) sndPowerUp();
       powerUps.splice(i,1);
     }
   }
@@ -2145,6 +2481,8 @@ function initGame(){
   comboMult = 1; comboTimer = 0; maxCombo = 1;
   bestSpeed = 0; longestBoostChain = 0; currentBoostChain = 0; strongestNearMiss = 0;
   floatingTexts = []; screenShake = 0;
+  killStreakCount = 0; killStreakTimer = 0;
+  speedPadHits = 0;
   setRunSeedFromMode();
   ensureDailyChallenge();
   gameTime     = 0;
@@ -2502,6 +2840,58 @@ function initGame(){
       }
     };
   }
+
+  // ── Spawn speed pads ──
+  speedPads = [];
+  for(let i=0; i<SPEED_PAD_COUNT; i++){
+    const margin = 500;
+    speedPads.push({
+      x: margin + rng()*(worldSize-margin*2),
+      y: margin + rng()*(worldSize-margin*2),
+      angle: rng()*Math.PI*2
+    });
+  }
+
+  // ── Spawn wormholes ──
+  wormholes = [];
+  for(let i=0; i<WORMHOLE_COUNT; i++){
+    const margin = 600;
+    wormholes.push({
+      x1: margin + rng()*(worldSize-margin*2),
+      y1: margin + rng()*(worldSize-margin*2),
+      x2: margin + rng()*(worldSize-margin*2),
+      y2: margin + rng()*(worldSize-margin*2),
+    });
+  }
+
+  // ── Init KotH ──
+  if(kothMode){
+    kothX = worldSize/2; kothY = worldSize/2;
+    kothScores = {player:0, player2:0}; kothHolder = null;
+    kothMoveTimer = KOTH_MOVE_INTERVAL;
+    const kothEl = document.getElementById('kothHud');
+    if(kothEl) kothEl.style.display = 'block';
+  } else {
+    const kothEl = document.getElementById('kothHud');
+    if(kothEl) kothEl.style.display = 'none';
+  }
+
+  // ── Init Infection ──
+  infectedSnakes = new Set();
+  if(infectionMode && npcs.length > 0){
+    // First NPC is patient zero
+    const zero = npcs[Math.floor(rng()*npcs.length)];
+    infectedSnakes.add(zero);
+    zero._infected = true;
+  }
+  document.getElementById('infectionOverlay').style.display = 'none';
+
+  // ── Init Elimination ──
+  elimAlive = npcs.length + 1 + (player2 ? 1 : 0);
+
+  // Init XP bar
+  updateXpBar();
+  renderAchievementPanel();
 
   gameRunning=true;
   if(animId) cancelAnimationFrame(animId);
@@ -2988,6 +3378,9 @@ function update(dt){
     // Boost
     const canBoost=player.length>=BOOST_MIN_LEN;
     const boosting=(boostKey||boostClick)&&canBoost;
+    const wasBoosting = player._wasBoosting || false;
+    if(boosting && !wasBoosting) sndBoost();
+    player._wasBoosting = boosting;
     currentBoostChain = boosting ? (currentBoostChain + dt) : 0;
     if(currentBoostChain > longestBoostChain) longestBoostChain = currentBoostChain;
     if(boosting){
@@ -3377,6 +3770,152 @@ function update(dt){
     }
   }
 
+  // ── Kill streak timer ──
+  if(killStreakTimer > 0){
+    killStreakTimer -= dt;
+    if(killStreakTimer <= 0) killStreakCount = 0;
+  }
+
+  // ── XP per second (1 per second survived) ──
+  if(Math.floor(gameTime) > Math.floor(gameTime - dt)){
+    addXP(1);
+    checkAchievements();
+  }
+
+  // ── King of the Hill mode ──
+  if(kothMode && gameRunning){
+    kothMoveTimer -= dt;
+    if(kothMoveTimer <= 0){
+      kothMoveTimer = KOTH_MOVE_INTERVAL;
+      // Move hill to a new position
+      kothX = 800 + rng()*(worldSize-1600);
+      kothY = 800 + rng()*(worldSize-1600);
+    }
+    const allKothS = [player, player2, ...npcs].filter(s=>s&&!s.dead);
+    kothHolder = null;
+    for(const s of allKothS){
+      const h = snakeHead(s);
+      if(Math.hypot(h.x-kothX, h.y-kothY) < KOTH_RADIUS){
+        kothHolder = s; break;
+      }
+    }
+    if(kothHolder){
+      const key = kothHolder === player ? 'player' : kothHolder === player2 ? 'player2' : ('npc_'+kothHolder.name);
+      kothScores[key] = (kothScores[key]||0) + dt * KOTH_SCORE_RATE;
+      if(kothHolder === player) addScoreForSnake(player, dt * 40, 'HILL');
+      // Check win
+      if((kothScores['player']||0) >= KOTH_WIN_SCORE){
+        unlockAchievement('koth_win');
+        addXP(500);
+        gameRunning = false;
+        hideGameUI();
+        document.getElementById('deathMsg').textContent = '👑 KING OF THE HILL! You won with '+KOTH_WIN_SCORE+' pts!';
+        document.getElementById('deathScreen').style.display = 'flex';
+        return;
+      }
+    }
+    // Update KOTH HUD
+    const kothEl = document.getElementById('kothHud');
+    if(kothEl){
+      const pt = (kothScores['player']||0).toFixed(1);
+      const holder = kothHolder ? (kothHolder===player?'YOU':kothHolder.name||'NPC') : '—';
+      kothEl.innerHTML = '👑 <b>'+holder+'</b> holds the hill &nbsp;|&nbsp; Your score: <b>'+pt+' / '+KOTH_WIN_SCORE+'</b>';
+    }
+  }
+
+  // ── Infection mode ──
+  if(infectionMode && gameRunning){
+    const allInf = [player, player2, ...npcs].filter(s=>s&&!s.dead);
+    const cleanSnakes = allInf.filter(s=>!infectedSnakes.has(s));
+    // Spread infection
+    for(const inf of infectedSnakes){
+      if(inf.dead){ continue; }
+      const ih = snakeHead(inf);
+      for(const clean of cleanSnakes){
+        const ch = snakeHead(clean);
+        const dist = Math.hypot(ih.x-ch.x, ih.y-ch.y);
+        if(dist < snakeRadius(inf.length) + snakeRadius(clean.length) + 30){
+          infectedSnakes.add(clean);
+          if(clean === player){
+            showAchieveToast('🧟 You got INFECTED!', '#44ff44');
+            document.getElementById('infectionOverlay').style.display = 'block';
+          }
+          spawnFloatingText(ch.x, ch.y-30, '🧟 INFECTED!', '#44ee44');
+        }
+      }
+    }
+    // Check win (all NPCs infected and player still clean)
+    if(cleanSnakes.includes(player) && allInf.filter(s=>s!==player&&s!==player2).every(s=>infectedSnakes.has(s))){
+      unlockAchievement('infection_win');
+      addXP(400);
+      gameRunning = false;
+      hideGameUI();
+      document.getElementById('infectionOverlay').style.display = 'none';
+      document.getElementById('deathMsg').textContent = '🧬 INFECTION SURVIVED! You outlasted all zombies!';
+      document.getElementById('deathScreen').style.display = 'flex';
+      return;
+    }
+  }
+
+  // ── Elimination mode — track alive count ──
+  if(eliminationMode && gameRunning){
+    const aliveNow = npcs.filter(n=>!n.dead).length + (player&&!player.dead?1:0) + (player2&&!player2.dead?1:0);
+    elimAlive = aliveNow;
+    // Update HUD is handled in drawWorld via ingameLB
+    if(elimAlive <= 1 && (player&&!player.dead)){
+      unlockAchievement('elim_win');
+      addXP(600);
+      gameRunning = false;
+      hideGameUI();
+      document.getElementById('deathMsg').textContent = '🏆 LAST SNAKE STANDING! You won Elimination!';
+      document.getElementById('deathScreen').style.display = 'flex';
+      return;
+    }
+  }
+
+  // ── Speed Pad detection ──
+  const allSpeeding = [player, player2, ...npcs].filter(s=>s&&!s.dead);
+  for(const s of allSpeeding){
+    const sh = snakeHead(s);
+    for(const pad of speedPads){
+      if(Math.hypot(sh.x-pad.x, sh.y-pad.y) < SPEED_PAD_SIZE * 0.6){
+        s.effects = s.effects || {};
+        s.effects.speedPad = (gameTime||0) + 2.5;
+        if(s === player){
+          speedPadHits++;
+          if(speedPadHits >= 10) unlockAchievement('speed_demon');
+        }
+        break;
+      }
+    }
+  }
+
+  // ── Wormhole teleport ──
+  for(const s of allSpeeding){
+    if(s._wormCool && s._wormCool > gameTime) continue;
+    const sh = snakeHead(s);
+    for(const wh of wormholes){
+      const d1 = Math.hypot(sh.x-wh.x1, sh.y-wh.y1);
+      const d2 = Math.hypot(sh.x-wh.x2, sh.y-wh.y2);
+      let dest = null;
+      if(d1 < WORMHOLE_RADIUS) dest = {x:wh.x2, y:wh.y2};
+      else if(d2 < WORMHOLE_RADIUS) dest = {x:wh.x1, y:wh.y1};
+      if(dest){
+        const shift = {x:dest.x-sh.x, y:dest.y-sh.y};
+        for(const seg of s.segs){
+          seg.x += shift.x; seg.y += shift.y;
+        }
+        s._wormCool = gameTime + WORMHOLE_COOLDOWN;
+        if(s===player){
+          sndWormhole();
+          unlockAchievement('wormhole');
+          spawnFloatingText(dest.x, dest.y-40, '🌀 WORMHOLE!', '#aa88ff');
+        }
+        break;
+      }
+    }
+  }
+
   lbTimer+=dt;
   if(lbTimer>=0.35){ lbTimer=0; updateIngameLB(); }
 }
@@ -3561,6 +4100,7 @@ function eatDots(snake, dots, value, instantGrowth, radiusMult){
       const scoreBase = Math.max(1, Math.floor(gain * (gain >= 100 ? 1 : 18)));
       addScoreForSnake(snake, scoreBase, gain>=100?'BONUS':'');
       if(snake===player){
+        sndEat();
         if(dots === deathDots) advanceObjective('death', 1);
         else advanceObjective('dots', 1);
       }
@@ -5637,11 +6177,16 @@ function updateNpc(npc, dt){
   } else { npc.npcBoostDrain=0; npc.npcBoost=false; }
 
   const _npcCarryPenalty = (ctfMode && npc.ctfCarrying) ? 0.5 : 1;
+  // Check if NPC is frozen by player freeze power-up
+  if(npc.effects && npc.effects.frozen && npc.effects.frozen > (gameTime||0)){
+    // Frozen NPC: skip movement
+    return;
+  }
   const spd = ((npc.npcMode === 'bodyguard' && npc._guardMatchSpd != null)
     ? npc._guardMatchSpd
     : (npc.npcMode === 'circler' && npc._circlerMatchSpd != null)
     ? npc._circlerMatchSpd
-    : (npc.npcBoost ? snakeBoostSpeed(npc.length, npc) : snakeBaseSpeed(npc.length)) * speedMultFor(npc, npc.npcBoost)) * _npcCarryPenalty;
+    : (npc.npcBoost ? snakeBoostSpeed(npc.length, npc) : snakeBaseSpeed(npc.length)) * speedMultFor(npc, npc.npcBoost)) * _npcCarryPenalty * npcSpeedMult();
   moveSnakeFixed(npc, npc.npcAngle, spd);
   closeLoopBody(npc, dt);
 }
@@ -5847,6 +6392,7 @@ function isOnOwnLand(snake){
 function killPlayer(cause){
   if(!player||player.dead) return;
   if(isOnOwnLand(player)) return;
+  sndDeath();
   // CTF: respawn at base instead of game over
   if(ctfMode){
     if(player.ctfCarrying){ player.ctfCarrying.carrier = null; player.ctfCarrying = null; } // drop flag in place
@@ -5858,6 +6404,8 @@ function killPlayer(cause){
     return;
   }
   player.dead=true; spawnDeathDots(player); boostClick=false;
+  // Award XP for run: 1/sec survived already + bonus for score
+  addXP(Math.floor(runScore / 100));
   const entry={name:player.name, score:Math.floor(player.length), kills, date:new Date().toLocaleDateString()};
   leaderboard.push(entry); leaderboard.sort((a,b)=>b.score-a.score);
   leaderboard=leaderboard.slice(0,10);
@@ -5927,6 +6475,10 @@ function hideGameUI(){
   document.getElementById('splitDivider').style.display='none';
   const ctfHudH = document.getElementById('ctfHud');
   if(ctfHudH) ctfHudH.style.display='none';
+  const kothHudH = document.getElementById('kothHud');
+  if(kothHudH) kothHudH.style.display='none';
+  const infOvH = document.getElementById('infectionOverlay');
+  if(infOvH) infOvH.style.display='none';
   const mic1=document.getElementById('voiceMic1');
   const mic2=document.getElementById('voiceMic2');
   const vt=document.getElementById('voiceToast');
@@ -5975,8 +6527,15 @@ function killNpc(npc, killer){
   npc.dead=true; spawnDeathDots(npc);
   if(killer===player)  kills++;
   if(killer===player2) kills2++;
-  if(killer===player){ addScoreForSnake(player, 850, 'KILL'); triggerShake(6); }
+  if(killer===player){ addScoreForSnake(player, 850, 'KILL'); triggerShake(6); registerKill(killer); }
   if(killer===player2){ addScoreForSnake(player2, 850, 'KILL'); }
+  // In elimination mode, don't respawn NPCs
+  if(eliminationMode){
+    infectedSnakes.delete(npc);
+    const idx2=npcs.indexOf(npc);
+    if(idx2!==-1) npcs.splice(idx2,1);
+    return;
+  }
   const idx=npcs.indexOf(npc);
   setTimeout(()=>{
     let fresh;
@@ -6356,6 +6915,98 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
     ctx.fillText(f.text, f.x, f.y);
     ctx.restore();
   }
+
+  // ── Speed pads ──
+  for(const pad of speedPads){
+    if(pad.x<vx1-SPEED_PAD_SIZE||pad.x>vx2+SPEED_PAD_SIZE||pad.y<vy1-SPEED_PAD_SIZE||pad.y>vy2+SPEED_PAD_SIZE) continue;
+    ctx.save();
+    ctx.translate(pad.x, pad.y);
+    ctx.rotate(pad.angle);
+    const baseSize = SPEED_PAD_SIZE;
+    // Glow
+    const spGrad = ctx.createRadialGradient(0,0,0,0,0,baseSize);
+    spGrad.addColorStop(0,'rgba(0,255,180,0.38)');
+    spGrad.addColorStop(1,'rgba(0,255,180,0)');
+    ctx.beginPath(); ctx.arc(0,0,baseSize,0,Math.PI*2);
+    ctx.fillStyle=spGrad; ctx.fill();
+    // Arrow chevrons
+    ctx.strokeStyle='#00ffbb'; ctx.lineWidth=3/zoom;
+    const pulse = 0.55+0.45*Math.sin(gameTime*4+pad.angle);
+    ctx.globalAlpha = 0.5 + 0.5*pulse;
+    for(let ai=0;ai<3;ai++){
+      const off = (ai-1)*22;
+      ctx.beginPath();
+      ctx.moveTo(-16, off+10);
+      ctx.lineTo(0, off-8);
+      ctx.lineTo(16, off+10);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ── Wormholes ──
+  for(const wh of wormholes){
+    for(const [wx,wy] of [[wh.x1,wh.y1],[wh.x2,wh.y2]]){
+      if(wx<vx1-100||wx>vx2+100||wy<vy1-100||wy>vy2+100) continue;
+      ctx.save();
+      const t2 = gameTime*2.5;
+      const whGrad = ctx.createRadialGradient(wx,wy,0,wx,wy,WORMHOLE_RADIUS*1.5);
+      whGrad.addColorStop(0,'rgba(180,0,255,0.6)');
+      whGrad.addColorStop(0.5,'rgba(80,0,255,0.3)');
+      whGrad.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.beginPath(); ctx.arc(wx,wy,WORMHOLE_RADIUS*1.5,0,Math.PI*2);
+      ctx.fillStyle=whGrad; ctx.fill();
+      // Spinning ring
+      ctx.strokeStyle='#cc44ff'; ctx.lineWidth=3.5/zoom;
+      for(let ri=0;ri<3;ri++){
+        ctx.beginPath();
+        ctx.arc(wx,wy,WORMHOLE_RADIUS*(0.6+ri*0.2),t2+ri*1.2,t2+ri*1.2+Math.PI*1.4);
+        ctx.stroke();
+      }
+      ctx.fillStyle='#aa00ff88';
+      ctx.beginPath(); ctx.arc(wx,wy,WORMHOLE_RADIUS*0.45,0,Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // ── King of the Hill zone ──
+  if(kothMode){
+    ctx.save();
+    const kpulse = 0.5+0.5*Math.sin(gameTime*2.5);
+    const kGrad = ctx.createRadialGradient(kothX,kothY,0,kothX,kothY,KOTH_RADIUS*1.4);
+    kGrad.addColorStop(0,'rgba(255,215,0,0.22)');
+    kGrad.addColorStop(0.6,'rgba(255,215,0,0.1)');
+    kGrad.addColorStop(1,'rgba(255,215,0,0)');
+    ctx.beginPath(); ctx.arc(kothX,kothY,KOTH_RADIUS*1.4,0,Math.PI*2);
+    ctx.fillStyle=kGrad; ctx.fill();
+    ctx.beginPath(); ctx.arc(kothX,kothY,KOTH_RADIUS,0,Math.PI*2);
+    ctx.strokeStyle='#ffd700'; ctx.lineWidth=(4+3*kpulse)/zoom;
+    ctx.shadowColor='#ffd700'; ctx.shadowBlur=18/zoom;
+    ctx.stroke(); ctx.shadowBlur=0;
+    ctx.font='bold '+(22/zoom)+'px Segoe UI';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='#ffd700';
+    ctx.fillText('👑 HILL', kothX, kothY);
+    ctx.restore();
+  }
+
+  // ── FOG OF WAR ──
+  if(fogMode && focusSnake && !focusSnake.dead){
+    const fh = snakeHead(focusSnake);
+    ctx.save();
+    const fogRadius = 1050 / zoom;
+    const fogGrad = ctx.createRadialGradient(fh.x, fh.y, fogRadius*0.55, fh.x, fh.y, fogRadius);
+    fogGrad.addColorStop(0,'rgba(0,0,0,0)');
+    fogGrad.addColorStop(1,'rgba(0,0,0,0.93)');
+    ctx.beginPath(); ctx.rect(0,0,worldSize,worldSize);
+    ctx.arc(fh.x,fh.y,fogRadius,0,Math.PI*2,true);
+    ctx.fillStyle='rgba(0,0,0,0.95)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(fh.x,fh.y,fogRadius,0,Math.PI*2);
+    ctx.fillStyle=fogGrad; ctx.fill();
+    ctx.restore();
+  }
+
   ctx.restore();
 }
 
@@ -6561,13 +7212,38 @@ function drawSnake(snake){
     ||((boostKey||boostClick)&&snake===player)
     ||(twoPlayerMode&&p2BoostKey&&snake===player2);
 
+  // Cloak: NPC snakes with cloak effect are invisible except to the player viewing
+  const isCloaked = hasEffect(snake, 'cloak') && snake !== player && snake !== player2;
+  const isInfected = infectedSnakes.has(snake);
+
   ctx.save();
+  if(isCloaked) ctx.globalAlpha = 0.18;
   ctx.lineCap='round'; ctx.lineJoin='round';
+
+  // Infection glow overlay
+  if(isInfected){
+    ctx.save();
+    const iglow = 0.5 + 0.5*Math.sin(gameTime*5);
+    ctx.shadowColor='#44ff44'; ctx.shadowBlur=20*iglow;
+    drawSmoothPath(segs);
+    ctx.strokeStyle='rgba(0,255,0,0.35)'; ctx.lineWidth=r*2+8; ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.restore();
+  }
+
+  // Speed pad flash overlay
+  if(hasEffect(snake,'speedPad') && snake===player){
+    ctx.save();
+    const spf = 0.3 + 0.7*Math.abs(Math.sin(gameTime*12));
+    drawSmoothPath(segs);
+    ctx.strokeStyle=`rgba(0,255,190,${spf*0.4})`; ctx.lineWidth=r*2+10; ctx.stroke();
+    ctx.restore();
+  }
 
   // Outline
   drawSmoothPath(segs);
-  ctx.strokeStyle='rgba(0,0,0,.42)'; ctx.lineWidth=r*2+4; ctx.globalAlpha=.5;
-  ctx.stroke(); ctx.globalAlpha=1;
+  ctx.strokeStyle='rgba(0,0,0,.42)'; ctx.lineWidth=r*2+4; ctx.globalAlpha*=0.5;
+  ctx.stroke(); ctx.globalAlpha= isCloaked ? 0.18 : 1;
 
   // Body
   drawBodyColored(segs,skin,r);
@@ -6575,7 +7251,7 @@ function drawSnake(snake){
   // Boost glow
   if(isBoosting){
     drawSmoothPath(segs);
-    ctx.strokeStyle='#ffffff44'; ctx.lineWidth=r*2+6; ctx.globalAlpha=.18; ctx.stroke(); ctx.globalAlpha=1;
+    ctx.strokeStyle='#ffffff44'; ctx.lineWidth=r*2+6; ctx.globalAlpha=isCloaked?0.05:.18; ctx.stroke(); ctx.globalAlpha=isCloaked?0.18:1;
   }
 
   // Head
@@ -7105,6 +7781,10 @@ function showTitle(){
   document.getElementById('p2DeadPanel').style.display  ='none';
   document.getElementById('minimap').style.display      ='block';
   document.getElementById('minimap2').style.display     ='none';
+  const kothHudST = document.getElementById('kothHud');
+  if(kothHudST) kothHudST.style.display='none';
+  const infOvST = document.getElementById('infectionOverlay');
+  if(infOvST) infOvST.style.display='none';
   renderLeaderboard();
   ensureDailyChallenge();
   const dc = dailyChallengeData && dailyChallengeData.challenge
@@ -7113,6 +7793,8 @@ function showTitle(){
   document.querySelector('.subtitle').textContent = 'Grow big. Eat everything. Survive the zone. LAN works on any device on the same WiFi.  |  '+dc;
   renderSkinPreview(1);
   renderSkinPreview(2);
+  renderAchievementPanel();
+  updateXpBar();
 }
 
 function renderLeaderboard(){
@@ -7220,6 +7902,45 @@ document.getElementById('btnMultiTeam').addEventListener('click',()=>{
   document.getElementById('btnMultiTeam').classList.toggle('active', multiTeamMode);
   updateTeamConfigRow();
 });
+document.getElementById('btnKoth').addEventListener('click',()=>{
+  kothMode = !kothMode;
+  document.getElementById('btnKoth').classList.toggle('active', kothMode);
+  if(kothMode){ infectionMode=false; eliminationMode=false;
+    document.getElementById('btnInfection').classList.remove('active');
+    document.getElementById('btnElimination').classList.remove('active');
+  }
+});
+document.getElementById('btnInfection').addEventListener('click',()=>{
+  infectionMode = !infectionMode;
+  document.getElementById('btnInfection').classList.toggle('active', infectionMode);
+  if(infectionMode){ kothMode=false; eliminationMode=false;
+    document.getElementById('btnKoth').classList.remove('active');
+    document.getElementById('btnElimination').classList.remove('active');
+  }
+});
+document.getElementById('btnElimination').addEventListener('click',()=>{
+  eliminationMode = !eliminationMode;
+  document.getElementById('btnElimination').classList.toggle('active', eliminationMode);
+  if(eliminationMode){ kothMode=false; infectionMode=false;
+    document.getElementById('btnKoth').classList.remove('active');
+    document.getElementById('btnInfection').classList.remove('active');
+  }
+});
+document.getElementById('btnFog').addEventListener('click',()=>{
+  fogMode = !fogMode;
+  document.getElementById('btnFog').classList.toggle('active', fogMode);
+});
+function setDifficulty(level){
+  difficultyLevel = level;
+  ['diffEasy','diffNormal','diffHard'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  const map = {easy:'diffEasy', normal:'diffNormal', hard:'diffHard'};
+  document.getElementById(map[level]).classList.add('active');
+}
+document.getElementById('diffEasy').addEventListener('click',()=>setDifficulty('easy'));
+document.getElementById('diffNormal').addEventListener('click',()=>setDifficulty('normal'));
+document.getElementById('diffHard').addEventListener('click',()=>setDifficulty('hard'));
+document.getElementById('boostBtn').addEventListener('pointerdown',()=>{ boostClick=true; });
+document.getElementById('boostBtn').addEventListener('pointerup',()=>{ boostClick=false; });
 function setTeamP2Config(val){
   teamP2Config = val;
   ['tcVs','tcBothRed','tcBothBlue'].forEach(id=>document.getElementById(id).classList.remove('active'));
@@ -7309,6 +8030,61 @@ document.getElementById('shopBuySaw').addEventListener('click',()=>{
 });
 
 window.addEventListener('beforeunload', disconnectMultiplayer);
+
+// =====================================================
+//  MOBILE JOYSTICK
+// =====================================================
+(function(){
+  const area = document.getElementById('joystickArea');
+  const knob = document.getElementById('joystickKnob');
+  const boostBtnEl = document.getElementById('boostBtn');
+  if(!area||!knob) return;
+  // Show joystick on touch devices
+  const isTouchDev = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  if(isTouchDev){ area.style.display='block'; area.style.pointerEvents='auto'; if(boostBtnEl) boostBtnEl.style.display='block'; }
+
+  let joystickActive = false;
+  let jStartX = 0, jStartY = 0;
+  const JR = 34; // max knob travel radius
+  const BASE_R = 55;
+
+  function onJoyStart(e){
+    joystickActive=true;
+    const t = e.touches ? e.touches[0] : e;
+    jStartX = t.clientX; jStartY = t.clientY;
+    e.preventDefault();
+  }
+  function onJoyMove(e){
+    if(!joystickActive) return;
+    const t = e.touches ? e.touches[0] : e;
+    const dx = t.clientX - jStartX;
+    const dy = t.clientY - jStartY;
+    const dist = Math.hypot(dx,dy);
+    const ang = Math.atan2(dy,dx);
+    const cx = Math.min(dist,JR) * Math.cos(ang);
+    const cy2 = Math.min(dist,JR) * Math.sin(ang);
+    knob.style.left = (BASE_R + cx) + 'px';
+    knob.style.top  = (BASE_R + cy2) + 'px';
+    knob.style.transform = 'none';
+    if(gameRunning && player && !player.dead){
+      const pw = canvas.width/2, ph = canvas.height/2;
+      const wx = pw + Math.cos(ang)*500;
+      const wy = ph + Math.sin(ang)*500;
+      mouseX = wx; mouseY = wy;
+    }
+    e.preventDefault();
+  }
+  function onJoyEnd(e){
+    joystickActive=false;
+    knob.style.left='50%'; knob.style.top='50%';
+    knob.style.transform='translate(-50%,-50%)';
+    e.preventDefault();
+  }
+  area.addEventListener('touchstart', onJoyStart, {passive:false});
+  area.addEventListener('touchmove',  onJoyMove,  {passive:false});
+  area.addEventListener('touchend',   onJoyEnd,   {passive:false});
+  area.addEventListener('touchcancel',onJoyEnd,   {passive:false});
+})();
 
 // ── Start ──
 showTitle();
