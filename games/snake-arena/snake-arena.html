@@ -963,6 +963,10 @@ let infectionMode  = false;
 let infectedSnakes = new Set(); // snake refs that are zombie
 let eliminationMode = false;
 let elimAlive      = 0;       // count of living snakes at start
+// Elimination targeting sniper
+let elimTargetTimer   = 30;   // countdown to next target appearing
+let elimTarget        = null; // the snake currently targeted
+let elimTargetShootTimer = 0; // counts up to 5, then shoots
 let fogMode        = false;
 let difficultyLevel = 'easy'; // 'easy' | 'normal' | 'hard'
 // speed pads & wormholes
@@ -1065,7 +1069,8 @@ let lastEventType = 'none';
 let seedLabel = '';
 let rngState = 0;
 
-let progressData = JSON.parse(localStorage.getItem('snakeArenaProgress') || '{"unlockedTrails":["none"],"unlockedBadges":[],"unlockedTracks":["battle"],"bestScore":0}');
+let progressData = JSON.parse(localStorage.getItem('snakeArenaProgress') || '{"unlockedTrails":["none"],"unlockedBadges":[],"unlockedTracks":["battle"],"bestScore":0,"bestLength":10}');
+if(progressData.bestLength == null) progressData.bestLength = 10;
 let dailyChallengeData = JSON.parse(localStorage.getItem('snakeArenaDaily') || '{}');
 // ── Shop persistence ──
 let playerCoins = Math.max(0, parseInt(localStorage.getItem('snakeArenaCoins') || '0'));
@@ -1527,11 +1532,11 @@ function advanceObjective(id, amount){
 
 function startBiomeEvent(){
   const types = [
-    'fog',
+    ...(eliminationMode || infectionMode ? [] : ['fog']),
     'lowgrav',
     'dotstorm',
     'haste',
-    ...(teamMode ? [] : ['heavy']),
+    ...(teamMode || eliminationMode || infectionMode ? [] : ['heavy']),
     'magnetstorm',
     'regenrain',
     'powersurge',
@@ -1563,6 +1568,7 @@ function activeEventSummary(){
 function updateProgressUnlocks(){
   let changed = false;
   if(runScore > (progressData.bestScore||0)){ progressData.bestScore = runScore; changed = true; }
+  if(!teamMode && !ctfMode && player && player.length > (progressData.bestLength||10)){ progressData.bestLength = player.length; changed = true; }
   if(runScore >= 12000 && !progressData.unlockedTrails.includes('ember')){ progressData.unlockedTrails.push('ember'); changed = true; }
   if(maxCombo >= 4 && !progressData.unlockedBadges.includes('Combo Rookie')){ progressData.unlockedBadges.push('Combo Rookie'); changed = true; }
   if(kills >= 10 && !progressData.unlockedTracks.includes('overdrive')){ progressData.unlockedTracks.push('overdrive'); changed = true; }
@@ -2528,6 +2534,7 @@ function initGame(){
     player.team = (teamMode||ctfMode) ? _p1TeamMode : 'blue';
     if(teamMode||ctfMode){ player.length = TEAM_START_LENGTH; player.bulk = 900;
       player.skin = player.team === 'red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE; }
+    else { player.length = Math.max(BASE_LENGTH, progressData.bestLength || BASE_LENGTH); }
   }
   camX = snakeHead(player).x; camY = snakeHead(player).y;
 
@@ -2733,7 +2740,8 @@ function initGame(){
   // deathDots intentionally NOT reset between rounds
 
   // Spawn permanent bodyguards for each human player
-  if(!ctfMode){
+  // (disabled in CTF, KotH, Elimination modes)
+  if(!ctfMode && !kothMode && !eliminationMode){
     for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player, i));
     if(twoPlayerMode && player2){
       for(let i=0; i<BODYGUARD_COUNT; i++) npcs.push(spawnBodyguardFor(player2, i));
@@ -2745,7 +2753,7 @@ function initGame(){
     }
   }
   // Spawn bodyguards for the enemy commander
-  if(teamMode && enemyCommander) spawnEnemyCommanderGuards(enemyCommander);
+  if(teamMode && !kothMode && !eliminationMode && enemyCommander) spawnEnemyCommanderGuards(enemyCommander);
 
   boostKey=false; boostClick=false; boostDrainTimer=0;
   lbTimer=0; npcSpawnTimer=0;
@@ -2876,18 +2884,27 @@ function initGame(){
     if(kothEl) kothEl.style.display = 'none';
   }
 
-  // ── Init Infection ──
+  // ── Init Infection —— random patient zero (NPC or player) ──
   infectedSnakes = new Set();
-  if(infectionMode && npcs.length > 0){
-    // First NPC is patient zero
-    const zero = npcs[Math.floor(rng()*npcs.length)];
-    infectedSnakes.add(zero);
-    zero._infected = true;
+  if(infectionMode){
+    const _allStart = [player, player2, ...npcs].filter(s=>s&&!s.dead);
+    if(_allStart.length > 0){
+      const _pz = _allStart[Math.floor(rng()*_allStart.length)];
+      infectedSnakes.add(_pz);
+      _pz._infected = true;
+      if(_pz === player || _pz === player2){
+        showAchieveToast('🧟 YOU are Patient Zero!', '#44ff44');
+        document.getElementById('infectionOverlay').style.display = 'block';
+      } else {
+        spawnFloatingText(snakeHead(_pz).x, snakeHead(_pz).y-40, '🧟 Patient Zero!', '#44ff44');
+      }
+    }
   }
   document.getElementById('infectionOverlay').style.display = 'none';
 
   // ── Init Elimination ──
   elimAlive = npcs.length + 1 + (player2 ? 1 : 0);
+  elimTarget = null; elimTargetTimer = 30; elimTargetShootTimer = 0;
 
   // Init XP bar
   updateXpBar();
@@ -3673,6 +3690,10 @@ function update(dt){
   if(p1alive && player.pendingGrowth>0){ const g=Math.min(player.pendingGrowth,_growRate*growthRateMult(player)*dt); player.length+=g; player.pendingGrowth-=g; }
   if(p2alive && player2.pendingGrowth>0){ const g=Math.min(player2.pendingGrowth,_growRate*growthRateMult(player2)*dt); player2.length+=g; player2.pendingGrowth-=g; }
   for(const npc of npcs) if(!npc.dead && npc.pendingGrowth>0){ const g=Math.min(npc.pendingGrowth,_growRate*growthRateMult(npc)*dt); npc.length+=g; npc.pendingGrowth-=g; }
+  if(p1alive && !teamMode && !ctfMode){
+    if(player.length > maxPlayerLen) maxPlayerLen = player.length;
+    if(player.length > (progressData.bestLength||10)){ progressData.bestLength = player.length; localStorage.setItem('snakeArenaProgress', JSON.stringify(progressData)); }
+  }
 
   if(!teamMode && !ctfMode){
     // World size stays fixed — camera zooms out instead
@@ -3807,9 +3828,11 @@ function update(dt){
       if((kothScores['player']||0) >= KOTH_WIN_SCORE){
         unlockAchievement('koth_win');
         addXP(500);
+        playerCoins += 25;
+        localStorage.setItem('snakeArenaCoins', String(playerCoins));
         gameRunning = false;
         hideGameUI();
-        document.getElementById('deathMsg').textContent = '👑 KING OF THE HILL! You won with '+KOTH_WIN_SCORE+' pts!';
+        document.getElementById('deathMsg').innerHTML = '👑 KING OF THE HILL! You won with '+KOTH_WIN_SCORE+' pts!<br><span style="color:#ffd700;font-size:.95em">🏆 +25 🪙 coins earned! Total: '+playerCoins+'</span>';
         document.getElementById('deathScreen').style.display = 'flex';
         return;
       }
@@ -3827,34 +3850,79 @@ function update(dt){
   if(infectionMode && gameRunning){
     const allInf = [player, player2, ...npcs].filter(s=>s&&!s.dead);
     const cleanSnakes = allInf.filter(s=>!infectedSnakes.has(s));
-    // Spread infection
-    for(const inf of infectedSnakes){
-      if(inf.dead){ continue; }
+    // Zombie NPC AI: infected NPCs hunt the nearest clean snake
+    for(const npc of npcs){
+      if(npc.dead || !infectedSnakes.has(npc)) continue;
+      let _nearest = null, _nearD = Infinity;
+      for(const c of cleanSnakes){
+        const _d = Math.hypot(snakeHead(c).x - snakeHead(npc).x, snakeHead(c).y - snakeHead(npc).y);
+        if(_d < _nearD){ _nearD = _d; _nearest = c; }
+      }
+      if(_nearest){
+        const _nh = snakeHead(npc), _th = snakeHead(_nearest);
+        npc.npcAngle = Math.atan2(_th.y - _nh.y, _th.x - _nh.x);
+        npc.npcBoost = true;
+      }
+    }
+    // Clean NPC AI: non-infected NPCs flee from the nearest zombie within 1200px
+    for(const npc of npcs){
+      if(npc.dead || infectedSnakes.has(npc)) continue;
+      let _nearestZ = null, _nearestZD = Infinity;
+      for(const z of infectedSnakes){
+        if(z.dead) continue;
+        const _d = Math.hypot(snakeHead(z).x - snakeHead(npc).x, snakeHead(z).y - snakeHead(npc).y);
+        if(_d < _nearestZD){ _nearestZD = _d; _nearestZ = z; }
+      }
+      if(_nearestZ && _nearestZD < 1200){
+        const _nh = snakeHead(npc), _zh = snakeHead(_nearestZ);
+        // Run directly away from the zombie
+        npc.npcAngle = Math.atan2(_nh.y - _zh.y, _nh.x - _zh.x);
+        npc.npcBoost = _nearestZD < 600; // boost when zombie is close
+      }
+    }
+    // Spread infection: only zombie HEAD touching any part of a clean snake infects it
+    for(const inf of [...infectedSnakes]){
+      if(inf.dead) continue;
       const ih = snakeHead(inf);
+      const ir = snakeRadius(inf.length);
       for(const clean of cleanSnakes){
-        const ch = snakeHead(clean);
-        const dist = Math.hypot(ih.x-ch.x, ih.y-ch.y);
-        if(dist < snakeRadius(inf.length) + snakeRadius(clean.length) + 30){
+        const cr = snakeRadius(clean.length);
+        // Check zombie head vs clean head
+        const hh = snakeHead(clean);
+        let hit = Math.hypot(ih.x-hh.x, ih.y-hh.y) < ir + cr + 12;
+        // Also check zombie head vs clean body segments
+        if(!hit){
+          for(let _si=2; _si<clean.segs.length; _si+=2){
+            const _sg = clean.segs[_si];
+            if(Math.hypot(ih.x-_sg.x, ih.y-_sg.y) < ir + cr + 8){ hit=true; break; }
+          }
+        }
+        if(hit){
           infectedSnakes.add(clean);
+          clean._infected = true;
           if(clean === player){
             showAchieveToast('🧟 You got INFECTED!', '#44ff44');
             document.getElementById('infectionOverlay').style.display = 'block';
           }
-          spawnFloatingText(ch.x, ch.y-30, '🧟 INFECTED!', '#44ee44');
+          spawnFloatingText(hh.x, hh.y-30, '🧟 INFECTED!', '#44ee44');
         }
       }
     }
-    // Check win (all NPCs infected and player still clean)
-    if(cleanSnakes.includes(player) && allInf.filter(s=>s!==player&&s!==player2).every(s=>infectedSnakes.has(s))){
+    // Win condition: player is the only clean survivor
+    const cleanNow = allInf.filter(s=>!infectedSnakes.has(s));
+    if(player && !player.dead && !infectedSnakes.has(player) && cleanNow.filter(s=>s!==player&&s!==player2).length === 0){
       unlockAchievement('infection_win');
       addXP(400);
+      playerCoins += 100;
+      localStorage.setItem('snakeArenaCoins', String(playerCoins));
       gameRunning = false;
       hideGameUI();
       document.getElementById('infectionOverlay').style.display = 'none';
-      document.getElementById('deathMsg').textContent = '🧬 INFECTION SURVIVED! You outlasted all zombies!';
+      document.getElementById('deathMsg').innerHTML = '🧬 INFECTION SURVIVED! You are the last survivor!<br><span style="color:#ffd700;font-size:.95em">🧸 +100 🪙 coins earned! Total: '+playerCoins+'</span>';
       document.getElementById('deathScreen').style.display = 'flex';
       return;
     }
+    // Lose condition: player got infected — show it but don't end game, they play as zombie
   }
 
   // ── Elimination mode — track alive count ──
@@ -3865,11 +3933,56 @@ function update(dt){
     if(elimAlive <= 1 && (player&&!player.dead)){
       unlockAchievement('elim_win');
       addXP(600);
+      playerCoins += 50;
+      localStorage.setItem('snakeArenaCoins', String(playerCoins));
       gameRunning = false;
       hideGameUI();
-      document.getElementById('deathMsg').textContent = '🏆 LAST SNAKE STANDING! You won Elimination!';
+      document.getElementById('deathMsg').innerHTML = '🏆 LAST SNAKE STANDING! You won Elimination!<br><span style="color:#ffd700;font-size:.95em">⚔️ +50 🪙 coins earned! Total: '+playerCoins+'</span>';
       document.getElementById('deathScreen').style.display = 'flex';
       return;
+    }
+
+    // ── Sniper Target mechanic ──
+    const allElimAlive = [player, player2, ...npcs].filter(s=>s&&!s.dead);
+    if(!elimTarget || elimTarget.dead){
+      // No active target — count down to next
+      elimTargetTimer -= dt;
+      if(elimTargetTimer <= 0){
+        // Pick a random living snake
+        if(allElimAlive.length > 0){
+          elimTarget = allElimAlive[Math.floor(rng()*allElimAlive.length)];
+          elimTargetShootTimer = 0;
+          const h = snakeHead(elimTarget);
+          spawnFloatingText(h.x, h.y - 60, '🎯 TARGETED!', '#ff2222');
+          if(elimTarget === player || elimTarget === player2)
+            triggerShake(6);
+        }
+      }
+    } else {
+      // Active target — count up to 5 seconds then shoot
+      elimTargetShootTimer += dt;
+      if(elimTargetShootTimer >= 5){
+        const h = snakeHead(elimTarget);
+        // Check if target is player — eliminate them
+        if(elimTarget === player){
+          spawnFloatingText(h.x, h.y - 40, '💥 SHOT!', '#ff2222');
+          triggerShake(18);
+          // Kill the player
+          player.dead = true;
+          player.deathReason = 'sniper';
+        } else if(elimTarget === player2){
+          spawnFloatingText(h.x, h.y - 40, '💥 SHOT!', '#ff2222');
+          triggerShake(18);
+          player2.dead = true;
+          player2.deathReason = 'sniper';
+        } else {
+          // NPC — eliminate them
+          spawnFloatingText(h.x, h.y - 40, '💥 SHOT!', '#ff4400');
+          elimTarget.dead = true;
+        }
+        elimTarget = null;
+        elimTargetTimer = 30; // next target in 30 seconds
+      }
     }
   }
 
@@ -5139,6 +5252,10 @@ function updateNpc(npc, dt){
       const fleeRange = isBlue ? 120 : (teamMode ? 220 : 200);
       if(d < fleeRange){ npc.npcMode='flee'; npc.npcModeTimer=0.9; break; }
     }
+    // Elimination: if this NPC is the target, flee frantically
+    if(eliminationMode && elimTarget === npc && elimTargetShootTimer > 0){
+      npc.npcMode='flee'; npc.npcModeTimer=1.5;
+    }
   }
 
   const zcnx=worldSize/2, zcny=worldSize/2;
@@ -5864,8 +5981,14 @@ function updateNpc(npc, dt){
       const th=snakeHead(threat), d=Math.max(1, Math.hypot(th.x-h.x, th.y-h.y));
       if(d<(teamMode?340:300)){ fx+=(h.x-th.x)/d; fy+=(h.y-th.y)/d; fc++; }
     }
+    // If this NPC is the elimination sniper target, sprint in a random zigzag direction
+    if(eliminationMode && elimTarget === npc){
+      const evadeAngle = npc.npcAngle + (Math.random()-0.5)*Math.PI*1.4;
+      fx += Math.cos(evadeAngle)*2; fy += Math.sin(evadeAngle)*2; fc++;
+      npc.npcBoost = npc.length >= BOOST_MIN_LEN; // boost to escape
+    }
     if(fc>0) desiredAngle=Math.atan2(fy,fx);
-    npc.npcBoost=false;
+    else npc.npcBoost=false;
   } else if(npc.npcMode==='zone'){
     desiredAngle=Math.atan2(zcny-h.y, zcnx-h.x)+(Math.random()-.5)*.4;
     npc.npcBoost=false;
@@ -6392,6 +6515,8 @@ function isOnOwnLand(snake){
 function killPlayer(cause){
   if(!player||player.dead) return;
   if(isOnOwnLand(player)) return;
+  // In infection mode, players can't die from collisions — they get infected instead
+  if(infectionMode && cause === 'npc') return;
   sndDeath();
   // CTF: respawn at base instead of game over
   if(ctfMode){
@@ -6438,6 +6563,8 @@ function killPlayer(cause){
 function killPlayer2(cause){
   if(!player2||player2.dead) return;
   if(isOnOwnLand(player2)) return;
+  // In infection mode, players can't die from collisions — they get infected instead
+  if(infectionMode && cause === 'npc') return;
   // CTF: respawn at base; drop flag in place
   if(ctfMode){
     if(player2.ctfCarrying){ player2.ctfCarrying.carrier = null; player2.ctfCarrying = null; } // drop flag in place
@@ -6501,6 +6628,8 @@ function hideGameUI(){
 
 function killNpc(npc, killer){
   if(npc.dead) return;
+  // In infection mode, NPCs are invincible — collision only infects
+  if(infectionMode) return;
   // Bot commander is immortal — cannot be killed
   if(npc.isAllyCommander) return;
   // Circlers are invincible — nothing can kill them
@@ -6889,7 +7018,7 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
       }
     }
   }
-  if(!teamMode && eventActive('fog')){
+  if(!teamMode && !eliminationMode && !infectionMode && eventActive('fog')){
     ctx.fillStyle='rgba(0,0,0,0.52)';
     ctx.fillRect(0,0,mapSize,mapSize);
     for(let i=0; i<45; i++){
@@ -6988,6 +7117,37 @@ function drawWorld(vpX, vpW, cx, cy, zoom, focusSnake){
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillStyle='#ffd700';
     ctx.fillText('👑 HILL', kothX, kothY);
+    ctx.restore();
+  }
+
+  // ── Elimination sniper target ──
+  if(eliminationMode && elimTarget && !elimTarget.dead){
+    const th = snakeHead(elimTarget);
+    ctx.save();
+    const prog = elimTargetShootTimer / 5; // 0→1 over 5 seconds
+    const pulse = 0.6 + 0.4 * Math.sin(gameTime * (8 + prog * 14));
+    const alertColor = `rgba(255,${Math.floor(34*(1-prog))},${Math.floor(34*(1-prog))},${0.7 + 0.3*pulse})`;
+    const r = (55 - prog * 20) / zoom; // shrinks toward head as time passes
+    // Outer ring
+    ctx.beginPath(); ctx.arc(th.x, th.y, r, 0, Math.PI*2);
+    ctx.strokeStyle = alertColor; ctx.lineWidth = (3 + 2*pulse) / zoom;
+    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 18 / zoom;
+    ctx.stroke(); ctx.shadowBlur = 0;
+    // Crosshair lines
+    const arm = r * 0.7;
+    ctx.strokeStyle = alertColor; ctx.lineWidth = 2 / zoom;
+    [[th.x-r-arm, th.y, th.x-r+arm*0.4, th.y],
+     [th.x+r-arm*0.4, th.y, th.x+r+arm, th.y],
+     [th.x, th.y-r-arm, th.x, th.y-r+arm*0.4],
+     [th.x, th.y+r-arm*0.4, th.x, th.y+r+arm]].forEach(([x1,y1,x2,y2])=>{
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    });
+    // Countdown text above
+    const secLeft = Math.max(0, Math.ceil(5 - elimTargetShootTimer));
+    ctx.font = `bold ${(22-prog*6)/zoom}px Segoe UI`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillStyle = `rgba(255,50,50,${0.85+0.15*pulse})`;
+    ctx.fillText(`🎯 ${secLeft}`, th.x, th.y - r - 8/zoom);
     ctx.restore();
   }
 
@@ -7203,7 +7363,7 @@ function drawSaws(snake){
 
 function drawSnake(snake){
   const segs=snake.segs, name=snake.name;
-  const skin = (teamMode && snake.team) ? (snake.team==='red' ? TEAM_SKIN_RED : TEAM_SKIN_BLUE) : snake.skin;
+  const skin = ((teamMode || ctfMode) && snake.team) ? (MULTI_TEAM_SKINS[snake.team] || snake.skin) : snake.skin;
   if(segs.length<2) return;
   const r=snakeRadius(snake.length);
   const head=segs[0];
@@ -7278,6 +7438,19 @@ function drawSnake(snake){
     ctx.shadowColor='#000'; ctx.shadowBlur=5;
     ctx.fillText(name, head.x, head.y-r*1.65-1);
     ctx.shadowBlur=0;
+  }
+
+  // Infection warning sign above zombie heads
+  if(infectionMode && isInfected && snake !== player && snake !== player2){
+    const _warnPulse = 0.7 + 0.3*Math.abs(Math.sin(gameTime*6));
+    const _warnSize = Math.max(14, r*1.4);
+    ctx.save();
+    ctx.globalAlpha = _warnPulse;
+    ctx.font = _warnSize+'px serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 10;
+    ctx.fillText('\u26A0\uFE0F', head.x, head.y - r*2.5 - 2);
+    ctx.restore();
   }
 
   // Commander hat (team mode players OR the AI commander NPC OR ally bot commander)
@@ -7653,6 +7826,23 @@ function _drawMinimapOnto(mc, W, H, focusPlayer){
     mc.strokeStyle='rgba(0,0,0,0.7)'; mc.lineWidth=2; mc.stroke();
     mc.fillStyle='#ffffff'; mc.fill();
   }
+  // Elimination sniper target on minimap
+  if(eliminationMode && elimTarget && !elimTarget.dead){
+    const th = snakeHead(elimTarget);
+    const pulse = 0.6 + 0.4*Math.sin(gameTime*10);
+    const mmR = 6 + 3*pulse;
+    mc.save();
+    mc.shadowColor='#ff0000'; mc.shadowBlur=10;
+    mc.strokeStyle=`rgba(255,30,30,${0.7+0.3*pulse})`;
+    mc.lineWidth=2;
+    mc.beginPath(); mc.arc(th.x*sx, th.y*sy, mmR, 0, Math.PI*2); mc.stroke();
+    // Crosshair
+    mc.beginPath();
+    mc.moveTo(th.x*sx - mmR*1.6, th.y*sy); mc.lineTo(th.x*sx + mmR*1.6, th.y*sy);
+    mc.moveTo(th.x*sx, th.y*sy - mmR*1.6); mc.lineTo(th.x*sx, th.y*sy + mmR*1.6);
+    mc.stroke();
+    mc.restore();
+  }
 }
 
 // =====================================================
@@ -7862,10 +8052,10 @@ function updateTeamConfigRow(){
   const show1P = (teamMode||ctfMode) && !twoPlayerMode;
   document.getElementById('teamConfigRow').style.display = show2P ? 'flex' : 'none';
   document.getElementById('teamP1ConfigRow').style.display = show1P ? 'flex' : 'none';
-  ['Green','Orange','Purple'].forEach(n=>{
-    const b = document.getElementById('tc1P'+n);
-    if(b) b.style.display = multiTeamMode ? '' : 'none';
-  });
+  const row2 = document.getElementById('teamP1BtnsRow2');
+  const row5 = document.getElementById('teamP1BtnsRow5');
+  if(row2) row2.style.display = multiTeamMode ? 'none' : 'flex';
+  if(row5) row5.style.display = multiTeamMode ? 'flex' : 'none';
 }
 document.getElementById('btn1P').addEventListener('click',()=>{
   twoPlayerMode=false;
@@ -7953,16 +8143,25 @@ document.getElementById('tcBothBlue').addEventListener('click',()=>setTeamP2Conf
 function setTeamP1Config(val){
   teamP1Config = val;
   if(multiTeamMode) multiTeamPlayerTeam = val;
+  // Update 2-team row buttons
+  ['Red','Blue'].forEach(c=>{
+    const el = document.getElementById('tc1P'+c);
+    if(el) el.classList.toggle('active', val===c.toLowerCase());
+  });
+  // Update 5-team row buttons
   MULTI_TEAMS.forEach(t=>{
-    const el = document.getElementById('tc1P'+t.charAt(0).toUpperCase()+t.slice(1));
-    if(el) el.classList.toggle('active', val === t);
+    const id = 'tc1P'+t.charAt(0).toUpperCase()+t.slice(1)+'5';
+    const el = document.getElementById(id);
+    if(el) el.classList.toggle('active', val===t);
   });
 }
 document.getElementById('tc1PRed').addEventListener('click',()=>setTeamP1Config('red'));
 document.getElementById('tc1PBlue').addEventListener('click',()=>setTeamP1Config('blue'));
-document.getElementById('tc1PGreen').addEventListener('click',()=>setTeamP1Config('green'));
-document.getElementById('tc1POrange').addEventListener('click',()=>setTeamP1Config('orange'));
-document.getElementById('tc1PPurple').addEventListener('click',()=>setTeamP1Config('purple'));
+document.getElementById('tc1PRed5').addEventListener('click',()=>setTeamP1Config('red'));
+document.getElementById('tc1PBlue5').addEventListener('click',()=>setTeamP1Config('blue'));
+document.getElementById('tc1PGreen5').addEventListener('click',()=>setTeamP1Config('green'));
+document.getElementById('tc1POrange5').addEventListener('click',()=>setTeamP1Config('orange'));
+document.getElementById('tc1PPurple5').addEventListener('click',()=>setTeamP1Config('purple'));
 document.getElementById('pickSkinBtn1').addEventListener('click',()=>openSkinPicker(1));
 document.getElementById('pickSkinBtn2').addEventListener('click',()=>openSkinPicker(2));
 document.getElementById('skinCloseBtn').addEventListener('click', closeSkinPicker);

@@ -3,3 +3,8 @@ package-lock.json
 .DS_Store
 games/snake-arena/.DS_Store
 games/snake-arena/snake-arena-backup-*.html
+
+snake-arena.html
+server.js
+server-lite.py
+package.json
